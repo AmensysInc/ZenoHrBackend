@@ -1,0 +1,245 @@
+package com.application.employee.service.auth;
+
+import com.application.employee.service.config.JwtService;
+import com.application.employee.service.config.SendGridEmail;
+import com.application.employee.service.entities.Message;
+import com.application.employee.service.repositories.EmployeeRespository;
+import com.application.employee.service.repositories.MessageRepository;
+import com.application.employee.service.user.User;
+import com.application.employee.service.repositories.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.security.SecureRandom;
+import java.util.*;
+
+@Service
+@RequiredArgsConstructor
+public class AuthenticationService {
+    private final UserRepository repository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationProvider authenticationProvider;
+    @Autowired
+    private JavaMailSender mailSender;
+    @Autowired
+    private MessageRepository messageRepository;
+    @Autowired
+    private SendGridEmail sendGridEmail;
+    @Autowired
+    private EmployeeRespository employeeRepository;
+
+    public AuthenticationResponse register(RegisterRequest request) {
+        var user = User.builder()
+                .id(UUID.randomUUID().toString())
+                .firstname(request.getFirstname())
+                .lastname(request.getLastname())
+                .email(request.getEmail())
+                .role(request.getRole())
+                .build();
+
+        String tempPassword = UUID.randomUUID().toString();
+        user.setTempPassword(passwordEncoder.encode(tempPassword));
+        sendTemporaryPasswordEmail(user.getEmail(), tempPassword);
+
+        repository.save(user);
+        var jwtToken = jwtService.generateToken(user);
+        return AuthenticationResponse.builder().build();
+    }
+
+    public ResponseEntity<String> reset(String email, String category) {
+        try {
+            // 1️⃣ Validate User
+            Optional<User> userOpt = repository.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with given emailID");
+            }
+
+            User user = userOpt.get();
+            String tempPassword = null;
+
+            // 2️⃣ Generate Temp Password only for allowed categories
+            if ("FORGOT_PASSWORD".equalsIgnoreCase(category) || "CHANGE_PASSWORD".equalsIgnoreCase(category)) {
+                tempPassword = generateTempPassword();
+                user.setTempPassword(passwordEncoder.encode(tempPassword));
+                System.out.println("Generated Temp Password: " + tempPassword);
+            }
+
+            // 3️⃣ Prepare placeholders (dynamic replacement for templates)
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("email_address", email);
+            if (tempPassword != null) {
+                placeholders.put("temp_password", tempPassword);
+            }
+
+            // 4️⃣ Send Email via template
+            sendEmailUsingTemplate(email, category, placeholders);
+
+            // 5️⃣ Save user only if password was generated
+            if (tempPassword != null) {
+                repository.save(user);
+            }
+
+            return ResponseEntity.status(HttpStatus.CREATED).body("Email sent successfully for category: " + category);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Email sending failed for category: " + category + " | Error: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * Generates a secure random alphanumeric temporary password (10 characters long).
+     */
+    private String generateTempPassword() {
+        final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        final int PASSWORD_LENGTH = 10;
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(PASSWORD_LENGTH);
+        for (int i = 0; i < PASSWORD_LENGTH; i++) {
+            sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
+        }
+        return sb.toString();
+    }
+
+    public void sendEmailUsingTemplate(String toEmail, String category, Map<String, String> placeholders) throws Exception {
+        // 1️⃣ Try fetching template for this category
+        Optional<Message> templateOpt = messageRepository.findByCategoryAndIsActive(category, true);
+
+        String subject;
+        String body;
+
+        if (templateOpt.isPresent()) {
+            Message template = templateOpt.get();
+            subject = replacePlaceholders(template.getSubject(), placeholders);
+            body = replacePlaceholders(template.getBody(), placeholders);
+        } else {
+            // Fallback generic template
+            subject = switch (category.toUpperCase()) {
+                case "FORGOT_PASSWORD" -> "Password Reset";
+                case "CHANGE_PASSWORD" -> "Password Change Confirmation";
+                default -> "Notification from HR Portal";
+            };
+
+            body = "Hello,\n\n";
+
+            if (placeholders.containsKey("temp_password")) {
+                body += "Your temporary password is: " + placeholders.get("temp_password") + "\n\n";
+            }
+
+            body += "Regards,\nTeam HR";
+        }
+
+        // 2️⃣ Dynamically determine the company 'from' email
+        String fromEmail = employeeRepository.findCompanyEmailByEmployeeEmail(toEmail);
+        if (!StringUtils.hasText(fromEmail)) {
+            fromEmail = "docs@saibersys.com"; // fallback sender
+        }
+
+        // 3️⃣ Send Email using SendGrid
+        sendGridEmail.sendEmails(
+                fromEmail,
+                List.of(toEmail),
+                null,
+                null,
+                subject,
+                body,
+                List.of()
+        );
+
+        int statusCode = sendGridEmail.getLastStatusCode();
+        if (statusCode != 202) {
+            throw new Exception("SendGrid Error: " + sendGridEmail.getLastErrorMessage());
+        }
+
+        System.out.println("[Email Sent] Category: " + category + ", To: " + toEmail);
+    }
+
+
+    private String replacePlaceholders(String text, Map<String, String> placeholders) {
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            text = text.replace("{{" + entry.getKey() + "}}", entry.getValue());
+        }
+        return text;
+    }
+
+
+    public ResponseEntity<String> updatePassword(String userId, String password) {
+        var user = repository.findById(userId);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setTempPassword(null);
+        repository.save(user);
+        return  ResponseEntity.status(HttpStatus.CREATED).body("Password updated");
+    }
+
+
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        var user = repository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean tempPassword = StringUtils.hasText(user.getTempPassword());
+
+        if (user.getTempPassword() != null) {
+            user.setPassword(user.getTempPassword());
+        } else if (user.getPassword().startsWith("$2a$")) {
+            authenticationProvider.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
+            );
+        } else {
+            if (!user.getPassword().equals(request.getPassword())) {
+                throw new BadCredentialsException("Invalid password");
+            }
+        }
+
+        var jwtToken = jwtService.generateToken(user);
+
+        return AuthenticationResponse.builder()
+                .accessToken(jwtToken)
+                .id(user.getId())
+                .firstName(user.getFirstname())
+                .lastName(user.getLastname())
+                .tempPassword(tempPassword)
+                .role(user.getRole())
+                .build();
+    }
+
+    public void sendTemporaryPasswordEmail(String toEmail, String tempPassword) {
+        String category = "LOGIN_DETAILS";
+
+        Optional<Message> templateOpt = messageRepository.findByCategoryAndIsActive(category, true);
+
+        String subject = "Your Temporary Password";
+        String body = "Hi,\n\nYour temporary password is: " + tempPassword + "\n\nPlease change it after logging in.";
+
+        if (templateOpt.isPresent()) {
+            Message template = templateOpt.get();
+            subject = template.getSubject() != null ? template.getSubject().replace("{{emailID}}", toEmail) : subject;
+            body = template.getBody() != null ? template.getBody()
+                    .replace("{{emailID}}", toEmail)
+                    .replace("{{password}}", tempPassword) : body;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(body);
+
+        mailSender.send(message);
+    }
+}
+
