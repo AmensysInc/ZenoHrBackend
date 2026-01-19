@@ -1,0 +1,17 @@
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.git
+.gitignore
+*.md
+*.sql
+*.ps1
+*.sh
+frontend/
+node_modules/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
