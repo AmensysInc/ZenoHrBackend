@@ -76,7 +76,8 @@ public class EmployeeServiceImplementation implements EmployeeService {
         newUser.setFirstname(employeeDTO.getFirstName());
         newUser.setLastname(employeeDTO.getLastName());
         newUser.setEmail(employeeDTO.getEmailID());
-        newUser.setRole(employeeDTO.getSecurityGroup());
+        // Default to EMPLOYEE role if securityGroup is not specified
+        newUser.setRole(employeeDTO.getSecurityGroup() != null ? employeeDTO.getSecurityGroup() : Role.EMPLOYEE);
         newUser.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
         if (employeeDTO.getPassword() == null || employeeDTO.getPassword().isEmpty()) {
             var tempPassword = UUID.randomUUID().toString();
@@ -136,7 +137,12 @@ public class EmployeeServiceImplementation implements EmployeeService {
         }
         MapperUtil.updateEmployeeFromDTO(employeeDTO, existingEmployee);
         existingUser.setEmail(employeeDTO.getEmailID());
-        existingUser.setRole(employeeDTO.getSecurityGroup());
+        // Default to EMPLOYEE role if securityGroup is not specified, or keep existing role if not provided
+        if (employeeDTO.getSecurityGroup() != null) {
+            existingUser.setRole(employeeDTO.getSecurityGroup());
+        } else if (existingUser.getRole() == null) {
+            existingUser.setRole(Role.EMPLOYEE);
+        }
         existingUser.setFirstname(employeeDTO.getFirstName());
         existingUser.setLastname(employeeDTO.getLastName());
         userRepository.save(existingUser);
