@@ -1,5 +1,7 @@
 package com.application.employee.service.controllers;
 
+import com.application.employee.service.entities.UserCompanyRole;
+import com.application.employee.service.repositories.UserCompanyRoleRepository;
 import com.application.employee.service.user.Role;
 import com.application.employee.service.user.User;
 import com.application.employee.service.repositories.UserRepository;
@@ -8,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,6 +26,7 @@ public class AdminUserController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserCompanyRoleRepository userCompanyRoleRepository;
 
     @GetMapping
     public ResponseEntity<String> createAdminUser(
@@ -30,7 +34,8 @@ public class AdminUserController {
             @RequestParam String password,
             @RequestParam(required = false, defaultValue = "Rama") String firstname,
             @RequestParam(required = false, defaultValue = "K") String lastname,
-            @RequestParam(required = false, defaultValue = "ADMIN") String role) {
+            @RequestParam(required = false, defaultValue = "ADMIN") String role,
+            @RequestParam(required = false) Long companyId) {
         
         try {
             // Check if user already exists
@@ -39,6 +44,8 @@ public class AdminUserController {
                         .body("User with email " + email + " already exists");
             }
 
+            Role userRole = Role.valueOf(role.toUpperCase());
+            
             // Create admin user
             User adminUser = User.builder()
                     .id(UUID.randomUUID().toString())
@@ -46,11 +53,35 @@ public class AdminUserController {
                     .lastname(lastname)
                     .email(email)
                     .password(passwordEncoder.encode(password))
-                    .role(Role.valueOf(role.toUpperCase()))
+                    .role(userRole)
                     .tempPassword(null)
                     .build();
 
             userRepository.save(adminUser);
+            
+            // ✅ For ADMIN role, create UserCompanyRole if companyId is provided
+            // SADMIN should NOT have a default company
+            if (userRole == Role.ADMIN && companyId != null) {
+                UserCompanyRole userCompanyRole = new UserCompanyRole();
+                userCompanyRole.setUserId(adminUser.getId());
+                userCompanyRole.setCompanyId(companyId.intValue());
+                userCompanyRole.setRole(Role.ADMIN.name());
+                userCompanyRole.setDefaultCompany("true");
+                userCompanyRole.setCreatedAt(new java.sql.Date(System.currentTimeMillis()));
+                
+                // Ensure only one default company per user
+                List<UserCompanyRole> existingRoles = userCompanyRoleRepository.findByUserId(adminUser.getId());
+                for (UserCompanyRole existing : existingRoles) {
+                    existing.setDefaultCompany("false");
+                    userCompanyRoleRepository.save(existing);
+                }
+                
+                userCompanyRoleRepository.save(userCompanyRole);
+                return ResponseEntity.ok("Admin user created successfully: " + email + " assigned to company ID: " + companyId);
+            } else if (userRole == Role.SADMIN) {
+                // SADMIN should not have a default company
+                return ResponseEntity.ok("Super Admin user created successfully: " + email + " (no company assignment)");
+            }
             
             return ResponseEntity.ok("Admin user created successfully: " + email);
         } catch (Exception e) {

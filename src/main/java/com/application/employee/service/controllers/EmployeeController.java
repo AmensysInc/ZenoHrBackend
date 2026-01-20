@@ -3,8 +3,11 @@ package com.application.employee.service.controllers;
 import com.application.employee.service.dto.EmployeeDTO;
 import com.application.employee.service.dto.ProspectFileDTO;
 import com.application.employee.service.entities.*;
+import com.application.employee.service.repositories.UserCompanyRoleRepository;
+import com.application.employee.service.repositories.UserRepository;
 import com.application.employee.service.services.*;
 import com.application.employee.service.user.Role;
+import com.application.employee.service.user.User;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,10 +39,35 @@ public class EmployeeController {
     @Value("${file.storage-location}")
     private String UploadPath;
 
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserCompanyRoleRepository userCompanyRoleRepository;
+    
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN')")
     public ResponseEntity<String> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
-            Employee employee = employeeService.saveEmployee(employeeDTO);
+        // ✅ If Admin creates employee without company, auto-assign to Admin's company
+        // Get current user from SecurityContext
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
+        
+        if (currentUser != null && currentUser.getRole() == Role.ADMIN) {
+            // Admin user - get their default company
+            List<UserCompanyRole> adminRoles = userCompanyRoleRepository.findByUserId(currentUser.getId());
+            UserCompanyRole defaultRole = adminRoles.stream()
+                    .filter(role -> "true".equalsIgnoreCase(role.getDefaultCompany()))
+                    .findFirst()
+                    .orElse(adminRoles.isEmpty() ? null : adminRoles.get(0));
+            
+            if (defaultRole != null && employeeDTO.getCompanyId() == null) {
+                // Auto-assign employee to Admin's company
+                employeeDTO.setCompanyId(Long.valueOf(defaultRole.getCompanyId()));
+            }
+        }
+        // SADMIN can assign to any company or leave null (will be handled in service)
+        
+        Employee employee = employeeService.saveEmployee(employeeDTO);
         if (employee == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Employee already exists for given EmailID");
         }
