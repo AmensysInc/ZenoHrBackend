@@ -10,6 +10,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/user-company")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class UserCompanyRoleController {
 
     @Autowired
