@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  zenohr-mysql:
+    image: mysql:8.0
+    container_name: zenohr-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - zenohr_mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zenohr-net
+
+  zenohr-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: zenohr-backend
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: zenohr-mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FILE_STORAGE_LOCATION: /app/files
+    ports:
+      - "8085:8080"
+    volumes:
+      - file_storage:/app/files
+    depends_on:
+      zenohr-mysql:
+        condition: service_healthy
+    networks:
+      - zenohr-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/admin/create-user/check?email=test@test.com"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  zenohr-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8085}
+    container_name: zenohr-frontend
+    restart: always
+    ports:
+      - "3005:80"
+    depends_on:
+      - zenohr-backend
+    networks:
+      - zenohr-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  zenohr_mysql_data:
+    driver: local
+  file_storage:
+    driver: local
+
+networks:
+  zenohr-net:
+    driver: bridge
