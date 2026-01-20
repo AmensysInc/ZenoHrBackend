@@ -39,7 +39,10 @@ public class SecurityConfiguration {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:3001",
-                "http://localhost:3002"
+                "http://localhost:3002",
+                "http://localhost:3005",
+                "http://204.12.199.212:3005",
+                "https://204.12.199.212:3005"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

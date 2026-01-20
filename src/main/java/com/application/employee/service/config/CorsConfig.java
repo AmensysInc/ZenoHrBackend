@@ -29,13 +29,18 @@ public class CorsConfig {
         config.addAllowedOrigin("http://localhost:3001");
         config.addAllowedOrigin("http://localhost:3002");
         config.addAllowedOrigin("http://localhost:3005");
+        config.addAllowedOrigin("http://204.12.199.212:3005");
+        config.addAllowedOrigin("https://204.12.199.212:3005");
         config.addAllowedOrigin("http://209.105.227.8:3000");
         config.addAllowedOrigin("http://209.209.41.4:3000");
         config.addAllowedOriginPattern("http://*:3005");
+        config.addAllowedOriginPattern("https://*:3005");
         config.addAllowedOriginPattern("http://*:80");
+        config.addAllowedOriginPattern("https://*:80");
         config.addAllowedOrigin("http://163.123.180.171:8080/EmployeeService-0.0.1");
         config.addAllowedOrigin("http://163.123.180.171:8080/EmployeeService-0.0.2");
         config.addAllowedOrigin("http://quickhrms.com");
+        config.addAllowedOrigin("https://quickhrms.com");
         config.setAllowedHeaders(Arrays.asList(
                 HttpHeaders.AUTHORIZATION,
                 HttpHeaders.CONTENT_TYPE,
