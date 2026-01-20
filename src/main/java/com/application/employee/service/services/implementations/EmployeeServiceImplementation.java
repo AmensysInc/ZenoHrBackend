@@ -88,7 +88,7 @@ public class EmployeeServiceImplementation implements EmployeeService {
         if (employeeDTO.getCompanyId() != null) {
             UserCompanyRole userCompanyRole = new UserCompanyRole();
             userCompanyRole.setUserId(employeeDTO.getEmployeeID());
-            userCompanyRole.setCompanyId(employeeDTO.getCompanyId().intValue());
+            userCompanyRole.setCompanyId(employeeDTO.getCompanyId());
             userCompanyRole.setRole(employeeDTO.getSecurityGroup() != null ? employeeDTO.getSecurityGroup().name() : Role.EMPLOYEE.name());
             userCompanyRole.setDefaultCompany("true");
             userCompanyRole.setCreatedAt(new java.sql.Date(System.currentTimeMillis()));
@@ -145,7 +145,7 @@ public class EmployeeServiceImplementation implements EmployeeService {
         if (employeeDTO.getCompanyId() != null) {
             List<UserCompanyRole> existingRoles = userCompanyRoleRepository.findByUserId(id);
             UserCompanyRole companyRole = existingRoles.stream()
-                    .filter(role -> role.getCompanyId().equals(employeeDTO.getCompanyId().intValue()))
+                    .filter(role -> role.getCompanyId().equals(employeeDTO.getCompanyId()))
                     .findFirst()
                     .orElse(null);
             

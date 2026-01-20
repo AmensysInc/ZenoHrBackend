@@ -62,7 +62,7 @@ public class EmployeeController {
             
             if (defaultRole != null && employeeDTO.getCompanyId() == null) {
                 // Auto-assign employee to Admin's company
-                employeeDTO.setCompanyId(Long.valueOf(defaultRole.getCompanyId()));
+                employeeDTO.setCompanyId(defaultRole.getCompanyId());
             }
         }
         // SADMIN can assign to any company or leave null (will be handled in service)
