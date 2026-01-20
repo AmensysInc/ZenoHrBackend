@@ -11,6 +11,8 @@ import com.application.employee.service.repositories.EmployeeDetailsRespository;
 import com.application.employee.service.repositories.EmployeeRespository;
 import com.application.employee.service.repositories.ProspectFileRepository;
 import com.application.employee.service.repositories.UserRepository;
+import com.application.employee.service.repositories.UserCompanyRoleRepository;
+import com.application.employee.service.entities.UserCompanyRole;
 import com.application.employee.service.services.EmployeeService;
 import com.application.employee.service.specifications.EmployeeSpecifications;
 import com.application.employee.service.user.Role;
@@ -53,6 +55,8 @@ public class EmployeeServiceImplementation implements EmployeeService {
     private ModelMapper modelMapper;
     @Autowired
     private ProspectFileRepository prospectFileRepository;
+    @Autowired
+    private UserCompanyRoleRepository userCompanyRoleRepository;
     @Value("${file.storage-location}")
     private String UploadPath;
 
@@ -79,6 +83,28 @@ public class EmployeeServiceImplementation implements EmployeeService {
             newUser.setTempPassword(passwordEncoder.encode(tempPassword));
         }
         userRepository.save(newUser);
+        
+        // ✅ Automatically create UserCompanyRole if employee is assigned to a company
+        if (employeeDTO.getCompanyId() != null) {
+            UserCompanyRole userCompanyRole = new UserCompanyRole();
+            userCompanyRole.setUserId(employeeDTO.getEmployeeID());
+            userCompanyRole.setCompanyId(employeeDTO.getCompanyId().intValue());
+            userCompanyRole.setRole(employeeDTO.getSecurityGroup() != null ? employeeDTO.getSecurityGroup().name() : Role.EMPLOYEE.name());
+            userCompanyRole.setDefaultCompany("true");
+            userCompanyRole.setCreatedAt(new java.sql.Date(System.currentTimeMillis()));
+            
+            // If this is the first company for this user, set as default
+            List<UserCompanyRole> existingRoles = userCompanyRoleRepository.findByUserId(employeeDTO.getEmployeeID());
+            if (existingRoles.isEmpty()) {
+                userCompanyRole.setDefaultCompany("true");
+            } else {
+                // If user already has roles, set this as non-default
+                userCompanyRole.setDefaultCompany("false");
+            }
+            
+            userCompanyRoleRepository.save(userCompanyRole);
+        }
+        
         return savedEmployee;
     }
 
@@ -114,6 +140,40 @@ public class EmployeeServiceImplementation implements EmployeeService {
         existingUser.setFirstname(employeeDTO.getFirstName());
         existingUser.setLastname(employeeDTO.getLastName());
         userRepository.save(existingUser);
+        
+        // ✅ Update or create UserCompanyRole if company is assigned/changed
+        if (employeeDTO.getCompanyId() != null) {
+            List<UserCompanyRole> existingRoles = userCompanyRoleRepository.findByUserId(id);
+            UserCompanyRole companyRole = existingRoles.stream()
+                    .filter(role -> role.getCompanyId().equals(employeeDTO.getCompanyId().intValue()))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (companyRole == null) {
+                // Create new UserCompanyRole
+                companyRole = new UserCompanyRole();
+                companyRole.setUserId(id);
+                companyRole.setCompanyId(employeeDTO.getCompanyId().intValue());
+                companyRole.setRole(employeeDTO.getSecurityGroup() != null ? employeeDTO.getSecurityGroup().name() : Role.EMPLOYEE.name());
+                
+                // If this is the first company role, set as default
+                if (existingRoles.isEmpty()) {
+                    companyRole.setDefaultCompany("true");
+                } else {
+                    companyRole.setDefaultCompany("false");
+                }
+                
+                companyRole.setCreatedAt(new java.sql.Date(System.currentTimeMillis()));
+                userCompanyRoleRepository.save(companyRole);
+            } else {
+                // Update existing role if needed
+                if (employeeDTO.getSecurityGroup() != null && !companyRole.getRole().equals(employeeDTO.getSecurityGroup().name())) {
+                    companyRole.setRole(employeeDTO.getSecurityGroup().name());
+                    userCompanyRoleRepository.save(companyRole);
+                }
+            }
+        }
+        
         return employeeRespository.save(existingEmployee);
     }
 
