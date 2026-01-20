@@ -15,17 +15,39 @@ DB_PASSWORD=${DB_PASSWORD}
 
 # If running inside docker network, use service name, otherwise localhost
 if [ -z "$DB_PASSWORD" ]; then
-    echo "⚠️  DB_PASSWORD not set. Trying to get from docker-compose..."
-    # Try to get from .env file
+    echo "⚠️  DB_PASSWORD not set. Trying to get from .env file..."
+    # Try to get from .env file in current directory
     if [ -f .env ]; then
         source .env
+    # Try parent directory
+    elif [ -f ../.env ]; then
+        source ../.env
+    # Try docker-compose env
+    elif [ -f docker-compose.yml ] || [ -f ../docker-compose.yml ]; then
+        echo "📋 Reading from docker-compose environment..."
+        # Try to extract from docker-compose
+        if [ -f docker-compose.yml ]; then
+            DB_PASSWORD=$(grep -A 5 "MYSQL_ROOT_PASSWORD" docker-compose.yml | grep -v "#" | head -1 | sed 's/.*MYSQL_ROOT_PASSWORD: //' | sed 's/${DB_ROOT_PASSWORD:-//' | sed 's/}//' | tr -d ' ')
+        elif [ -f ../docker-compose.yml ]; then
+            DB_PASSWORD=$(grep -A 5 "MYSQL_ROOT_PASSWORD" ../docker-compose.yml | grep -v "#" | head -1 | sed 's/.*MYSQL_ROOT_PASSWORD: //' | sed 's/${DB_ROOT_PASSWORD:-//' | sed 's/}//' | tr -d ' ')
+        fi
     fi
 fi
 
 if [ -z "$DB_PASSWORD" ]; then
-    echo "❌ Error: DB_PASSWORD not found. Please set it or provide it:"
-    echo "   export DB_PASSWORD=your_password"
-    exit 1
+    echo "❌ Error: DB_PASSWORD not found."
+    echo ""
+    echo "Please provide it in one of these ways:"
+    echo "1. Export it: export DB_PASSWORD=your_password"
+    echo "2. Create .env file with: DB_ROOT_PASSWORD=your_password"
+    echo "3. Or enter it when prompted:"
+    echo ""
+    read -sp "Enter MySQL root password: " DB_PASSWORD
+    echo ""
+    if [ -z "$DB_PASSWORD" ]; then
+        echo "❌ Password cannot be empty"
+        exit 1
+    fi
 fi
 
 echo "📊 Connecting to database: $DB_NAME on $DB_HOST"
