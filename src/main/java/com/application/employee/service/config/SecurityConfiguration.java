@@ -42,7 +42,11 @@ public class SecurityConfiguration {
                 "http://localhost:3002",
                 "http://localhost:3005",
                 "http://204.12.199.212:3005",
-                "https://204.12.199.212:3005"
+                "https://204.12.199.212:3005",
+                "http://zenopayhr.com",
+                "https://zenopayhr.com",
+                "http://www.zenopayhr.com",
+                "https://www.zenopayhr.com"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));

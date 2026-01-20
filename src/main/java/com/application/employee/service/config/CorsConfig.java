@@ -41,6 +41,10 @@ public class CorsConfig {
         config.addAllowedOrigin("http://163.123.180.171:8080/EmployeeService-0.0.2");
         config.addAllowedOrigin("http://quickhrms.com");
         config.addAllowedOrigin("https://quickhrms.com");
+        config.addAllowedOrigin("http://zenopayhr.com");
+        config.addAllowedOrigin("https://zenopayhr.com");
+        config.addAllowedOrigin("http://www.zenopayhr.com");
+        config.addAllowedOrigin("https://www.zenopayhr.com");
         config.setAllowedHeaders(Arrays.asList(
                 HttpHeaders.AUTHORIZATION,
                 HttpHeaders.CONTENT_TYPE,
