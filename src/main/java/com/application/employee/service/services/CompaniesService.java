@@ -14,5 +14,6 @@ public interface CompaniesService {
     Companies updateCompany(Integer companyId, Companies company);
     void deleteCompany(Integer companyId);
     Page<Companies> findCompaniesWithPagination(int page, int size, String field, String seacrhString);
+    Page<Companies> createPageFromList(List<Companies> content, int page, int size, long totalElements);
     List<CompanyWithEmployeesDTO> getCompaniesWithEmployees();
 }

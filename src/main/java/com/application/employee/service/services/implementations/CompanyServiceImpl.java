@@ -10,6 +10,7 @@ import com.application.employee.service.services.CompaniesService;
 import com.application.employee.service.specifications.CompaniesSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -73,6 +74,15 @@ public class CompanyServiceImpl implements CompaniesService {
         }
 
         return companiesRepository.findAll(spec, pageable);
+    }
+
+    @Override
+    public Page<Companies> createPageFromList(List<Companies> content, int page, int size, long totalElements) {
+        Pageable pageable = PageRequest.of(page, size);
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), content.size());
+        List<Companies> pageContent = content.subList(start, end);
+        return new PageImpl<>(pageContent, pageable, totalElements);
     }
 
     @Override
