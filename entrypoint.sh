@@ -1,13 +1,12 @@
 #!/bin/sh
+set -e
+
 # Fix permissions for /app/files directory
 # This runs as root before switching to spring user
-if [ -d /app/files ]; then
-    chown -R spring:spring /app/files
-    chmod -R 755 /app/files
-fi
-
-# Create subdirectories if they don't exist
+# Create directory if it doesn't exist (volume mount might be empty)
 mkdir -p /app/files
+
+# Set ownership and permissions
 chown -R spring:spring /app/files
 chmod -R 755 /app/files
 
