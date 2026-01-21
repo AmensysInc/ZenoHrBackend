@@ -23,7 +23,7 @@ services:
 
   zenohr-backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     container_name: zenohr-backend
     restart: always
