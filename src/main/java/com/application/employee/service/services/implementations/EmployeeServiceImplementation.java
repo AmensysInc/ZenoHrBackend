@@ -522,11 +522,15 @@ public class EmployeeServiceImplementation implements EmployeeService {
             }
 
             String originalFilename = Objects.requireNonNull(file.getOriginalFilename(), "File name is null");
-            Path filePath = weekDir.resolve(originalFilename);
+            // Sanitize filename to prevent path traversal
+            String safeFileName = Paths.get(originalFilename).getFileName().toString();
+            Path filePath = weekDir.resolve(safeFileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         } catch (IOException e) {
-            throw new FileUploadException("Failed to upload weekly file for employee: " + employeeId, e);
+            throw new FileUploadException("Failed to upload weekly file for employee: " + employeeId + ". Error: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new FileUploadException("Unexpected error uploading file: " + e.getMessage(), e);
         }
     }
 
