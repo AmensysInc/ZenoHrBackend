@@ -578,9 +578,16 @@ public class EmployeeServiceImplementation implements EmployeeService {
     }
 
     @Override
-    public List<Map<String, Object>> getAllWeeklyFiles() throws IOException {
+    public List<Map<String, Object>> getAllWeeklyFiles(Integer companyId) throws IOException {
         List<Map<String, Object>> allFiles = new ArrayList<>();
-        List<Employee> employees = employeeRespository.findAll();
+        List<Employee> employees;
+        
+        // Filter employees by company if companyId is provided
+        if (companyId != null) {
+            employees = employeeRespository.findByCompanyCompanyId(companyId.longValue());
+        } else {
+            employees = employeeRespository.findAll();
+        }
 
         for (Employee employee : employees) {
             String empId = employee.getEmployeeID();

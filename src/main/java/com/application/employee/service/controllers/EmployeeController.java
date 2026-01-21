@@ -468,7 +468,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{employeeId}/files/week/{week}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE')")
     public ResponseEntity<List<String>> getWeeklyFiles(
             @PathVariable String employeeId,
             @PathVariable String week) {
@@ -481,7 +481,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{employeeId}/files/week/{week}/{fileName}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE')")
     public ResponseEntity<byte[]> downloadWeeklyFile(
             @PathVariable String employeeId,
             @PathVariable String week,
@@ -540,10 +540,64 @@ public class EmployeeController {
     }
 
     @GetMapping("/files/all")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN')")
-    public ResponseEntity<List<Map<String, Object>>> getAllWeeklyFiles() {
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getAllWeeklyFiles(
+            @RequestParam(name = "companyId", required = false) Integer companyId) {
         try {
-            List<Map<String, Object>> files = employeeService.getAllWeeklyFiles();
+            // Get current user
+            String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+            User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
+            
+            // For GROUP_ADMIN, filter by selected company
+            if (currentUser != null && currentUser.getRole() == Role.GROUP_ADMIN) {
+                // Get GROUP_ADMIN's assigned companies
+                List<UserCompanyRole> userRoles = userCompanyRoleRepository.findByUserId(currentUser.getId());
+                List<Integer> assignedCompanyIds = userRoles.stream()
+                        .map(UserCompanyRole::getCompanyId)
+                        .toList();
+                
+                // If companyId is provided, validate it's one of their assigned companies
+                if (companyId != null && assignedCompanyIds.contains(companyId)) {
+                    // Valid company - use it for filtering
+                } else if (companyId != null) {
+                    // Invalid company - use first assigned as fallback
+                    if (!assignedCompanyIds.isEmpty()) {
+                        companyId = assignedCompanyIds.get(0);
+                    } else {
+                        // No companies assigned - return empty result
+                        return ResponseEntity.ok(Collections.emptyList());
+                    }
+                } else if (!assignedCompanyIds.isEmpty()) {
+                    // No companyId provided - use selected/default company
+                    UserCompanyRole defaultRole = userRoles.stream()
+                            .filter(role -> "true".equalsIgnoreCase(role.getDefaultCompany()))
+                            .findFirst()
+                            .orElse(userRoles.get(0));
+                    companyId = defaultRole.getCompanyId();
+                } else {
+                    // No companies assigned - return empty result
+                    return ResponseEntity.ok(Collections.emptyList());
+                }
+            }
+            
+            // For SADMIN, ignore companyId filter (show all)
+            if (currentUser != null && currentUser.getRole() == Role.SADMIN) {
+                companyId = null;
+            }
+            
+            // For ADMIN, use their assigned company if no companyId provided
+            if (currentUser != null && currentUser.getRole() == Role.ADMIN && companyId == null) {
+                List<UserCompanyRole> adminRoles = userCompanyRoleRepository.findByUserId(currentUser.getId());
+                if (!adminRoles.isEmpty()) {
+                    UserCompanyRole defaultRole = adminRoles.stream()
+                            .filter(role -> "true".equalsIgnoreCase(role.getDefaultCompany()))
+                            .findFirst()
+                            .orElse(adminRoles.get(0));
+                    companyId = defaultRole.getCompanyId();
+                }
+            }
+            
+            List<Map<String, Object>> files = employeeService.getAllWeeklyFiles(companyId);
             return ResponseEntity.ok(files);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -23,6 +23,9 @@ public interface EmployeeRespository extends JpaRepository<Employee, String> {
     @Query("SELECT e FROM Employee e WHERE (:CompanyId IS NULL OR e.CompanyId = :CompanyId)")
     List<Employee> findByCompanyOrAll(@Param("CompanyId") Long company_id);
 
+    @Query("SELECT e FROM Employee e WHERE e.CompanyId = :companyId")
+    List<Employee> findByCompanyCompanyId(@Param("companyId") Long companyId);
+
     @Query("SELECT e.company.email FROM Employee e WHERE e.emailID = :email")
     String findCompanyEmailByEmployeeEmail(String email);
 }
