@@ -419,11 +419,39 @@ public class EmployeeController {
             @PathVariable String fileName) {
         try {
             byte[] fileData = employeeService.downloadWeeklyFile(employeeId, week, fileName);
+            
+            // Determine Content-Type based on file extension
+            String contentType = getContentType(fileName);
+            
             return ResponseEntity.ok()
+                    .header("Content-Type", contentType)
                     .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
                     .body(fileData);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+    
+    private String getContentType(String fileName) {
+        String lowerFileName = fileName.toLowerCase();
+        if (lowerFileName.endsWith(".pdf")) {
+            return "application/pdf";
+        } else if (lowerFileName.endsWith(".doc") || lowerFileName.endsWith(".docx")) {
+            return "application/msword";
+        } else if (lowerFileName.endsWith(".xls") || lowerFileName.endsWith(".xlsx")) {
+            return "application/vnd.ms-excel";
+        } else if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (lowerFileName.endsWith(".png")) {
+            return "image/png";
+        } else if (lowerFileName.endsWith(".gif")) {
+            return "image/gif";
+        } else if (lowerFileName.endsWith(".txt")) {
+            return "text/plain";
+        } else if (lowerFileName.endsWith(".html") || lowerFileName.endsWith(".htm")) {
+            return "text/html";
+        } else {
+            return "application/octet-stream";
         }
     }
 
