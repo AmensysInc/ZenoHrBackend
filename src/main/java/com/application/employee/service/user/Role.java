@@ -75,6 +75,18 @@ public enum Role {
                     EMPLOYEE_DELETE,
                     EMPLOYEE_CREATE
             )
+    ),
+    GROUP_ADMIN(
+            Set.of(
+                    ADMIN_READ,
+                    ADMIN_CREATE,
+                    ADMIN_UPDATE,
+                    ADMIN_DELETE,
+                    EMPLOYEE_READ,
+                    EMPLOYEE_UPDATE,
+                    EMPLOYEE_DELETE,
+                    EMPLOYEE_CREATE
+            )
     );
 
     @Getter

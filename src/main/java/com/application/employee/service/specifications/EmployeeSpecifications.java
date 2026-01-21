@@ -89,4 +89,13 @@ public class EmployeeSpecifications {
         };
     }
 
+    public static Specification<Employee> companyIdEquals(Long companyId) {
+        return (root, query, criteriaBuilder) -> {
+            if (companyId != null) {
+                return criteriaBuilder.equal(root.get("company").get("companyId"), companyId.intValue());
+            }
+            return null;
+        };
+    }
+
 }

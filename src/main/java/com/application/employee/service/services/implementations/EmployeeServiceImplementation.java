@@ -325,10 +325,20 @@ public class EmployeeServiceImplementation implements EmployeeService {
 
     @Override
     public Page<Employee> findEmployeeWithPagination(int page, int size, String searchField, String searchString) {
+        return findEmployeeWithPagination(page, size, searchField, searchString, null);
+    }
+
+    @Override
+    public Page<Employee> findEmployeeWithPagination(int page, int size, String searchField, String searchString, Long companyId) {
         // Use unsorted pageable to avoid issues with String ID sorting
         Pageable pageable = PageRequest.of(page, size);
 
         Specification<Employee> spec = Specification.where(null);
+
+        // Filter by company if companyId is provided
+        if (companyId != null) {
+            spec = spec.and(EmployeeSpecifications.companyIdEquals(companyId));
+        }
 
         if (searchField != null && !searchField.isEmpty() && searchString != null && !searchString.isEmpty()) {
             switch (searchField) {

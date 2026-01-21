@@ -61,6 +61,7 @@ public class AdminUserController {
             
             // ✅ For ADMIN role, create UserCompanyRole if companyId is provided
             // SADMIN should NOT have a default company
+            // GROUP_ADMIN should NOT have company assigned here (use AddUserRole to assign multiple companies)
             if (userRole == Role.ADMIN && companyId != null) {
                 UserCompanyRole userCompanyRole = new UserCompanyRole();
                 userCompanyRole.setUserId(adminUser.getId());
@@ -81,6 +82,9 @@ public class AdminUserController {
             } else if (userRole == Role.SADMIN) {
                 // SADMIN should not have a default company
                 return ResponseEntity.ok("Super Admin user created successfully: " + email + " (no company assignment)");
+            } else if (userRole == Role.GROUP_ADMIN) {
+                // GROUP_ADMIN created - companies should be assigned via AddUserRole page
+                return ResponseEntity.ok("Group Admin user created successfully: " + email + ". Please assign companies using 'Add User Role' page.");
             }
             
             return ResponseEntity.ok("Admin user created successfully: " + email);

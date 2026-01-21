@@ -22,6 +22,7 @@ public interface EmployeeService {
     void uploadProspectFiles(String employeeID, MultipartFile[] files) throws FileUploadException;
     void deleteEmployee(String id);
     Page<Employee> findEmployeeWithPagination(int page, int size, String field, String seacrhString);
+    Page<Employee> findEmployeeWithPagination(int page, int size, String field, String seacrhString, Long companyId);
     List<Employee> getEmployeesBySecurityGroup(Role securityGroup);
     List<String> getProspectEmployeeFiles(String employeeID) throws IOException;
     byte[] downloadProspectEmployeeFile(String employeeID, String fileName) throws IOException;

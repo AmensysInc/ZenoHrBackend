@@ -45,24 +45,50 @@ public class EmployeeController {
     private UserCompanyRoleRepository userCompanyRoleRepository;
     
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN') or hasRole('GROUP_ADMIN')")
     public ResponseEntity<String> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
         // ✅ If Admin creates employee without company, auto-assign to Admin's company
         // Get current user from SecurityContext
         String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
         
-        if (currentUser != null && currentUser.getRole() == Role.ADMIN) {
-            // Admin user - get their default company
-            List<UserCompanyRole> adminRoles = userCompanyRoleRepository.findByUserId(currentUser.getId());
-            UserCompanyRole defaultRole = adminRoles.stream()
-                    .filter(role -> "true".equalsIgnoreCase(role.getDefaultCompany()))
-                    .findFirst()
-                    .orElse(adminRoles.isEmpty() ? null : adminRoles.get(0));
-            
-            if (defaultRole != null && employeeDTO.getCompanyId() == null) {
-                // Auto-assign employee to Admin's company
-                employeeDTO.setCompanyId(defaultRole.getCompanyId());
+        if (currentUser != null) {
+            if (currentUser.getRole() == Role.ADMIN) {
+                // Admin user - get their default company
+                List<UserCompanyRole> adminRoles = userCompanyRoleRepository.findByUserId(currentUser.getId());
+                UserCompanyRole defaultRole = adminRoles.stream()
+                        .filter(role -> "true".equalsIgnoreCase(role.getDefaultCompany()))
+                        .findFirst()
+                        .orElse(adminRoles.isEmpty() ? null : adminRoles.get(0));
+                
+                if (defaultRole != null && employeeDTO.getCompanyId() == null) {
+                    // Auto-assign employee to Admin's company
+                    employeeDTO.setCompanyId(defaultRole.getCompanyId());
+                }
+            } else if (currentUser.getRole() == Role.GROUP_ADMIN) {
+                // GROUP_ADMIN - validate that companyId is one of their assigned companies
+                List<UserCompanyRole> groupAdminRoles = userCompanyRoleRepository.findByUserId(currentUser.getId());
+                List<Integer> assignedCompanyIds = groupAdminRoles.stream()
+                        .map(UserCompanyRole::getCompanyId)
+                        .toList();
+                
+                // If no companyId provided, use selected company from session
+                if (employeeDTO.getCompanyId() == null) {
+                    // Try to get selected company (frontend should send it, but if not, use first assigned)
+                    UserCompanyRole defaultRole = groupAdminRoles.stream()
+                            .filter(role -> "true".equalsIgnoreCase(role.getDefaultCompany()))
+                            .findFirst()
+                            .orElse(groupAdminRoles.isEmpty() ? null : groupAdminRoles.get(0));
+                    if (defaultRole != null) {
+                        employeeDTO.setCompanyId(defaultRole.getCompanyId());
+                    }
+                } else {
+                    // Validate that the provided companyId is one of their assigned companies
+                    if (!assignedCompanyIds.contains(employeeDTO.getCompanyId())) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                .body("You can only assign employees to companies you manage");
+                    }
+                }
             }
         }
         // SADMIN can assign to any company or leave null (will be handled in service)
@@ -100,14 +126,57 @@ public class EmployeeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(name = "searchField",defaultValue = "") String field,
-            @RequestParam(name = "searchString",defaultValue = "") String seacrhString
+            @RequestParam(name = "searchString",defaultValue = "") String seacrhString,
+            @RequestParam(name = "company_id", required = false) Long companyId
     ) {
-        Page<Employee> employees = employeeService.findEmployeeWithPagination(page, size, field, seacrhString);
+        // Get current user
+        String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
+        
+        // For GROUP_ADMIN, filter by selected company
+        if (currentUser != null && currentUser.getRole() == Role.GROUP_ADMIN) {
+            // Get GROUP_ADMIN's assigned companies
+            List<UserCompanyRole> userRoles = userCompanyRoleRepository.findByUserId(currentUser.getId());
+            List<Integer> assignedCompanyIds = userRoles.stream()
+                    .map(UserCompanyRole::getCompanyId)
+                    .toList();
+            
+            // If company_id is provided, validate it's one of their assigned companies
+            if (companyId != null && assignedCompanyIds.contains(companyId.intValue())) {
+                // Valid company - use it for filtering
+            } else if (companyId != null) {
+                // Invalid company - return error or use first assigned
+                // For now, use first assigned company as fallback
+                if (!assignedCompanyIds.isEmpty()) {
+                    companyId = assignedCompanyIds.get(0).longValue();
+                } else {
+                    // No companies assigned - return empty result
+                    companyId = -1L; // Will result in no matches
+                }
+            } else if (!assignedCompanyIds.isEmpty()) {
+                // No company_id provided - use selected/default company
+                UserCompanyRole defaultRole = userRoles.stream()
+                        .filter(role -> "true".equalsIgnoreCase(role.getDefaultCompany()))
+                        .findFirst()
+                        .orElse(userRoles.get(0));
+                companyId = defaultRole.getCompanyId().longValue();
+            } else {
+                // No companies assigned - return empty result
+                companyId = -1L;
+            }
+        }
+        
+        // For SADMIN, ignore company_id filter (show all)
+        if (currentUser != null && currentUser.getRole() == Role.SADMIN) {
+            companyId = null;
+        }
+        
+        Page<Employee> employees = employeeService.findEmployeeWithPagination(page, size, field, seacrhString, companyId);
         return ResponseEntity.ok(employees);
     }
 
     @PutMapping("/{employeeID}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN') or hasRole('GROUP_ADMIN')")
     public ResponseEntity<String> updateEmployee(@PathVariable String employeeID, @RequestBody EmployeeDTO employeeDTO) {
         employeeService.updateEmployee(employeeID, employeeDTO);
         return ResponseEntity.ok("Employee updated successfully");
