@@ -16,12 +16,18 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
+# Install su-exec for switching users
+RUN apk add --no-cache su-exec
+
 # Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
 
 # Copy jar from build stage
 COPY --from=build /app/target/*.jar app.jar
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose port
 EXPOSE 8080
@@ -30,6 +36,6 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/admin/create-user/check?email=test@test.com || exit 1
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run the application via entrypoint script (runs as root, switches to spring user)
+ENTRYPOINT ["/entrypoint.sh"]
 
