@@ -6,17 +6,26 @@ import com.application.employee.service.dto.TimeSheetDTO;
 import com.application.employee.service.dto.TimeSheetsDTO;
 import com.application.employee.service.entities.Companies;
 import com.application.employee.service.repositories.CompaniesRepository;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import com.application.employee.service.services.CompaniesService;
 import com.application.employee.service.specifications.CompaniesSpecifications;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -24,6 +33,9 @@ import java.util.stream.Collectors;
 public class CompanyServiceImpl implements CompaniesService {
     @Autowired
     private CompaniesRepository companiesRepository;
+    
+    @Value("${file.storage-location}")
+    private String uploadPath;
 
     @Override
     public List<Companies> getAllCompanies() {
@@ -102,5 +114,55 @@ public class CompanyServiceImpl implements CompaniesService {
                                 .collect(Collectors.toList())
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void uploadCompanyDocument(Integer companyId, MultipartFile file) throws FileUploadException {
+        if (file == null || file.isEmpty()) {
+            throw new FileUploadException("No file provided for upload.");
+        }
+
+        try {
+            // Get company
+            Companies company = companiesRepository.findById(companyId)
+                    .orElseThrow(() -> new FileUploadException("Company not found with ID: " + companyId));
+
+            // Create directory for company documents
+            Path companyUploadPath = Paths.get(uploadPath, "companies", String.valueOf(companyId));
+            if (!Files.exists(companyUploadPath)) {
+                Files.createDirectories(companyUploadPath);
+            }
+
+            // Save file
+            String originalFilename = Objects.requireNonNull(file.getOriginalFilename(), "File name is null");
+            String safeFileName = Paths.get(originalFilename).getFileName().toString(); // Remove path info
+            Path filePath = companyUploadPath.resolve(safeFileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Update company with document info
+            company.setDocumentName(safeFileName);
+            company.setDocumentPath(filePath.toString());
+            companiesRepository.save(company);
+
+        } catch (IOException e) {
+            throw new FileUploadException("Failed to upload document: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] downloadCompanyDocument(Integer companyId) throws IOException {
+        Companies company = companiesRepository.findById(companyId)
+                .orElseThrow(() -> new IOException("Company not found with ID: " + companyId));
+
+        if (company.getDocumentPath() == null || company.getDocumentPath().isEmpty()) {
+            throw new IOException("No document found for company: " + companyId);
+        }
+
+        Path filePath = Paths.get(company.getDocumentPath());
+        if (!Files.exists(filePath)) {
+            throw new IOException("Document file not found at path: " + company.getDocumentPath());
+        }
+
+        return Files.readAllBytes(filePath);
     }
 }

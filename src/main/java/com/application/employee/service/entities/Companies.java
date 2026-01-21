@@ -50,6 +50,12 @@ public class Companies {
     @Column(name = "PHONE_NO")
     private String phoneNo;
 
+    @Column(name = "DOCUMENT_NAME")
+    private String documentName;
+
+    @Column(name = "DOCUMENT_PATH")
+    private String documentPath;
+
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Employee> employees;
