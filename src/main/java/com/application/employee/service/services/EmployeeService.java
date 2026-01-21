@@ -30,4 +30,11 @@ public interface EmployeeService {
     List<ProspectFileDTO> searchProspectFiles(String search);
     void deleteProspectFile(String employeeID, String fileName) throws IOException;
     List<Employee> getEmployeesByCompanyOrAll(Long company_id);
+    
+    // Weekly file upload methods
+    void uploadWeeklyFiles(String employeeId, String week, MultipartFile file, String description) throws FileUploadException;
+    List<String> getWeeklyFiles(String employeeId, String week) throws IOException;
+    byte[] downloadWeeklyFile(String employeeId, String week, String fileName) throws IOException;
+    void deleteWeeklyFile(String employeeId, String week, String fileName) throws IOException;
+    List<Map<String, Object>> getAllWeeklyFiles() throws IOException;
 }

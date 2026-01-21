@@ -372,6 +372,79 @@ public class EmployeeController {
         return ResponseEntity.ok(paginatedVisaDetails);
     }
 
+    // Weekly file upload endpoints
+    @PostMapping("/{employeeId}/uploadFiles")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'EMPLOYEE')")
+    public ResponseEntity<String> uploadWeeklyFiles(
+            @PathVariable String employeeId,
+            @RequestParam("documents") MultipartFile file,
+            @RequestParam("week") String week,
+            @RequestParam(value = "description", required = false) String description) {
+        try {
+            employeeService.uploadWeeklyFiles(employeeId, week, file, description);
+            return ResponseEntity.ok("File uploaded successfully");
+        } catch (FileUploadException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload file: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{employeeId}/files/week/{week}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'EMPLOYEE')")
+    public ResponseEntity<List<String>> getWeeklyFiles(
+            @PathVariable String employeeId,
+            @PathVariable String week) {
+        try {
+            List<String> files = employeeService.getWeeklyFiles(employeeId, week);
+            return ResponseEntity.ok(files);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/{employeeId}/files/week/{week}/{fileName}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'EMPLOYEE')")
+    public ResponseEntity<byte[]> downloadWeeklyFile(
+            @PathVariable String employeeId,
+            @PathVariable String week,
+            @PathVariable String fileName) {
+        try {
+            byte[] fileData = employeeService.downloadWeeklyFile(employeeId, week, fileName);
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
+                    .body(fileData);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    @DeleteMapping("/{employeeId}/files/week/{week}/{fileName}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'EMPLOYEE')")
+    public ResponseEntity<String> deleteWeeklyFile(
+            @PathVariable String employeeId,
+            @PathVariable String week,
+            @PathVariable String fileName) {
+        try {
+            employeeService.deleteWeeklyFile(employeeId, week, fileName);
+            return ResponseEntity.ok("File deleted successfully");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("File not found or could not be deleted: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/files/all")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> getAllWeeklyFiles() {
+        try {
+            List<Map<String, Object>> files = employeeService.getAllWeeklyFiles();
+            return ResponseEntity.ok(files);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
+    }
+
 }
 
 

@@ -506,4 +506,102 @@ public class EmployeeServiceImplementation implements EmployeeService {
             prospectFileRepository.delete(f);
         }
     }
+
+    // Weekly file upload methods
+    @Override
+    public void uploadWeeklyFiles(String employeeId, String week, MultipartFile file, String description) throws FileUploadException {
+        if (file == null || file.isEmpty()) {
+            throw new FileUploadException("No file provided for upload.");
+        }
+
+        try {
+            // Create directory structure: UploadPath/{employeeId}/week/{week}/
+            Path weekDir = Paths.get(UploadPath, employeeId, "week", week);
+            if (!Files.exists(weekDir)) {
+                Files.createDirectories(weekDir);
+            }
+
+            String originalFilename = Objects.requireNonNull(file.getOriginalFilename(), "File name is null");
+            Path filePath = weekDir.resolve(originalFilename);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        } catch (IOException e) {
+            throw new FileUploadException("Failed to upload weekly file for employee: " + employeeId, e);
+        }
+    }
+
+    @Override
+    public List<String> getWeeklyFiles(String employeeId, String week) throws IOException {
+        Path weekDir = Paths.get(UploadPath, employeeId, "week", week);
+        if (!Files.exists(weekDir)) {
+            return List.of(); // No files found
+        }
+
+        try (var paths = Files.list(weekDir)) {
+            return paths
+                    .filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString())
+                    .toList();
+        }
+    }
+
+    @Override
+    public byte[] downloadWeeklyFile(String employeeId, String week, String fileName) throws IOException {
+        Path filePath = Paths.get(UploadPath, employeeId, "week", week, fileName);
+        if (!Files.exists(filePath)) {
+            throw new IOException("File not found: " + fileName);
+        }
+        return Files.readAllBytes(filePath);
+    }
+
+    @Override
+    public void deleteWeeklyFile(String employeeId, String week, String fileName) throws IOException {
+        Path filePath = Paths.get(UploadPath, employeeId, "week", week, fileName);
+        if (!Files.exists(filePath)) {
+            throw new IOException("File not found: " + fileName);
+        }
+        Files.delete(filePath);
+    }
+
+    @Override
+    public List<Map<String, Object>> getAllWeeklyFiles() throws IOException {
+        List<Map<String, Object>> allFiles = new ArrayList<>();
+        List<Employee> employees = employeeRespository.findAll();
+
+        for (Employee employee : employees) {
+            String empId = employee.getEmployeeID();
+            Path employeeWeekDir = Paths.get(UploadPath, empId, "week");
+            
+            if (Files.exists(employeeWeekDir)) {
+                try (var weekDirs = Files.list(employeeWeekDir)) {
+                    weekDirs.filter(Files::isDirectory).forEach(weekDir -> {
+                        String week = weekDir.getFileName().toString();
+                        try (var files = Files.list(weekDir)) {
+                            files.filter(Files::isRegularFile).forEach(file -> {
+                                Map<String, Object> fileData = new HashMap<>();
+                                fileData.put("employeeId", empId);
+                                fileData.put("employeeName", employee.getFirstName() + " " + employee.getLastName());
+                                fileData.put("employeeEmail", employee.getEmailID());
+                                fileData.put("week", week);
+                                fileData.put("fileName", file.getFileName().toString());
+                                fileData.put("uploadTime", LocalDateTime.ofInstant(
+                                    java.nio.file.attribute.FileTime.fromMillis(
+                                        file.toFile().lastModified()
+                                    ).toInstant(), 
+                                    java.time.ZoneId.systemDefault()
+                                ));
+                                allFiles.add(fileData);
+                            });
+                        } catch (IOException e) {
+                            // Log error but continue
+                        }
+                    });
+                } catch (IOException e) {
+                    // Log error but continue
+                }
+            }
+        }
+
+        return allFiles;
+    }
 }
