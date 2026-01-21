@@ -25,9 +25,22 @@ RUN addgroup -S spring && adduser -S spring -G spring
 # Copy jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Create entrypoint script inline
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'set -e' >> /entrypoint.sh && \
+    echo '' >> /entrypoint.sh && \
+    echo '# Fix permissions for /app/files directory' >> /entrypoint.sh && \
+    echo '# This runs as root before switching to spring user' >> /entrypoint.sh && \
+    echo '# Create directory if it does not exist (volume mount might be empty)' >> /entrypoint.sh && \
+    echo 'mkdir -p /app/files' >> /entrypoint.sh && \
+    echo '' >> /entrypoint.sh && \
+    echo '# Set ownership and permissions' >> /entrypoint.sh && \
+    echo 'chown -R spring:spring /app/files' >> /entrypoint.sh && \
+    echo 'chmod -R 755 /app/files' >> /entrypoint.sh && \
+    echo '' >> /entrypoint.sh && \
+    echo '# Switch to spring user and run the application' >> /entrypoint.sh && \
+    echo 'exec su-exec spring:spring java -jar app.jar' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
 # Expose port
 EXPOSE 8080
