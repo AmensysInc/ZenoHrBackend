@@ -33,7 +33,7 @@ public class TimesheetReminderServiceImpl implements TimesheetReminderService {
     @Autowired
     private SendGridEmail sendGridEmail;
 
-    @Value("${spring.mail.from:docs@saibersys.com}")
+    @Value("${spring.mail.from:support@zenopayhr.com}")
     private String defaultFromEmail;
 
     @Override
@@ -81,9 +81,16 @@ public class TimesheetReminderServiceImpl implements TimesheetReminderService {
         for (Employee employee : employeesToNotify) {
             try {
                 String employeeEmail = employee.getEmailID();
-                String companyEmail = employee.getCompany() != null && employee.getCompany().getEmail() != null
-                        ? employee.getCompany().getEmail()
-                        : defaultFromEmail;
+                // Use company email for timesheet reminders (as per requirements)
+                String companyEmail = null;
+                if (employee.getCompany() != null && employee.getCompany().getEmail() != null) {
+                    companyEmail = employee.getCompany().getEmail();
+                }
+                
+                // Fallback to default email if company email is not available (should rarely happen)
+                if (companyEmail == null || companyEmail.trim().isEmpty()) {
+                    companyEmail = defaultFromEmail;
+                }
 
                 String personalizedMessage = "Dear " + employee.getFirstName() + " " + employee.getLastName() + ",\n\n"
                         + message + "\n\n"

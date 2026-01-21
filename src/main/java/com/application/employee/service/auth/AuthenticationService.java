@@ -142,10 +142,28 @@ public class AuthenticationService {
             body += "Regards,\nTeam HR";
         }
 
-        // 2️⃣ Dynamically determine the company 'from' email
-        String fromEmail = employeeRepository.findCompanyEmailByEmployeeEmail(toEmail);
-        if (!StringUtils.hasText(fromEmail)) {
-            fromEmail = "docs@saibersys.com"; // fallback sender
+        // 2️⃣ Determine the 'from' email based on category
+        String fromEmail;
+        String categoryUpper = category != null ? category.toUpperCase() : "";
+        
+        if ("FORGOT_PASSWORD".equals(categoryUpper)) {
+            // Use support@zenopayhr.com for password reset emails
+            fromEmail = "support@zenopayhr.com";
+        } else {
+            // For all other emails (LOGIN_DETAILS, CHANGE_PASSWORD, etc.), use company email
+            fromEmail = employeeRepository.findCompanyEmailByEmployeeEmail(toEmail);
+            if (!StringUtils.hasText(fromEmail)) {
+                // Fallback: try to get from employee directly if repository method returns null
+                Optional<com.application.employee.service.entities.Employee> employeeOpt = 
+                    employeeRepository.findByEmailID(toEmail);
+                if (employeeOpt.isPresent() && employeeOpt.get().getCompany() != null 
+                    && StringUtils.hasText(employeeOpt.get().getCompany().getEmail())) {
+                    fromEmail = employeeOpt.get().getCompany().getEmail();
+                } else {
+                    // Final fallback - should not happen if companies are properly configured
+                    fromEmail = "support@zenopayhr.com";
+                }
+            }
         }
 
         // 3️⃣ Send Email using SendGrid
@@ -164,7 +182,7 @@ public class AuthenticationService {
             throw new Exception("SendGrid Error: " + sendGridEmail.getLastErrorMessage());
         }
 
-        System.out.println("[Email Sent] Category: " + category + ", To: " + toEmail);
+        System.out.println("[Email Sent] Category: " + category + ", From: " + fromEmail + ", To: " + toEmail);
     }
 
 
@@ -219,27 +237,24 @@ public class AuthenticationService {
     }
 
     public void sendTemporaryPasswordEmail(String toEmail, String tempPassword) {
+        // Use the same template system as other emails for consistency
+        // This is for user registration - will use company email (LOGIN_DETAILS category)
         String category = "LOGIN_DETAILS";
 
-        Optional<Message> templateOpt = messageRepository.findByCategoryAndIsActive(category, true);
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("email_address", toEmail);
+        placeholders.put("emailID", toEmail); // Support both placeholder names
+        placeholders.put("temp_password", tempPassword);
+        placeholders.put("password", tempPassword); // Support both placeholder names
 
-        String subject = "Your Temporary Password";
-        String body = "Hi,\n\nYour temporary password is: " + tempPassword + "\n\nPlease change it after logging in.";
-
-        if (templateOpt.isPresent()) {
-            Message template = templateOpt.get();
-            subject = template.getSubject() != null ? template.getSubject().replace("{{emailID}}", toEmail) : subject;
-            body = template.getBody() != null ? template.getBody()
-                    .replace("{{emailID}}", toEmail)
-                    .replace("{{password}}", tempPassword) : body;
+        try {
+            // Use the template-based email sending which handles company email lookup
+            sendEmailUsingTemplate(toEmail, category, placeholders);
+        } catch (Exception e) {
+            // Log error but don't throw - registration should still succeed even if email fails
+            System.err.println("Failed to send temporary password email to " + toEmail + ": " + e.getMessage());
+            e.printStackTrace();
         }
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject(subject);
-        message.setText(body);
-
-        mailSender.send(message);
     }
 }
 
