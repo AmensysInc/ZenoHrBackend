@@ -61,7 +61,7 @@ public class AdminUserController {
             
             // ✅ For ADMIN role, create UserCompanyRole if companyId is provided
             // SADMIN should NOT have a default company
-            // GROUP_ADMIN should NOT have company assigned here (use AddUserRole to assign multiple companies)
+            // GROUP_ADMIN can optionally have a company assigned here, or assign later via AddUserRole page
             if (userRole == Role.ADMIN && companyId != null) {
                 UserCompanyRole userCompanyRole = new UserCompanyRole();
                 userCompanyRole.setUserId(adminUser.getId());
@@ -83,8 +83,27 @@ public class AdminUserController {
                 // SADMIN should not have a default company
                 return ResponseEntity.ok("Super Admin user created successfully: " + email + " (no company assignment)");
             } else if (userRole == Role.GROUP_ADMIN) {
-                // GROUP_ADMIN created - companies should be assigned via AddUserRole page
-                return ResponseEntity.ok("Group Admin user created successfully: " + email + ". Please assign companies using 'Add User Role' page.");
+                // GROUP_ADMIN can optionally have a company assigned during creation
+                if (companyId != null) {
+                    UserCompanyRole userCompanyRole = new UserCompanyRole();
+                    userCompanyRole.setUserId(adminUser.getId());
+                    userCompanyRole.setCompanyId(companyId.intValue());
+                    userCompanyRole.setRole(Role.GROUP_ADMIN.name());
+                    userCompanyRole.setDefaultCompany("true");
+                    userCompanyRole.setCreatedAt(new java.sql.Date(System.currentTimeMillis()));
+                    
+                    // Ensure only one default company per user
+                    List<UserCompanyRole> existingRoles = userCompanyRoleRepository.findByUserId(adminUser.getId());
+                    for (UserCompanyRole existing : existingRoles) {
+                        existing.setDefaultCompany("false");
+                        userCompanyRoleRepository.save(existing);
+                    }
+                    
+                    userCompanyRoleRepository.save(userCompanyRole);
+                    return ResponseEntity.ok("Group Admin user created successfully: " + email + " assigned to company ID: " + companyId + ". You can assign additional companies using 'Add User Role' page.");
+                } else {
+                    return ResponseEntity.ok("Group Admin user created successfully: " + email + ". Please assign companies using 'Add User Role' page.");
+                }
             }
             
             return ResponseEntity.ok("Admin user created successfully: " + email);
