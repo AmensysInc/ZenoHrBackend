@@ -373,7 +373,7 @@ public class EmployeeController {
     }
 
     // Weekly file upload endpoints
-    @PostMapping("/{employeeId}/uploadFiles")
+    @PostMapping(value = "/{employeeId}/uploadFiles", consumes = "multipart/form-data")
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'EMPLOYEE')")
     public ResponseEntity<String> uploadWeeklyFiles(
             @PathVariable String employeeId,
@@ -381,9 +381,18 @@ public class EmployeeController {
             @RequestParam("week") String week,
             @RequestParam(value = "description", required = false) String description) {
         try {
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("No file provided for upload");
+            }
             employeeService.uploadWeeklyFiles(employeeId, week, file, description);
             return ResponseEntity.ok("File uploaded successfully");
         } catch (FileUploadException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload file: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload file: " + e.getMessage());
         }
