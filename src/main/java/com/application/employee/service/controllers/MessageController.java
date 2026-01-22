@@ -42,4 +42,17 @@ public class MessageController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/initialize-defaults")
+    public ResponseEntity<String> initializeDefaultTemplates() {
+        service.initializeDefaultTemplates();
+        return ResponseEntity.ok("Default email templates initialized successfully");
+    }
+
+    @GetMapping("/category/{category}")
+    public ResponseEntity<Message> getByCategory(@PathVariable String category) {
+        return service.getByCategory(category)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }
