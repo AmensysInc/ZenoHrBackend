@@ -136,6 +136,7 @@ public class EmployeeController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE', 'HR_MANAGER', 'REPORTING_MANAGER')")
     public ResponseEntity<Page<Employee>> getAllEmployee(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -488,7 +489,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{employeeId}/files/week/{week}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE', 'REPORTING_MANAGER')")
     public ResponseEntity<List<String>> getWeeklyFiles(
             @PathVariable String employeeId,
             @PathVariable String week) {
@@ -501,7 +502,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{employeeId}/files/week/{week}/{fileName}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE', 'REPORTING_MANAGER')")
     public ResponseEntity<byte[]> downloadWeeklyFile(
             @PathVariable String employeeId,
             @PathVariable String week,
