@@ -23,7 +23,7 @@ public class UserCompanyRoleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER', 'REPORTING_MANAGER')")
     public ResponseEntity<List<UserCompanyRole>> getAllRoles() {
         return ResponseEntity.ok(service.getAllRoles());
     }
