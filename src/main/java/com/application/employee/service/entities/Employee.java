@@ -64,6 +64,14 @@ public class Employee {
     @Column(name = "PASSWORD")
     private String password;
 
+    @Column(name = "REPORTING_MANAGER_ID")
+    private String reportingManagerId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "REPORTING_MANAGER_ID", insertable = false, updatable = false)
+    @JsonIgnore
+    private com.application.employee.service.user.User reportingManager;
+
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
     private List<PurchaseOrder> employeePurchaseOrder;
 
@@ -103,6 +111,7 @@ public class Employee {
             this.company.setCompanyId(employeeDTO.getCompanyId());
         }
         this.password = employeeDTO.getPassword();
+        this.reportingManagerId = employeeDTO.getReportingManagerId();
     }
 
     @Column(name = "CREATED_AT", updatable = false)

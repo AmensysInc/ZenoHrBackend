@@ -44,4 +44,5 @@ public class EmployeeDTO {
     private String itFilingState;
     private String needInsurance;
     private String startDateWithAmensys;
+    private String reportingManagerId;
 }

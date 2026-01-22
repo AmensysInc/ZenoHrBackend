@@ -330,6 +330,11 @@ public class EmployeeServiceImplementation implements EmployeeService {
 
     @Override
     public Page<Employee> findEmployeeWithPagination(int page, int size, String searchField, String searchString, Long companyId) {
+        return findEmployeeWithPagination(page, size, searchField, searchString, companyId, null);
+    }
+
+    @Override
+    public Page<Employee> findEmployeeWithPagination(int page, int size, String searchField, String searchString, Long companyId, String reportingManagerId) {
         // Use unsorted pageable to avoid issues with String ID sorting
         Pageable pageable = PageRequest.of(page, size);
 
@@ -338,6 +343,11 @@ public class EmployeeServiceImplementation implements EmployeeService {
         // Filter by company if companyId is provided
         if (companyId != null) {
             spec = spec.and(EmployeeSpecifications.companyIdEquals(companyId));
+        }
+
+        // Filter by reportingManagerId if provided
+        if (reportingManagerId != null && !reportingManagerId.isEmpty()) {
+            spec = spec.and(EmployeeSpecifications.reportingManagerIdEquals(reportingManagerId));
         }
 
         if (searchField != null && !searchField.isEmpty() && searchString != null && !searchString.isEmpty()) {

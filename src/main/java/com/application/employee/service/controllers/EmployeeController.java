@@ -171,12 +171,18 @@ public class EmployeeController {
             companyId = null;
         }
         
-        Page<Employee> employees = employeeService.findEmployeeWithPagination(page, size, field, seacrhString, companyId);
+        // For REPORTING_MANAGER, filter by reportingManagerId
+        String reportingManagerId = null;
+        if (currentUser != null && currentUser.getRole() == Role.REPORTING_MANAGER) {
+            reportingManagerId = currentUser.getId();
+        }
+        
+        Page<Employee> employees = employeeService.findEmployeeWithPagination(page, size, field, seacrhString, companyId, reportingManagerId);
         return ResponseEntity.ok(employees);
     }
 
     @PutMapping("/{employeeID}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN') or hasRole('GROUP_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN') or hasRole('GROUP_ADMIN') or hasRole('REPORTING_MANAGER')")
     public ResponseEntity<String> updateEmployee(@PathVariable String employeeID, @RequestBody EmployeeDTO employeeDTO) {
         employeeService.updateEmployee(employeeID, employeeDTO);
         return ResponseEntity.ok("Employee updated successfully");

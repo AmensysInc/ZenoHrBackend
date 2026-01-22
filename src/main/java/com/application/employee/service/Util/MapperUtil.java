@@ -25,6 +25,7 @@ public class MapperUtil {
             employee.setCompany(company);
         }
         employee.setPassword(employeeDTO.getPassword());
+        employee.setReportingManagerId(employeeDTO.getReportingManagerId());
         return  employee;
     }
     public static void updateEmployeeFromDTO(EmployeeDTO employeeDTO, Employee employee) {
@@ -45,5 +46,6 @@ public class MapperUtil {
             employee.setCompany(company);
         }
         employee.setPassword(employeeDTO.getPassword());
+        employee.setReportingManagerId(employeeDTO.getReportingManagerId());
     }
 }

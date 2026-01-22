@@ -23,6 +23,7 @@ public interface EmployeeService {
     void deleteEmployee(String id);
     Page<Employee> findEmployeeWithPagination(int page, int size, String field, String seacrhString);
     Page<Employee> findEmployeeWithPagination(int page, int size, String field, String seacrhString, Long companyId);
+    Page<Employee> findEmployeeWithPagination(int page, int size, String field, String seacrhString, Long companyId, String reportingManagerId);
     List<Employee> getEmployeesBySecurityGroup(Role securityGroup);
     List<String> getProspectEmployeeFiles(String employeeID) throws IOException;
     byte[] downloadProspectEmployeeFile(String employeeID, String fileName) throws IOException;

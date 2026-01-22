@@ -98,4 +98,13 @@ public class EmployeeSpecifications {
         };
     }
 
+    public static Specification<Employee> reportingManagerIdEquals(String reportingManagerId) {
+        return (root, query, criteriaBuilder) -> {
+            if (reportingManagerId != null && !reportingManagerId.isEmpty()) {
+                return criteriaBuilder.equal(root.get("reportingManagerId"), reportingManagerId);
+            }
+            return null;
+        };
+    }
+
 }

@@ -87,6 +87,12 @@ public enum Role {
                     EMPLOYEE_DELETE,
                     EMPLOYEE_CREATE
             )
+    ),
+    REPORTING_MANAGER(
+            Set.of(
+                    EMPLOYEE_READ,
+                    EMPLOYEE_UPDATE
+            )
     );
 
     @Getter

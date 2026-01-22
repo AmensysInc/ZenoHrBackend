@@ -104,9 +104,12 @@ public class AdminUserController {
                 } else {
                     return ResponseEntity.ok("Group Admin user created successfully: " + email + ". Please assign companies using 'Add User Role' page.");
                 }
+            } else if (userRole == Role.REPORTING_MANAGER) {
+                // REPORTING_MANAGER doesn't need company assignment
+                return ResponseEntity.ok("Reporting Manager user created successfully: " + email + ". Employees can be assigned to this Reporting Manager during employee creation/editing.");
             }
             
-            return ResponseEntity.ok("Admin user created successfully: " + email);
+            return ResponseEntity.ok("User created successfully: " + email);
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body("Error creating user: " + e.getMessage());
