@@ -39,4 +39,5 @@ public interface EmployeeService {
     byte[] downloadWeeklyFile(String employeeId, String week, String fileName) throws IOException;
     void deleteWeeklyFile(String employeeId, String week, String fileName) throws IOException;
     List<Map<String, Object>> getAllWeeklyFiles(Integer companyId) throws IOException;
+    List<Map<String, Object>> getAllWeeklyFiles(Integer companyId, String reportingManagerId) throws IOException;
 }

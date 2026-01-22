@@ -589,6 +589,11 @@ public class EmployeeServiceImplementation implements EmployeeService {
 
     @Override
     public List<Map<String, Object>> getAllWeeklyFiles(Integer companyId) throws IOException {
+        return getAllWeeklyFiles(companyId, null);
+    }
+
+    @Override
+    public List<Map<String, Object>> getAllWeeklyFiles(Integer companyId, String reportingManagerId) throws IOException {
         List<Map<String, Object>> allFiles = new ArrayList<>();
         List<Employee> employees;
         
@@ -597,6 +602,13 @@ public class EmployeeServiceImplementation implements EmployeeService {
             employees = employeeRespository.findByCompanyCompanyId(companyId.longValue());
         } else {
             employees = employeeRespository.findAll();
+        }
+        
+        // Filter by reportingManagerId if provided
+        if (reportingManagerId != null && !reportingManagerId.isEmpty()) {
+            employees = employees.stream()
+                    .filter(emp -> reportingManagerId.equals(emp.getReportingManagerId()))
+                    .collect(java.util.stream.Collectors.toList());
         }
 
         for (Employee employee : employees) {

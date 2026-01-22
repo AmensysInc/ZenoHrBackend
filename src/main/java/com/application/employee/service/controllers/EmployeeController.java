@@ -43,6 +43,8 @@ public class EmployeeController {
     private UserRepository userRepository;
     @Autowired
     private UserCompanyRoleRepository userCompanyRoleRepository;
+    @Autowired
+    private com.application.employee.service.repositories.EmployeeRespository employeeRespository;
     
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SADMIN') or hasRole('GROUP_ADMIN')")
@@ -100,9 +102,21 @@ public class EmployeeController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Employee created successfully");
     }
     @GetMapping("/{employeeID}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE', 'HR_MANAGER', 'REPORTING_MANAGER')")
     public ResponseEntity<Employee> getEmployeeByID(@PathVariable String employeeID) {
         Employee employee = employeeService.getEmployee(employeeID);
         return ResponseEntity.ok(employee);
+    }
+
+    @GetMapping("/by-email/{email}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'EMPLOYEE', 'HR_MANAGER', 'REPORTING_MANAGER')")
+    public ResponseEntity<Employee> getEmployeeByEmail(@PathVariable String email) {
+        Optional<Employee> employee = employeeRespository.findByEmailID(email);
+        if (employee.isPresent()) {
+            return ResponseEntity.ok(employee.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
     @GetMapping("/role")
     public ResponseEntity<List<Employee>> getEmployeesBySecurityGroup(@RequestParam("securityGroup") String securityGroup) {
@@ -546,13 +560,19 @@ public class EmployeeController {
     }
 
     @GetMapping("/files/all")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'REPORTING_MANAGER')")
     public ResponseEntity<List<Map<String, Object>>> getAllWeeklyFiles(
             @RequestParam(name = "companyId", required = false) Integer companyId) {
         try {
             // Get current user
             String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepository.findByEmail(currentUserEmail).orElse(null);
+            
+            // For REPORTING_MANAGER, filter by reportingManagerId
+            String reportingManagerId = null;
+            if (currentUser != null && currentUser.getRole() == Role.REPORTING_MANAGER) {
+                reportingManagerId = currentUser.getId();
+            }
             
             // For GROUP_ADMIN, filter by selected company
             if (currentUser != null && currentUser.getRole() == Role.GROUP_ADMIN) {
@@ -603,7 +623,7 @@ public class EmployeeController {
                 }
             }
             
-            List<Map<String, Object>> files = employeeService.getAllWeeklyFiles(companyId);
+            List<Map<String, Object>> files = employeeService.getAllWeeklyFiles(companyId, reportingManagerId);
             return ResponseEntity.ok(files);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
