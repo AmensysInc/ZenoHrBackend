@@ -5,6 +5,7 @@ import com.application.employee.service.repositories.EmployeeRespository;
 import com.application.employee.service.repositories.UserCompanyRoleRepository;
 import com.application.employee.service.user.Role;
 import org.modelmapper.ModelMapper;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -63,6 +64,14 @@ public class UserController {
                 }
             }
 
+            // If user is an EMPLOYEE, delete the Employee record as well
+            if (user.getRole() == Role.EMPLOYEE || user.getRole() == Role.PROSPECT) {
+                Optional<Employee> employeeOpt = employeeRespository.findById(id);
+                if (employeeOpt.isPresent()) {
+                    employeeRespository.delete(employeeOpt.get());
+                }
+            }
+
             // Delete all UserCompanyRole entries for this user
             List<com.application.employee.service.entities.UserCompanyRole> userRoles = 
                     userCompanyRoleRepository.findByUserId(id);
@@ -71,7 +80,7 @@ public class UserController {
             // Delete the user
             userRepository.delete(user);
 
-            return ResponseEntity.ok("User deleted successfully along with all associated roles and employee assignments");
+            return ResponseEntity.ok("User deleted successfully along with all associated roles, employee records, and assignments");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error deleting user: " + e.getMessage());
         }
