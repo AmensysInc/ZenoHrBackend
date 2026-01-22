@@ -347,6 +347,7 @@ public class EmployeeServiceImplementation implements EmployeeService {
 
         // Filter by reportingManagerId if provided
         if (reportingManagerId != null && !reportingManagerId.isEmpty()) {
+            System.out.println("[EmployeeService] Filtering by reportingManagerId: " + reportingManagerId);
             spec = spec.and(EmployeeSpecifications.reportingManagerIdEquals(reportingManagerId));
         }
 

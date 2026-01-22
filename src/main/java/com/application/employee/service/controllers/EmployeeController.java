@@ -190,9 +190,12 @@ public class EmployeeController {
         String reportingManagerId = null;
         if (currentUser != null && currentUser.getRole() == Role.REPORTING_MANAGER) {
             reportingManagerId = currentUser.getId();
+            System.out.println("[REPORTING_MANAGER] Current user ID: " + reportingManagerId);
+            System.out.println("[REPORTING_MANAGER] Filtering employees by reportingManagerId: " + reportingManagerId);
         }
         
         Page<Employee> employees = employeeService.findEmployeeWithPagination(page, size, field, seacrhString, companyId, reportingManagerId);
+        System.out.println("[REPORTING_MANAGER] Found " + employees.getTotalElements() + " employees");
         return ResponseEntity.ok(employees);
     }
 
