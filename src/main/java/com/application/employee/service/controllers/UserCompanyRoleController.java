@@ -4,6 +4,7 @@ import com.application.employee.service.entities.UserCompanyRole;
 import com.application.employee.service.services.UserCompanyRoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
@@ -22,17 +23,20 @@ public class UserCompanyRoleController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<List<UserCompanyRole>> getAllRoles() {
         return ResponseEntity.ok(service.getAllRoles());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER', 'REPORTING_MANAGER')")
     public ResponseEntity<UserCompanyRole> getRoleById(@PathVariable Long id) {
         Optional<UserCompanyRole> role = service.getRoleById(id);
         return role.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER', 'REPORTING_MANAGER', 'EMPLOYEE')")
     public ResponseEntity<List<UserCompanyRole>> getRolesByUserId(@PathVariable String userId) {
         return ResponseEntity.ok(service.getRolesByUserId(userId));
     }

@@ -105,8 +105,27 @@ public class AdminUserController {
                     return ResponseEntity.ok("Group Admin user created successfully: " + email + ". Please assign companies using 'Add User Role' page.");
                 }
             } else if (userRole == Role.REPORTING_MANAGER) {
-                // REPORTING_MANAGER doesn't need company assignment
-                return ResponseEntity.ok("Reporting Manager user created successfully: " + email + ". Employees can be assigned to this Reporting Manager during employee creation/editing.");
+                // REPORTING_MANAGER can optionally have a company assigned
+                if (companyId != null) {
+                    UserCompanyRole userCompanyRole = new UserCompanyRole();
+                    userCompanyRole.setUserId(adminUser.getId());
+                    userCompanyRole.setCompanyId(companyId.intValue());
+                    userCompanyRole.setRole(Role.REPORTING_MANAGER.name());
+                    userCompanyRole.setDefaultCompany("true");
+                    userCompanyRole.setCreatedAt(new java.sql.Date(System.currentTimeMillis()));
+                    
+                    // Ensure only one default company per user
+                    List<UserCompanyRole> existingRoles = userCompanyRoleRepository.findByUserId(adminUser.getId());
+                    for (UserCompanyRole existing : existingRoles) {
+                        existing.setDefaultCompany("false");
+                        userCompanyRoleRepository.save(existing);
+                    }
+                    
+                    userCompanyRoleRepository.save(userCompanyRole);
+                    return ResponseEntity.ok("Reporting Manager user created successfully: " + email + " assigned to company ID: " + companyId + ". Employees can be assigned to this Reporting Manager during employee creation/editing.");
+                } else {
+                    return ResponseEntity.ok("Reporting Manager user created successfully: " + email + ". Employees can be assigned to this Reporting Manager during employee creation/editing.");
+                }
             }
             
             return ResponseEntity.ok("User created successfully: " + email);
