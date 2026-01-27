@@ -86,8 +86,13 @@ public class PaystubController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Employees can only see their own paystubs
-            if (currentUser.getRole() == Role.EMPLOYEE && !currentUser.getId().equals(employeeId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            // Also ensure employeeId matches current user's ID
+            if (currentUser.getRole() == Role.EMPLOYEE) {
+                if (!currentUser.getId().equals(employeeId)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+                // For EMPLOYEE, always use their own ID regardless of what's in the path
+                employeeId = currentUser.getId();
             }
 
             List<Paystub> paystubs = paystubService.getPaystubsByEmployee(employeeId);
