@@ -78,9 +78,13 @@ public class EmployeeServiceImplementation implements EmployeeService {
         newUser.setEmail(employeeDTO.getEmailID());
         // Default to EMPLOYEE role if securityGroup is not specified
         newUser.setRole(employeeDTO.getSecurityGroup() != null ? employeeDTO.getSecurityGroup() : Role.EMPLOYEE);
-        newUser.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
-        if (employeeDTO.getPassword() == null || employeeDTO.getPassword().isEmpty()) {
+        
+        // Handle password - if provided, encode it; otherwise generate temp password
+        if (employeeDTO.getPassword() != null && !employeeDTO.getPassword().isEmpty()) {
+            newUser.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
+        } else {
             var tempPassword = UUID.randomUUID().toString();
+            newUser.setPassword(passwordEncoder.encode(tempPassword));
             newUser.setTempPassword(passwordEncoder.encode(tempPassword));
         }
         userRepository.save(newUser);
