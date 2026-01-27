@@ -64,7 +64,10 @@ public class PaystubController {
 
             paystubService.uploadPaystub(employeeId, file, year, startDate, endDate, grossPay, netPay, currentUser.getEmail());
             return ResponseEntity.ok("Paystub uploaded successfully");
-        } catch (FileUploadException | IOException e) {
+        } catch (FileUploadException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload paystub: " + e.getMessage());
+        } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload paystub: " + e.getMessage());
         } catch (Exception e) {
