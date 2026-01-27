@@ -148,9 +148,14 @@ public class PaystubController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Employees can only download their own paystubs
-            if (currentUser.getRole() == Role.EMPLOYEE && 
-                !paystub.getEmployee().getEmployeeID().equals(currentUser.getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            if (currentUser.getRole() == Role.EMPLOYEE) {
+                String employeeId = paystub.getEmployee().getEmployeeID();
+                String userId = currentUser.getId();
+                // Ensure employee can only access their own paystubs
+                if (!employeeId.equals(userId)) {
+                    System.out.println("[PaystubController] EMPLOYEE access denied - employeeId: " + employeeId + ", userId: " + userId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
             }
 
             byte[] fileData = paystubService.downloadPaystub(id);
