@@ -35,7 +35,7 @@ public class PaystubServiceImpl implements PaystubService {
     private String uploadPath;
 
     @Override
-    public Paystub uploadPaystub(String employeeId, MultipartFile file, LocalDate payPeriodStart,
+    public Paystub uploadPaystub(String employeeId, MultipartFile file, Integer year, LocalDate payPeriodStart,
                                  LocalDate payPeriodEnd, BigDecimal grossPay, BigDecimal netPay,
                                  String uploadedBy) throws FileUploadException, IOException {
         
@@ -80,7 +80,7 @@ public class PaystubServiceImpl implements PaystubService {
         paystub.setUploadedAt(LocalDateTime.now());
         paystub.setUploadedBy(uploadedBy);
         paystub.setMonth(payPeriodStart.getMonthValue());
-        paystub.setYear(payPeriodStart.getYear());
+        paystub.setYear(year); // Use the provided year instead of deriving from date
 
         return paystubRepository.save(paystub);
     }

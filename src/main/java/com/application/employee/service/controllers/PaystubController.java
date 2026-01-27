@@ -37,6 +37,7 @@ public class PaystubController {
     public ResponseEntity<String> uploadPaystub(
             @RequestParam("employeeId") String employeeId,
             @RequestParam("file") MultipartFile file,
+            @RequestParam("year") Integer year,
             @RequestParam("payPeriodStart") String payPeriodStart,
             @RequestParam("payPeriodEnd") String payPeriodEnd,
             @RequestParam(value = "grossPay", required = false) String grossPayStr,
@@ -61,7 +62,7 @@ public class PaystubController {
                 netPay = new BigDecimal(netPayStr);
             }
 
-            paystubService.uploadPaystub(employeeId, file, startDate, endDate, grossPay, netPay, currentUser.getEmail());
+            paystubService.uploadPaystub(employeeId, file, year, startDate, endDate, grossPay, netPay, currentUser.getEmail());
             return ResponseEntity.ok("Paystub uploaded successfully");
         } catch (FileUploadException | IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

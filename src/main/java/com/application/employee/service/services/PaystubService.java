@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface PaystubService {
-    Paystub uploadPaystub(String employeeId, MultipartFile file, LocalDate payPeriodStart, 
+    Paystub uploadPaystub(String employeeId, MultipartFile file, Integer year, LocalDate payPeriodStart, 
                          LocalDate payPeriodEnd, BigDecimal grossPay, BigDecimal netPay, 
                          String uploadedBy) throws FileUploadException, IOException;
     
