@@ -33,7 +33,7 @@ public class PaystubController {
     private UserRepository userRepository;
 
     @PostMapping("/upload")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<String> uploadPaystub(
             @RequestParam("employeeId") String employeeId,
             @RequestParam("file") MultipartFile file,
@@ -170,7 +170,7 @@ public class PaystubController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<String> deletePaystub(@PathVariable Long id) {
         try {
             paystubService.deletePaystub(id);
