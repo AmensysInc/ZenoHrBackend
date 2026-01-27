@@ -103,7 +103,7 @@ public class PaystubController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<List<Paystub>> getAllPaystubs() {
         try {
             List<Paystub> paystubs = paystubService.getAllPaystubs();
