@@ -80,6 +80,7 @@ public class SecurityConfiguration {
                 .requestMatchers("/timesheets/reminders/**").hasAnyRole(SADMIN.name(),ADMIN.name(),HR_MANAGER.name(),"GROUP_ADMIN")
                 .requestMatchers(POST,"/paystubs/**").hasAnyRole(SADMIN.name(),ADMIN.name(),HR_MANAGER.name(),"GROUP_ADMIN")
                 .requestMatchers(DELETE,"/paystubs/**").hasAnyRole(SADMIN.name(),ADMIN.name(),HR_MANAGER.name(),"GROUP_ADMIN")
+                .requestMatchers(GET,"/paystubs/**").hasAnyRole(SADMIN.name(),ADMIN.name(),HR_MANAGER.name(),"GROUP_ADMIN",EMPLOYEE.name())
                 .requestMatchers("/paystubs/**").hasAnyRole(SADMIN.name(),ADMIN.name(),HR_MANAGER.name(),"GROUP_ADMIN",EMPLOYEE.name())
                 .requestMatchers(GET,"/employees/**","/orders/**","/trackings/**","/project-history/**","/visa-details/**").hasAnyAuthority(SADMIN.name(),ADMIN_READ.name(),EMPLOYEE_READ.name())
                 .requestMatchers(POST,"/employees/**","/orders/**","/trackings/**","/project-history/**","/visa-details/**","/auth/register","/auth/resetPassword","/auth/updatePassword").hasAnyAuthority(SADMIN_CREATE.name(),ADMIN_CREATE.name(),EMPLOYEE_CREATE.name(),RECRUITER.name(), SALES.name())
