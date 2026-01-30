@@ -92,7 +92,7 @@ public class PaystubServiceImpl implements PaystubService {
 
     @Override
     public List<Paystub> getAllPaystubs() {
-        return paystubRepository.findAll();
+        return paystubRepository.findAllWithEmployee();
     }
 
     @Override
