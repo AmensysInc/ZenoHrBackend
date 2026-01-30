@@ -1,5 +1,6 @@
 package com.application.employee.service.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -47,6 +48,7 @@ public class Paystub {
     private BigDecimal netPay;
 
     @Column(name = "UPLOADED_AT", nullable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime uploadedAt;
 
     @Column(name = "UPLOADED_BY")
