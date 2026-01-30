@@ -40,6 +40,7 @@ public class PaystubController {
             @RequestParam("year") Integer year,
             @RequestParam("payPeriodStart") String payPeriodStart,
             @RequestParam("payPeriodEnd") String payPeriodEnd,
+            @RequestParam(value = "checkDate", required = false) String checkDateStr,
             @RequestParam(value = "grossPay", required = false) String grossPayStr,
             @RequestParam(value = "netPay", required = false) String netPayStr) {
         try {
@@ -51,6 +52,10 @@ public class PaystubController {
             // Parse dates
             LocalDate startDate = LocalDate.parse(payPeriodStart);
             LocalDate endDate = LocalDate.parse(payPeriodEnd);
+            LocalDate checkDate = null;
+            if (checkDateStr != null && !checkDateStr.isEmpty()) {
+                checkDate = LocalDate.parse(checkDateStr);
+            }
 
             // Parse amounts
             BigDecimal grossPay = null;
@@ -62,7 +67,7 @@ public class PaystubController {
                 netPay = new BigDecimal(netPayStr);
             }
 
-            paystubService.uploadPaystub(employeeId, file, year, startDate, endDate, grossPay, netPay, currentUser.getEmail());
+            paystubService.uploadPaystub(employeeId, file, year, startDate, endDate, checkDate, grossPay, netPay, currentUser.getEmail());
             return ResponseEntity.ok("Paystub uploaded successfully");
         } catch (FileUploadException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

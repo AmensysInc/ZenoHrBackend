@@ -41,6 +41,9 @@ public class Paystub {
     @Column(name = "PAY_PERIOD_END", nullable = false)
     private LocalDate payPeriodEnd;
 
+    @Column(name = "CHECK_DATE")
+    private LocalDate checkDate;
+
     @Column(name = "GROSS_PAY", precision = 10, scale = 2)
     private BigDecimal grossPay;
 

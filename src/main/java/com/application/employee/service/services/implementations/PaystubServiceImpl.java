@@ -36,7 +36,7 @@ public class PaystubServiceImpl implements PaystubService {
 
     @Override
     public Paystub uploadPaystub(String employeeId, MultipartFile file, Integer year, LocalDate payPeriodStart,
-                                 LocalDate payPeriodEnd, BigDecimal grossPay, BigDecimal netPay,
+                                 LocalDate payPeriodEnd, LocalDate checkDate, BigDecimal grossPay, BigDecimal netPay,
                                  String uploadedBy) throws FileUploadException, IOException {
         
         if (file == null || file.isEmpty()) {
@@ -75,6 +75,7 @@ public class PaystubServiceImpl implements PaystubService {
         paystub.setFilePath(filePath.toString());
         paystub.setPayPeriodStart(payPeriodStart);
         paystub.setPayPeriodEnd(payPeriodEnd);
+        paystub.setCheckDate(checkDate);
         paystub.setGrossPay(grossPay);
         paystub.setNetPay(netPay);
         paystub.setUploadedAt(LocalDateTime.now());
