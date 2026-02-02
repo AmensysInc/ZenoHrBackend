@@ -75,21 +75,26 @@ public class Employee {
     private com.application.employee.service.user.User reportingManager;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<PurchaseOrder> employeePurchaseOrder;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<WithHoldTracking> employeeWithHoldTracking;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<ProjectHistory> employeeProjectHistory;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<VisaDetails> employeeVisaDetails;
 
     @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
     private EmployeeDetails employeeDetails;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<TimeSheetMaster> timeSheetMasters;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
