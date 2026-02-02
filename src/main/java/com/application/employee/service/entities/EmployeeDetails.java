@@ -16,6 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "employees_details")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class EmployeeDetails  {
     @Id
     @Column(name = "ID")
@@ -58,6 +59,7 @@ public class EmployeeDetails  {
 
     @OneToOne
     @JoinColumn(name = "employee_id")
+    @JsonIgnore
     private Employee employee;
     public EmployeeDetails(EmployeeDTO employeeDTO) {
         this.employeeDetailsID = employeeDTO.getEmployeeID();
