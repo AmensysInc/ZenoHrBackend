@@ -3,6 +3,7 @@ package com.application.employee.service.entities;
 import com.application.employee.service.deserializer.CustomLocalDateSerializer;
 import com.application.employee.service.dto.EmployeeDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
