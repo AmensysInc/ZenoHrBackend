@@ -184,6 +184,70 @@ public class EmployeeServiceImplementation implements EmployeeService {
             }
         }
         
+        // ✅ Update or create EmployeeDetails (contains visaStatus and other details)
+        com.application.employee.service.entities.EmployeeDetails employeeDetails = existingEmployee.getEmployeeDetails();
+        if (employeeDetails == null) {
+            employeeDetails = new com.application.employee.service.entities.EmployeeDetails();
+            employeeDetails.setEmployeeDetailsID(id);
+            employeeDetails.setEmployee(existingEmployee);
+        }
+        
+        // Update visaStatus and other EmployeeDetails fields from DTO
+        if (employeeDTO.getVisaStatus() != null) {
+            employeeDetails.setVisaStatus(employeeDTO.getVisaStatus());
+        }
+        if (employeeDTO.getFatherName() != null) {
+            employeeDetails.setFatherName(employeeDTO.getFatherName());
+        }
+        if (employeeDTO.getSsn() != null) {
+            employeeDetails.setSsn(employeeDTO.getSsn());
+        }
+        if (employeeDTO.getCurrentWorkLocation() != null) {
+            employeeDetails.setCurrentWorkLocation(employeeDTO.getCurrentWorkLocation());
+        }
+        if (employeeDTO.getResidentialAddress() != null) {
+            employeeDetails.setResidentialAddress(employeeDTO.getResidentialAddress());
+        }
+        if (employeeDTO.getHomeCountryAddress() != null) {
+            employeeDetails.setHomeCountryAddress(employeeDTO.getHomeCountryAddress());
+        }
+        if (employeeDTO.getEmergencyContactDetails() != null) {
+            employeeDetails.setEmergencyContactDetails(employeeDTO.getEmergencyContactDetails());
+        }
+        if (employeeDTO.getBachelorsDegree() != null) {
+            employeeDetails.setBachelorsDegree(employeeDTO.getBachelorsDegree());
+        }
+        if (employeeDTO.getMastersDegree() != null) {
+            employeeDetails.setMastersDegree(employeeDTO.getMastersDegree());
+        }
+        if (employeeDTO.getBankName() != null) {
+            employeeDetails.setBankName(employeeDTO.getBankName());
+        }
+        if (employeeDTO.getAccType() != null) {
+            employeeDetails.setAccType(employeeDTO.getAccType());
+        }
+        if (employeeDTO.getRoutingNumber() != null) {
+            employeeDetails.setRoutingNumber(employeeDTO.getRoutingNumber());
+        }
+        if (employeeDTO.getAccNumber() != null) {
+            employeeDetails.setAccNumber(employeeDTO.getAccNumber());
+        }
+        if (employeeDTO.getMaritalStatus() != null) {
+            employeeDetails.setMaritalStatus(employeeDTO.getMaritalStatus());
+        }
+        if (employeeDTO.getItFilingState() != null) {
+            employeeDetails.setItFilingState(employeeDTO.getItFilingState());
+        }
+        if (employeeDTO.getNeedInsurance() != null) {
+            employeeDetails.setNeedInsurance(employeeDTO.getNeedInsurance());
+        }
+        if (employeeDTO.getStartDateWithAmensys() != null) {
+            employeeDetails.setStartDateWithAmensys(employeeDTO.getStartDateWithAmensys());
+        }
+        
+        employeeDetailsRepository.save(employeeDetails);
+        existingEmployee.setEmployeeDetails(employeeDetails);
+        
         return employeeRespository.save(existingEmployee);
     }
 
