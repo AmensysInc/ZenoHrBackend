@@ -126,7 +126,8 @@ public class EmployeeServiceImplementation implements EmployeeService {
 
     @Override
     public Employee getEmployee(String id) {
-        return employeeRespository.findById(id).orElseThrow(
+        // Use findByIdWithDetails to eagerly fetch employeeDetails
+        return employeeRespository.findByIdWithDetails(id).orElseThrow(
                 () -> new ResourceNotFoundException("Employee not found with given employeeID: " + id)
         );
     }
@@ -195,8 +196,10 @@ public class EmployeeServiceImplementation implements EmployeeService {
         }
         
         // Update visaStatus and other EmployeeDetails fields from DTO
-        // Only update if the field is provided in the DTO (not null)
-        if (employeeDTO.getVisaStatus() != null) {
+        // Always update visaStatus if provided (including empty string to clear it)
+        // Check if visaStatus key exists in the DTO to distinguish between "not provided" and "provided as null/empty"
+        if (employeeDTO.getVisaStatus() != null || (employeeDTO.getVisaStatus() == null && employeeDetails.getVisaStatus() != null)) {
+            // If visaStatus is explicitly set (even if null/empty), update it
             employeeDetails.setVisaStatus(employeeDTO.getVisaStatus());
         }
         if (employeeDTO.getFatherName() != null) {

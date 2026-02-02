@@ -19,6 +19,9 @@ public interface EmployeeRespository extends JpaRepository<Employee, String> {
     Optional<Employee> findByEmailID(String emailId);
     Page<Employee> findAll(Specification<Employee> spec, Pageable pageable);
     List<Employee> findBySecurityGroup(Role securityGroup);
+    
+    @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.employeeDetails WHERE e.employeeID = :id")
+    Optional<Employee> findByIdWithDetails(@Param("id") String id);
 
     @Query("SELECT e FROM Employee e WHERE (:CompanyId IS NULL OR e.CompanyId = :CompanyId)")
     List<Employee> findByCompanyOrAll(@Param("CompanyId") Long company_id);
