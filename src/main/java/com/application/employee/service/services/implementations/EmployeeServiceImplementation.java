@@ -186,13 +186,16 @@ public class EmployeeServiceImplementation implements EmployeeService {
         
         // ✅ Update or create EmployeeDetails (contains visaStatus and other details)
         com.application.employee.service.entities.EmployeeDetails employeeDetails = existingEmployee.getEmployeeDetails();
+        boolean isNewEmployeeDetails = false;
         if (employeeDetails == null) {
             employeeDetails = new com.application.employee.service.entities.EmployeeDetails();
             employeeDetails.setEmployeeDetailsID(id);
             employeeDetails.setEmployee(existingEmployee);
+            isNewEmployeeDetails = true;
         }
         
         // Update visaStatus and other EmployeeDetails fields from DTO
+        // Only update if the field is provided in the DTO (not null)
         if (employeeDTO.getVisaStatus() != null) {
             employeeDetails.setVisaStatus(employeeDTO.getVisaStatus());
         }
@@ -245,7 +248,10 @@ public class EmployeeServiceImplementation implements EmployeeService {
             employeeDetails.setStartDateWithAmensys(employeeDTO.getStartDateWithAmensys());
         }
         
+        // Save EmployeeDetails first (it's the owning side of the relationship)
         employeeDetailsRepository.save(employeeDetails);
+        
+        // Set the relationship on Employee and save
         existingEmployee.setEmployeeDetails(employeeDetails);
         
         return employeeRespository.save(existingEmployee);
