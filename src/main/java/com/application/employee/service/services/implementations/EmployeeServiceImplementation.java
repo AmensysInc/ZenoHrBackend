@@ -196,11 +196,13 @@ public class EmployeeServiceImplementation implements EmployeeService {
         }
         
         // Update visaStatus and other EmployeeDetails fields from DTO
-        // Always update visaStatus if provided (including empty string to clear it)
-        // Check if visaStatus key exists in the DTO to distinguish between "not provided" and "provided as null/empty"
-        if (employeeDTO.getVisaStatus() != null || (employeeDTO.getVisaStatus() == null && employeeDetails.getVisaStatus() != null)) {
-            // If visaStatus is explicitly set (even if null/empty), update it
+        // Always update visaStatus if provided in DTO (allows setting to null/empty to clear it)
+        if (employeeDTO.getVisaStatus() != null) {
             employeeDetails.setVisaStatus(employeeDTO.getVisaStatus());
+        } else if (employeeDTO.getVisaStatus() == null && employeeDetails.getVisaStatus() != null) {
+            // If DTO has visaStatus as null and existing has a value, allow clearing it
+            // This handles the case where user explicitly clears the field
+            employeeDetails.setVisaStatus(null);
         }
         if (employeeDTO.getFatherName() != null) {
             employeeDetails.setFatherName(employeeDTO.getFatherName());
