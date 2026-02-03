@@ -109,12 +109,15 @@ public class MessageServiceImpl {
                     "Please login and change your password immediately.\n\n" +
                     "If you did not request this, please contact support.\n\n" +
                     "Regards,\nTeam HR";
-            case "LOGIN_DETAILS" -> "Hello,\n\n" +
-                    "Your login credentials have been created:\n" +
-                    "Email: {email_address}\n" +
-                    "Temporary Password: {temp_password}\n\n" +
-                    "Please login at {website_link} and change your password immediately.\n\n" +
-                    "Regards,\nTeam HR";
+            case "LOGIN_DETAILS" -> "<html><body>" +
+                    "<p>Hello,</p>" +
+                    "<p>Your login credentials have been created:</p>" +
+                    "<p><strong>Email:</strong> {email_address}<br>" +
+                    "<strong>Temporary Password:</strong> {temp_password}</p>" +
+                    "<p>Please <a href=\"{website_link}\" style=\"background-color: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;\">Click here to login</a> and change your password immediately.</p>" +
+                    "<p>Or copy and paste this link in your browser: {website_link}</p>" +
+                    "<p>Regards,<br>Team HR</p>" +
+                    "</body></html>";
             case "CHANGE_PASSWORD" -> "Hello,\n\n" +
                     "Your password has been changed successfully.\n\n" +
                     "If you did not make this change, please contact support immediately.\n\n" +

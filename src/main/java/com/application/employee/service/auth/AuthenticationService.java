@@ -78,7 +78,7 @@ public class AuthenticationService {
             // 3️⃣ Prepare placeholders (dynamic replacement for templates)
             Map<String, String> placeholders = new HashMap<>();
             placeholders.put("email_address", email);
-            placeholders.put("website_link", "https://zenopayhr.com"); // Add website link
+            placeholders.put("website_link", "https://zenopayhr.com/quick-hrms-ui/login"); // Add login page link
             if (tempPassword != null) {
                 placeholders.put("temp_password", tempPassword);
             }
@@ -210,20 +210,36 @@ public class AuthenticationService {
         var user = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        boolean tempPassword = StringUtils.hasText(user.getTempPassword());
+        boolean hasTempPassword = StringUtils.hasText(user.getTempPassword());
+        boolean passwordMatches = false;
 
-        if (user.getTempPassword() != null) {
-            user.setPassword(user.getTempPassword());
-        } else if (user.getPassword().startsWith("$2a$")) {
-            authenticationProvider.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
-        } else {
-            if (!user.getPassword().equals(request.getPassword())) {
-                throw new BadCredentialsException("Invalid password");
+        // Check if user is using temporary password
+        if (hasTempPassword) {
+            // Verify the provided password against the encoded temp password
+            if (passwordEncoder.matches(request.getPassword(), user.getTempPassword())) {
+                passwordMatches = true;
+                // Set the temp password as the main password so user can continue using it
+                user.setPassword(user.getTempPassword());
+                user.setTempPassword(null); // Clear temp password after first successful login
+                repository.save(user);
+            }
+        }
+
+        // If not using temp password, check regular password
+        if (!passwordMatches) {
+            if (user.getPassword().startsWith("$2a$")) {
+                // Password is bcrypt encoded, use authentication provider
+                authenticationProvider.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getEmail(),
+                                request.getPassword()
+                        )
+                );
+            } else {
+                // Plain text password (legacy)
+                if (!user.getPassword().equals(request.getPassword())) {
+                    throw new BadCredentialsException("Invalid password");
+                }
             }
         }
 
@@ -234,7 +250,7 @@ public class AuthenticationService {
                 .id(user.getId())
                 .firstName(user.getFirstname())
                 .lastName(user.getLastname())
-                .tempPassword(tempPassword)
+                .tempPassword(hasTempPassword && passwordMatches)
                 .role(user.getRole())
                 .build();
     }
