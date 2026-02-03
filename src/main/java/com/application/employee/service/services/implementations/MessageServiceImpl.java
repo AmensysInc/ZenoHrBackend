@@ -113,7 +113,7 @@ public class MessageServiceImpl {
                     "Your login credentials have been created:\n" +
                     "Email: {email_address}\n" +
                     "Temporary Password: {temp_password}\n\n" +
-                    "Please login and change your password immediately.\n\n" +
+                    "Please login at {website_link} and change your password immediately.\n\n" +
                     "Regards,\nTeam HR";
             case "CHANGE_PASSWORD" -> "Hello,\n\n" +
                     "Your password has been changed successfully.\n\n" +

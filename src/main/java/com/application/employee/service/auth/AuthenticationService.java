@@ -68,8 +68,8 @@ public class AuthenticationService {
             User user = userOpt.get();
             String tempPassword = null;
 
-            // 2️⃣ Generate Temp Password only for allowed categories
-            if ("FORGOT_PASSWORD".equalsIgnoreCase(category) || "CHANGE_PASSWORD".equalsIgnoreCase(category)) {
+            // 2️⃣ Generate Temp Password for categories that need it
+            if ("FORGOT_PASSWORD".equalsIgnoreCase(category) || "CHANGE_PASSWORD".equalsIgnoreCase(category) || "LOGIN_DETAILS".equalsIgnoreCase(category)) {
                 tempPassword = generateTempPassword();
                 user.setTempPassword(passwordEncoder.encode(tempPassword));
                 System.out.println("Generated Temp Password: " + tempPassword);
@@ -78,6 +78,7 @@ public class AuthenticationService {
             // 3️⃣ Prepare placeholders (dynamic replacement for templates)
             Map<String, String> placeholders = new HashMap<>();
             placeholders.put("email_address", email);
+            placeholders.put("website_link", "https://zenopayhr.com"); // Add website link
             if (tempPassword != null) {
                 placeholders.put("temp_password", tempPassword);
             }
@@ -188,7 +189,9 @@ public class AuthenticationService {
 
     private String replacePlaceholders(String text, Map<String, String> placeholders) {
         for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            // Replace both {{placeholder}} and {placeholder} formats
             text = text.replace("{{" + entry.getKey() + "}}", entry.getValue());
+            text = text.replace("{" + entry.getKey() + "}", entry.getValue());
         }
         return text;
     }
