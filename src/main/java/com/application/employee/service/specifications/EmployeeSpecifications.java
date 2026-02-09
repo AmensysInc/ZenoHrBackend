@@ -96,12 +96,6 @@ public class EmployeeSpecifications {
             }
             return null;
         };
-    } {
-            if (companyId != null) {
-                return criteriaBuilder.equal(root.get("company").get("companyId"), companyId.intValue());
-            }
-            return null;
-        };
     }
 
     public static Specification<Employee> reportingManagerIdEquals(String reportingManagerId) {
