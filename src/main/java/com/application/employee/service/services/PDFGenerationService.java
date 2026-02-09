@@ -19,15 +19,14 @@ import java.util.Map;
 @Service
 public class PDFGenerationService {
 
-    private static final Font HEADER_FONT = new Font(Font.HELVETICA, 10, Font.NORMAL);
-    private static final Font TITLE_FONT = new Font(Font.HELVETICA, 14, Font.BOLD);
+    private static final Font TITLE_FONT = new Font(Font.HELVETICA, 16, Font.BOLD);
     private static final Font NORMAL_FONT = new Font(Font.HELVETICA, 9, Font.NORMAL);
     private static final Font BOLD_FONT = new Font(Font.HELVETICA, 9, Font.BOLD);
     private static final Font SMALL_FONT = new Font(Font.HELVETICA, 8, Font.NORMAL);
-    private static final Font VERY_SMALL_FONT = new Font(Font.HELVETICA, 7, Font.NORMAL);
+    private static final Font SMALL_BOLD_FONT = new Font(Font.HELVETICA, 8, Font.BOLD);
 
     public byte[] generateADPPaystub(PayrollRecord payrollRecord, Employee employee, YTDData ytdData) throws IOException, DocumentException {
-        Document document = new Document(PageSize.LETTER);
+        Document document = new Document(PageSize.LETTER, 36, 36, 36, 36);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance(document, baos);
         document.open();
@@ -35,17 +34,23 @@ public class PDFGenerationService {
         // Header Section
         addHeader(document, employee, payrollRecord);
 
+        // Add horizontal line separator
+        addHorizontalLine(document);
+
         // Tax Filing Status and Earnings Section
         addTaxAndEarningsSection(document, employee, payrollRecord, ytdData);
 
-        // Statutory Deductions Section
-        addStatutoryDeductionsSection(document, payrollRecord, ytdData);
+        // Add horizontal line separator
+        addHorizontalLine(document);
 
-        // Net Pay (separate, below deductions table)
-        addNetPaySection(document, payrollRecord);
+        // Statutory Deductions Section (includes Net Pay)
+        addStatutoryDeductionsSection(document, payrollRecord, ytdData);
 
         // Federal Taxable Wages
         addFederalTaxableWages(document, payrollRecord);
+
+        // Add horizontal line separator
+        addHorizontalLine(document);
 
         // Footer/Check Section
         addCheckSection(document, employee, payrollRecord, writer);
@@ -57,15 +62,16 @@ public class PDFGenerationService {
     private void addHeader(Document document, Employee employee, PayrollRecord payrollRecord) throws DocumentException {
         PdfPTable headerTable = new PdfPTable(3);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[]{40f, 20f, 40f});
+        headerTable.setWidths(new float[]{35f, 30f, 35f});
+        headerTable.setSpacingAfter(10);
 
         // Left Column - Company Info
         PdfPCell leftCell = new PdfPCell();
         leftCell.setBorder(Rectangle.NO_BORDER);
-        leftCell.setPadding(5);
+        leftCell.setPadding(0);
+        leftCell.setPaddingBottom(5);
         leftCell.setVerticalAlignment(Element.ALIGN_TOP);
 
-        // Get company information from employee
         String companyNameStr = "Ingenious Heads LLC";
         String companyAddressStr = "21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279";
         
@@ -86,23 +92,25 @@ public class PDFGenerationService {
         leftCell.addElement(locDept);
         leftCell.addElement(number);
         leftCell.addElement(page);
-        leftCell.addElement(new Paragraph(" "));
+        leftCell.addElement(new Paragraph(" ", SMALL_FONT));
         leftCell.addElement(companyName);
         leftCell.addElement(companyAddress);
 
-        // Center Column - Empty
+        // Center Column - Empty (for spacing)
         PdfPCell centerCell = new PdfPCell();
         centerCell.setBorder(Rectangle.NO_BORDER);
 
         // Right Column - Employee Info and Dates
         PdfPCell rightCell = new PdfPCell();
         rightCell.setBorder(Rectangle.NO_BORDER);
-        rightCell.setPadding(5);
+        rightCell.setPadding(0);
+        rightCell.setPaddingBottom(5);
         rightCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         rightCell.setVerticalAlignment(Element.ALIGN_TOP);
 
         Paragraph earningsTitle = new Paragraph("Earnings Statement", TITLE_FONT);
         earningsTitle.setAlignment(Element.ALIGN_CENTER);
+        earningsTitle.setSpacingAfter(8);
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
         Paragraph periodStart = new Paragraph("Period Starting: " + payrollRecord.getPayPeriodStart().format(dateFormatter), SMALL_FONT);
@@ -112,17 +120,16 @@ public class PDFGenerationService {
         String fullName = (employee.getFirstName() != null ? employee.getFirstName() : "") + " " +
             (employee.getLastName() != null ? employee.getLastName() : "");
         Paragraph employeeName = new Paragraph(fullName.trim(), BOLD_FONT);
+        employeeName.setSpacingBefore(5);
         
         String empAddress = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getResidentialAddress() != null ?
             employee.getEmployeeDetails().getResidentialAddress() : "152 Pampano Ln, Saint Charles, MO 63301";
         Paragraph employeeAddress = new Paragraph(empAddress, SMALL_FONT);
 
         rightCell.addElement(earningsTitle);
-        rightCell.addElement(new Paragraph(" "));
         rightCell.addElement(periodStart);
         rightCell.addElement(periodEnd);
         rightCell.addElement(payDate);
-        rightCell.addElement(new Paragraph(" "));
         rightCell.addElement(employeeName);
         rightCell.addElement(employeeAddress);
 
@@ -131,13 +138,13 @@ public class PDFGenerationService {
         headerTable.addCell(rightCell);
 
         document.add(headerTable);
-        document.add(new Paragraph(" "));
     }
 
     private void addTaxAndEarningsSection(Document document, Employee employee, PayrollRecord payrollRecord, YTDData ytdData) throws DocumentException {
         PdfPTable mainTable = new PdfPTable(3);
         mainTable.setWidthPercentage(100);
-        mainTable.setWidths(new float[]{33f, 34f, 33f});
+        mainTable.setWidths(new float[]{30f, 40f, 30f});
+        mainTable.setSpacingAfter(10);
 
         // Left Column - Tax Filing Status
         PdfPCell leftCell = new PdfPCell();
@@ -154,13 +161,13 @@ public class PDFGenerationService {
         String ssn = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getSsn() != null ?
             maskSSN(employee.getEmployeeDetails().getSsn()) : "XXX-XX-XXXX";
         Paragraph ssnPara = new Paragraph("Social Security Number: " + ssn, SMALL_FONT);
+        ssnPara.setSpacingBefore(5);
 
         leftCell.addElement(taxFilingTitle);
         leftCell.addElement(exemptionsTitle);
         leftCell.addElement(federalExempt);
         leftCell.addElement(stateExempt);
         leftCell.addElement(localExempt);
-        leftCell.addElement(new Paragraph(" "));
         leftCell.addElement(ssnPara);
 
         // Center Column - Tax Override and Earnings Table
@@ -178,42 +185,35 @@ public class PDFGenerationService {
         centerCell.addElement(federalOverride);
         centerCell.addElement(stateOverride);
         centerCell.addElement(localOverride);
-        centerCell.addElement(new Paragraph(" "));
+        centerCell.addElement(new Paragraph(" ", SMALL_FONT));
 
-        // Earnings Table - No borders for ADP style
+        // Earnings Table
         PdfPTable earningsTable = new PdfPTable(5);
         earningsTable.setWidthPercentage(100);
-        earningsTable.setWidths(new float[]{30f, 15f, 20f, 17.5f, 17.5f});
+        earningsTable.setWidths(new float[]{25f, 15f, 18f, 21f, 21f});
         earningsTable.setSpacingBefore(0);
         earningsTable.setSpacingAfter(0);
 
+        // Headers
         addTableHeader(earningsTable, "Earnings");
         addTableHeader(earningsTable, "rate");
         addTableHeader(earningsTable, "hours/units");
         addTableHeader(earningsTable, "this period");
         addTableHeader(earningsTable, "year to date");
 
-        // Calculate rate (gross pay / hours, or use a default for salaried)
-        String rateValue = "";
-        if (payrollRecord.getGrossPay() != null && payrollRecord.getGrossPay().compareTo(BigDecimal.ZERO) > 0) {
-            // For salaried, show a calculated rate (e.g., monthly salary / 160 hours)
-            BigDecimal monthlyRate = payrollRecord.getGrossPay().divide(BigDecimal.valueOf(160), 4, RoundingMode.HALF_UP);
-            rateValue = String.format("%.4f", monthlyRate);
-        }
-
-        // Regular Earnings Row
+        // Regular Earnings Row - rate should be blank for salaried
         addTableCell(earningsTable, "Regular", NORMAL_FONT);
-        addTableCell(earningsTable, rateValue, NORMAL_FONT, Element.ALIGN_RIGHT);
+        addTableCell(earningsTable, "", NORMAL_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, "0.00", NORMAL_FONT, Element.ALIGN_RIGHT);
-        addTableCell(earningsTable, formatCurrency(payrollRecord.getGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
-        addTableCell(earningsTable, formatCurrency(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
+        addTableCell(earningsTable, formatCurrencyNoDollar(payrollRecord.getGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
+        addTableCell(earningsTable, formatCurrencyNoDollar(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
 
         // Gross Pay Summary Row
         PdfPCell summaryCell = new PdfPCell(new Phrase("Gross Pay", BOLD_FONT));
         summaryCell.setColspan(3);
         summaryCell.setBorder(Rectangle.NO_BORDER);
         summaryCell.setPadding(5);
-        summaryCell.setPaddingTop(10);
+        summaryCell.setPaddingTop(8);
         earningsTable.addCell(summaryCell);
         addTableCell(earningsTable, formatCurrency(payrollRecord.getGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
@@ -226,18 +226,11 @@ public class PDFGenerationService {
         rightCell.setPadding(5);
         rightCell.setVerticalAlignment(Element.ALIGN_TOP);
 
-        Paragraph importantNotesTitle = new Paragraph("Important Notes", SMALL_FONT);
-        Paragraph totalHoursTitle = new Paragraph("Total Hours Worked", SMALL_FONT);
-        Paragraph totalHoursThisPeriod = new Paragraph("This Period: 0.00", SMALL_FONT);
-        Paragraph totalHoursYTD = new Paragraph("Year to Date: 0.00", SMALL_FONT);
+        Paragraph importantNotesTitle = new Paragraph("Important Notes", SMALL_BOLD_FONT);
         Paragraph basisOfPay = new Paragraph("Basis of pay: Salaried", SMALL_FONT);
+        basisOfPay.setSpacingBefore(5);
 
         rightCell.addElement(importantNotesTitle);
-        rightCell.addElement(new Paragraph(" "));
-        rightCell.addElement(totalHoursTitle);
-        rightCell.addElement(totalHoursThisPeriod);
-        rightCell.addElement(totalHoursYTD);
-        rightCell.addElement(new Paragraph(" "));
         rightCell.addElement(basisOfPay);
 
         mainTable.addCell(leftCell);
@@ -245,15 +238,13 @@ public class PDFGenerationService {
         mainTable.addCell(rightCell);
 
         document.add(mainTable);
-        document.add(new Paragraph(" "));
     }
 
     private void addStatutoryDeductionsSection(Document document, PayrollRecord payrollRecord, YTDData ytdData) throws DocumentException {
         PdfPTable deductionsTable = new PdfPTable(3);
         deductionsTable.setWidthPercentage(100);
         deductionsTable.setWidths(new float[]{50f, 25f, 25f});
-        deductionsTable.setSpacingBefore(0);
-        deductionsTable.setSpacingAfter(0);
+        deductionsTable.setSpacingAfter(5);
 
         // Header
         addTableHeader(deductionsTable, "Statutory Deductions");
@@ -331,33 +322,25 @@ public class PDFGenerationService {
             }
         }
 
-        document.add(deductionsTable);
-        document.add(new Paragraph(" "));
-    }
-
-    private void addNetPaySection(Document document, PayrollRecord payrollRecord) throws DocumentException {
-        // Net Pay is BELOW the deductions table, not inside it
-        PdfPTable netPayTable = new PdfPTable(3);
-        netPayTable.setWidthPercentage(100);
-        netPayTable.setWidths(new float[]{50f, 25f, 25f});
-
+        // Net Pay Row - part of the deductions table
         PdfPCell netPayLabel = new PdfPCell(new Phrase("Net Pay", BOLD_FONT));
         netPayLabel.setBorder(Rectangle.NO_BORDER);
         netPayLabel.setPadding(5);
-        netPayTable.addCell(netPayLabel);
+        netPayLabel.setPaddingTop(8);
+        deductionsTable.addCell(netPayLabel);
         
         PdfPCell netPayValue = new PdfPCell(new Phrase(formatCurrency(payrollRecord.getNetPay()), BOLD_FONT));
         netPayValue.setBorder(Rectangle.NO_BORDER);
         netPayValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
         netPayValue.setPadding(5);
-        netPayTable.addCell(netPayValue);
+        netPayValue.setPaddingTop(8);
+        deductionsTable.addCell(netPayValue);
         
         PdfPCell emptyCell = new PdfPCell();
         emptyCell.setBorder(Rectangle.NO_BORDER);
-        netPayTable.addCell(emptyCell);
+        deductionsTable.addCell(emptyCell);
 
-        document.add(netPayTable);
-        document.add(new Paragraph(" "));
+        document.add(deductionsTable);
     }
 
     private void addFederalTaxableWages(Document document, PayrollRecord payrollRecord) throws DocumentException {
@@ -365,21 +348,21 @@ public class PDFGenerationService {
             "Your federal taxable wages this period are " + formatCurrency(payrollRecord.getGrossPay()),
             SMALL_FONT
         );
+        federalTaxable.setSpacingAfter(10);
         document.add(federalTaxable);
-        document.add(new Paragraph(" "));
     }
 
     private void addCheckSection(Document document, Employee employee, PayrollRecord payrollRecord, PdfWriter writer) throws DocumentException {
         // Add watermark first (behind the content)
         PdfContentByte canvas = writer.getDirectContentUnder();
-        Font watermarkFont = new Font(Font.HELVETICA, 60, Font.BOLD, new Color(180, 180, 180));
+        Font watermarkFont = new Font(Font.HELVETICA, 50, Font.BOLD, new Color(200, 200, 200));
         Phrase watermark = new Phrase("VOID NON-NEGOTIABLE", watermarkFont);
         
         // Position watermark in the lower portion of the page (where check is)
         float pageWidth = document.right() - document.left();
         float pageHeight = document.top() - document.bottom();
         float watermarkX = pageWidth / 2f + document.leftMargin();
-        float watermarkY = pageHeight * 0.25f + document.bottomMargin(); // Lower quarter of page
+        float watermarkY = pageHeight * 0.2f + document.bottomMargin();
         
         ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
             watermarkX, watermarkY, 0f);
@@ -387,6 +370,7 @@ public class PDFGenerationService {
         PdfPTable checkTable = new PdfPTable(2);
         checkTable.setWidthPercentage(100);
         checkTable.setWidths(new float[]{50f, 50f});
+        checkTable.setSpacingAfter(5);
 
         // Left Column - Company Info (bottom aligned)
         PdfPCell leftCell = new PdfPCell();
@@ -439,24 +423,24 @@ public class PDFGenerationService {
             SMALL_FONT
         );
         Paragraph payToOrder = new Paragraph("Pay to the order of: " + fullName.trim(), SMALL_FONT);
+        payToOrder.setSpacingBefore(5);
         Paragraph payeeAddress = new Paragraph(empAddress, SMALL_FONT);
         Paragraph amountWords = new Paragraph(
             numberToWords(payrollRecord.getNetPay()),
             SMALL_FONT
         );
+        amountWords.setSpacingBefore(5);
         
         Paragraph netPayBox = new Paragraph(formatCurrency(payrollRecord.getNetPay()), BOLD_FONT);
         netPayBox.setAlignment(Element.ALIGN_RIGHT);
+        netPayBox.setSpacingBefore(5);
 
         rightCell.addElement(bankRouting);
         rightCell.addElement(payrollCheck);
         rightCell.addElement(payDate);
-        rightCell.addElement(new Paragraph(" "));
         rightCell.addElement(payToOrder);
         rightCell.addElement(payeeAddress);
-        rightCell.addElement(new Paragraph(" "));
         rightCell.addElement(amountWords);
-        rightCell.addElement(new Paragraph(" "));
         rightCell.addElement(netPayBox);
 
         checkTable.addCell(leftCell);
@@ -465,9 +449,24 @@ public class PDFGenerationService {
         document.add(checkTable);
         
         // Add "NOT A CHECK" text below
-        Paragraph notACheck = new Paragraph("NOT A CHECK", new Font(Font.HELVETICA, 10, Font.BOLD, new Color(150, 150, 150)));
+        Paragraph notACheck = new Paragraph("NOT A CHECK", new Font(Font.HELVETICA, 9, Font.BOLD, new Color(150, 150, 150)));
         notACheck.setAlignment(Element.ALIGN_CENTER);
+        notACheck.setSpacingBefore(5);
         document.add(notACheck);
+    }
+
+    private void addHorizontalLine(Document document) throws DocumentException {
+        PdfPTable lineTable = new PdfPTable(1);
+        lineTable.setWidthPercentage(100);
+        PdfPCell lineCell = new PdfPCell();
+        lineCell.setBorder(Rectangle.BOTTOM);
+        lineCell.setBorderWidth(0.5f);
+        lineCell.setBorderColor(Color.BLACK);
+        lineCell.setFixedHeight(1f);
+        lineCell.setPadding(0);
+        lineTable.addCell(lineCell);
+        lineTable.setSpacingAfter(8);
+        document.add(lineTable);
     }
 
     private String getCompanyAddress(Companies company) {
@@ -526,7 +525,7 @@ public class PDFGenerationService {
         PdfPCell cell = new PdfPCell(new Phrase(text, BOLD_FONT));
         cell.setPadding(5);
         cell.setBorder(Rectangle.NO_BORDER);
-        cell.setBackgroundColor(Color.WHITE); // No background color for ADP style
+        cell.setBackgroundColor(Color.WHITE);
         table.addCell(cell);
     }
 
@@ -545,19 +544,24 @@ public class PDFGenerationService {
     private void addDeductionRow(PdfPTable table, String name, BigDecimal thisPeriod, BigDecimal ytd) {
         addTableCell(table, name, NORMAL_FONT);
         String thisPeriodStr = thisPeriod != null && thisPeriod.compareTo(BigDecimal.ZERO) >= 0 ?
-            formatCurrency(thisPeriod) : "0.00";
+            formatCurrencyNoDollar(thisPeriod) : "0.00";
         // Show negative for deductions
         if (!thisPeriodStr.startsWith("-") && thisPeriod != null && thisPeriod.compareTo(BigDecimal.ZERO) > 0) {
             thisPeriodStr = "-" + thisPeriodStr;
         }
         addTableCell(table, thisPeriodStr, NORMAL_FONT, Element.ALIGN_RIGHT);
-        String ytdStr = ytd != null ? formatCurrency(ytd) : "0.00";
+        String ytdStr = ytd != null ? formatCurrencyNoDollar(ytd) : "0.00";
         addTableCell(table, ytdStr, NORMAL_FONT, Element.ALIGN_RIGHT);
     }
 
     private String formatCurrency(BigDecimal amount) {
         if (amount == null) return "$0.00";
         return String.format("$%,.2f", amount);
+    }
+
+    private String formatCurrencyNoDollar(BigDecimal amount) {
+        if (amount == null) return "0.00";
+        return String.format("%,.2f", amount);
     }
 
     private String numberToWords(BigDecimal amount) {
