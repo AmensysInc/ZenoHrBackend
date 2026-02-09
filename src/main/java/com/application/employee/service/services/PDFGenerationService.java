@@ -109,22 +109,27 @@ public class PDFGenerationService {
         rightCell.setVerticalAlignment(Element.ALIGN_TOP);
 
         Paragraph earningsTitle = new Paragraph("Earnings Statement", TITLE_FONT);
-        earningsTitle.setAlignment(Element.ALIGN_CENTER);
-        earningsTitle.setSpacingAfter(8);
+        earningsTitle.setAlignment(Element.ALIGN_RIGHT);
+        earningsTitle.setSpacingAfter(5);
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
         Paragraph periodStart = new Paragraph("Period Starting: " + payrollRecord.getPayPeriodStart().format(dateFormatter), SMALL_FONT);
+        periodStart.setAlignment(Element.ALIGN_RIGHT);
         Paragraph periodEnd = new Paragraph("Period Ending: " + payrollRecord.getPayPeriodEnd().format(dateFormatter), SMALL_FONT);
+        periodEnd.setAlignment(Element.ALIGN_RIGHT);
         Paragraph payDate = new Paragraph("Pay Date: " + payrollRecord.getPayDate().format(dateFormatter), SMALL_FONT);
+        payDate.setAlignment(Element.ALIGN_RIGHT);
         
         String fullName = (employee.getFirstName() != null ? employee.getFirstName() : "") + " " +
             (employee.getLastName() != null ? employee.getLastName() : "");
         Paragraph employeeName = new Paragraph(fullName.trim(), BOLD_FONT);
+        employeeName.setAlignment(Element.ALIGN_RIGHT);
         employeeName.setSpacingBefore(5);
         
         String empAddress = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getResidentialAddress() != null ?
             employee.getEmployeeDetails().getResidentialAddress() : "152 Pampano Ln, Saint Charles, MO 63301";
         Paragraph employeeAddress = new Paragraph(empAddress, SMALL_FONT);
+        employeeAddress.setAlignment(Element.ALIGN_RIGHT);
 
         rightCell.addElement(earningsTitle);
         rightCell.addElement(periodStart);
@@ -170,7 +175,7 @@ public class PDFGenerationService {
         leftCell.addElement(localExempt);
         leftCell.addElement(ssnPara);
 
-        // Center Column - Tax Override and Earnings Table
+        // Center Column - Tax Override
         PdfPCell centerCell = new PdfPCell();
         centerCell.setBorder(Rectangle.NO_BORDER);
         centerCell.setPadding(5);
@@ -185,14 +190,32 @@ public class PDFGenerationService {
         centerCell.addElement(federalOverride);
         centerCell.addElement(stateOverride);
         centerCell.addElement(localOverride);
-        centerCell.addElement(new Paragraph(" ", SMALL_FONT));
 
-        // Earnings Table
+        // Right Column - Important Notes
+        PdfPCell rightCell = new PdfPCell();
+        rightCell.setBorder(Rectangle.NO_BORDER);
+        rightCell.setPadding(5);
+        rightCell.setVerticalAlignment(Element.ALIGN_TOP);
+
+        Paragraph importantNotesTitle = new Paragraph("Important Notes", SMALL_BOLD_FONT);
+        Paragraph basisOfPay = new Paragraph("Basis of pay: Salaried", SMALL_FONT);
+        basisOfPay.setSpacingBefore(5);
+
+        rightCell.addElement(importantNotesTitle);
+        rightCell.addElement(basisOfPay);
+
+        mainTable.addCell(leftCell);
+        mainTable.addCell(centerCell);
+        mainTable.addCell(rightCell);
+
+        document.add(mainTable);
+
+        // Earnings Table - Full width, below the three columns
         PdfPTable earningsTable = new PdfPTable(5);
         earningsTable.setWidthPercentage(100);
         earningsTable.setWidths(new float[]{25f, 15f, 18f, 21f, 21f});
-        earningsTable.setSpacingBefore(0);
-        earningsTable.setSpacingAfter(0);
+        earningsTable.setSpacingBefore(5);
+        earningsTable.setSpacingAfter(10);
 
         // Headers
         addTableHeader(earningsTable, "Earnings");
@@ -218,26 +241,7 @@ public class PDFGenerationService {
         addTableCell(earningsTable, formatCurrency(payrollRecord.getGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
 
-        centerCell.addElement(earningsTable);
-
-        // Right Column - Important Notes
-        PdfPCell rightCell = new PdfPCell();
-        rightCell.setBorder(Rectangle.NO_BORDER);
-        rightCell.setPadding(5);
-        rightCell.setVerticalAlignment(Element.ALIGN_TOP);
-
-        Paragraph importantNotesTitle = new Paragraph("Important Notes", SMALL_BOLD_FONT);
-        Paragraph basisOfPay = new Paragraph("Basis of pay: Salaried", SMALL_FONT);
-        basisOfPay.setSpacingBefore(5);
-
-        rightCell.addElement(importantNotesTitle);
-        rightCell.addElement(basisOfPay);
-
-        mainTable.addCell(leftCell);
-        mainTable.addCell(centerCell);
-        mainTable.addCell(rightCell);
-
-        document.add(mainTable);
+        document.add(earningsTable);
     }
 
     private void addStatutoryDeductionsSection(Document document, PayrollRecord payrollRecord, YTDData ytdData) throws DocumentException {
@@ -353,16 +357,18 @@ public class PDFGenerationService {
     }
 
     private void addCheckSection(Document document, Employee employee, PayrollRecord payrollRecord, PdfWriter writer) throws DocumentException {
-        // Add watermark first (behind the content)
+        // Add watermark first (behind the content) - smaller and at top of check section
         PdfContentByte canvas = writer.getDirectContentUnder();
-        Font watermarkFont = new Font(Font.HELVETICA, 50, Font.BOLD, new Color(200, 200, 200));
+        Font watermarkFont = new Font(Font.HELVETICA, 35, Font.BOLD, new Color(200, 200, 200));
         Phrase watermark = new Phrase("VOID NON-NEGOTIABLE", watermarkFont);
         
-        // Position watermark in the lower portion of the page (where check is)
+        // Position watermark at the top of check section
         float pageWidth = document.right() - document.left();
         float pageHeight = document.top() - document.bottom();
         float watermarkX = pageWidth / 2f + document.leftMargin();
-        float watermarkY = pageHeight * 0.2f + document.bottomMargin();
+        // Position it higher up, near the top of the check section
+        float currentY = document.getPageSize().getHeight() - document.top() + document.bottomMargin();
+        float watermarkY = currentY - 50f; // Adjust based on current position
         
         ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
             watermarkX, watermarkY, 0f);
