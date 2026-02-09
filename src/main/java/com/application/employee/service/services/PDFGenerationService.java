@@ -46,6 +46,9 @@ public class PDFGenerationService {
         // Statutory Deductions Section (includes Net Pay)
         addStatutoryDeductionsSection(document, payrollRecord, ytdData);
 
+        // Voluntary Deductions Section (custom deductions from PDF)
+        addVoluntaryDeductionsSection(document, payrollRecord, ytdData);
+
         // Federal Taxable Wages (above the line)
         addFederalTaxableWages(document, payrollRecord);
 
@@ -217,12 +220,41 @@ public class PDFGenerationService {
         earningsTable.setSpacingBefore(5);
         earningsTable.setSpacingAfter(10);
 
-        // Headers
-        addTableHeader(earningsTable, "Earnings");
-        addTableHeader(earningsTable, "rate");
-        addTableHeader(earningsTable, "hours/units");
-        addTableHeader(earningsTable, "this period");
-        addTableHeader(earningsTable, "year to date");
+        // Headers with bottom border
+        PdfPCell earningsHeader = new PdfPCell(new Phrase("Earnings", SMALL_BOLD_FONT));
+        earningsHeader.setBorder(Rectangle.BOTTOM);
+        earningsHeader.setBorderWidth(0.5f);
+        earningsHeader.setPadding(5);
+        earningsHeader.setHorizontalAlignment(Element.ALIGN_LEFT);
+        earningsTable.addCell(earningsHeader);
+        
+        PdfPCell rateHeader = new PdfPCell(new Phrase("rate", SMALL_BOLD_FONT));
+        rateHeader.setBorder(Rectangle.BOTTOM);
+        rateHeader.setBorderWidth(0.5f);
+        rateHeader.setPadding(5);
+        rateHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        earningsTable.addCell(rateHeader);
+        
+        PdfPCell hoursHeader = new PdfPCell(new Phrase("hours/units", SMALL_BOLD_FONT));
+        hoursHeader.setBorder(Rectangle.BOTTOM);
+        hoursHeader.setBorderWidth(0.5f);
+        hoursHeader.setPadding(5);
+        hoursHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        earningsTable.addCell(hoursHeader);
+        
+        PdfPCell thisPeriodHeader = new PdfPCell(new Phrase("this period", SMALL_BOLD_FONT));
+        thisPeriodHeader.setBorder(Rectangle.BOTTOM);
+        thisPeriodHeader.setBorderWidth(0.5f);
+        thisPeriodHeader.setPadding(5);
+        thisPeriodHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        earningsTable.addCell(thisPeriodHeader);
+        
+        PdfPCell ytdHeader = new PdfPCell(new Phrase("year to date", SMALL_BOLD_FONT));
+        ytdHeader.setBorder(Rectangle.BOTTOM);
+        ytdHeader.setBorderWidth(0.5f);
+        ytdHeader.setPadding(5);
+        ytdHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        earningsTable.addCell(ytdHeader);
 
         // Regular Earnings Row - rate should be blank for salaried
         addTableCell(earningsTable, "Regular", NORMAL_FONT);
@@ -250,10 +282,27 @@ public class PDFGenerationService {
         deductionsTable.setWidths(new float[]{50f, 25f, 25f});
         deductionsTable.setSpacingAfter(5);
 
-        // Header
-        addTableHeader(deductionsTable, "Statutory Deductions");
-        addTableHeader(deductionsTable, "this period");
-        addTableHeader(deductionsTable, "year to date");
+        // Header with bottom border
+        PdfPCell statDedHeader = new PdfPCell(new Phrase("Statutory Deductions", SMALL_BOLD_FONT));
+        statDedHeader.setBorder(Rectangle.BOTTOM);
+        statDedHeader.setBorderWidth(0.5f);
+        statDedHeader.setPadding(5);
+        statDedHeader.setHorizontalAlignment(Element.ALIGN_LEFT);
+        deductionsTable.addCell(statDedHeader);
+        
+        PdfPCell statThisPeriodHeader = new PdfPCell(new Phrase("this period", SMALL_BOLD_FONT));
+        statThisPeriodHeader.setBorder(Rectangle.BOTTOM);
+        statThisPeriodHeader.setBorderWidth(0.5f);
+        statThisPeriodHeader.setPadding(5);
+        statThisPeriodHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        deductionsTable.addCell(statThisPeriodHeader);
+        
+        PdfPCell statYtdHeader = new PdfPCell(new Phrase("year to date", SMALL_BOLD_FONT));
+        statYtdHeader.setBorder(Rectangle.BOTTOM);
+        statYtdHeader.setBorderWidth(0.5f);
+        statYtdHeader.setPadding(5);
+        statYtdHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        deductionsTable.addCell(statYtdHeader);
 
         // Federal Income
         addDeductionRow(deductionsTable, "Federal Income", payrollRecord.getFederalTax(), 
@@ -290,42 +339,6 @@ public class PDFGenerationService {
             addDeductionRow(deductionsTable, "Additional Medicare", payrollRecord.getAdditionalMedicare(), null);
         }
 
-        // Custom Deductions
-        if (payrollRecord.getCustomDeductionsJson() != null) {
-            try {
-                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                Map<String, Object> customDeductions = mapper.readValue(payrollRecord.getCustomDeductionsJson(), 
-                    new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
-                
-                for (Map.Entry<String, Object> entry : customDeductions.entrySet()) {
-                    String key = entry.getKey();
-                    Object value = entry.getValue();
-                    String name = key;
-                    BigDecimal amount = BigDecimal.ZERO;
-                    
-                    if (value instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> fieldData = (Map<String, Object>) value;
-                        name = fieldData.containsKey("name") ? (String) fieldData.get("name") : key;
-                        if (fieldData.containsKey("value")) {
-                            Object val = fieldData.get("value");
-                            if (val instanceof Number) {
-                                amount = BigDecimal.valueOf(((Number) val).doubleValue());
-                            }
-                        }
-                    } else if (value instanceof Number) {
-                        amount = BigDecimal.valueOf(((Number) value).doubleValue());
-                    }
-                    
-                    if (amount.compareTo(BigDecimal.ZERO) > 0) {
-                        addDeductionRow(deductionsTable, name, amount, null);
-                    }
-                }
-            } catch (Exception e) {
-                // Ignore parsing errors
-            }
-        }
-
         // Net Pay Row - part of the deductions table
         PdfPCell netPayLabel = new PdfPCell(new Phrase("Net Pay", BOLD_FONT));
         netPayLabel.setBorder(Rectangle.NO_BORDER);
@@ -345,6 +358,111 @@ public class PDFGenerationService {
         deductionsTable.addCell(emptyCell);
 
         document.add(deductionsTable);
+    }
+
+    private void addVoluntaryDeductionsSection(Document document, PayrollRecord payrollRecord, YTDData ytdData) throws DocumentException {
+        // Only create this section if there are custom deductions
+        if (payrollRecord.getCustomDeductionsJson() == null || payrollRecord.getCustomDeductionsJson().trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            Map<String, Object> customDeductions = mapper.readValue(payrollRecord.getCustomDeductionsJson(), 
+                new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+            
+            if (customDeductions == null || customDeductions.isEmpty()) {
+                return;
+            }
+
+            PdfPTable voluntaryTable = new PdfPTable(3);
+            voluntaryTable.setWidthPercentage(100);
+            voluntaryTable.setWidths(new float[]{50f, 25f, 25f});
+            voluntaryTable.setSpacingBefore(5);
+            voluntaryTable.setSpacingAfter(5);
+
+            // Header with bottom border
+            PdfPCell volDedHeader = new PdfPCell(new Phrase("Voluntary Deductions", SMALL_BOLD_FONT));
+            volDedHeader.setBorder(Rectangle.BOTTOM);
+            volDedHeader.setBorderWidth(0.5f);
+            volDedHeader.setPadding(5);
+            volDedHeader.setHorizontalAlignment(Element.ALIGN_LEFT);
+            voluntaryTable.addCell(volDedHeader);
+            
+            PdfPCell volThisPeriodHeader = new PdfPCell(new Phrase("this period", SMALL_BOLD_FONT));
+            volThisPeriodHeader.setBorder(Rectangle.BOTTOM);
+            volThisPeriodHeader.setBorderWidth(0.5f);
+            volThisPeriodHeader.setPadding(5);
+            volThisPeriodHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            voluntaryTable.addCell(volThisPeriodHeader);
+            
+            PdfPCell volYtdHeader = new PdfPCell(new Phrase("year to date", SMALL_BOLD_FONT));
+            volYtdHeader.setBorder(Rectangle.BOTTOM);
+            volYtdHeader.setBorderWidth(0.5f);
+            volYtdHeader.setPadding(5);
+            volYtdHeader.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            voluntaryTable.addCell(volYtdHeader);
+
+            // Process each custom deduction
+            for (Map.Entry<String, Object> entry : customDeductions.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                String name = key;
+                BigDecimal thisPeriodAmount = BigDecimal.ZERO;
+                BigDecimal ytdAmount = null;
+                
+                if (value instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> fieldData = (Map<String, Object>) value;
+                    name = fieldData.containsKey("name") ? (String) fieldData.get("name") : key;
+                    
+                    // Get this period value
+                    if (fieldData.containsKey("value")) {
+                        Object val = fieldData.get("value");
+                        if (val instanceof Number) {
+                            thisPeriodAmount = BigDecimal.valueOf(((Number) val).doubleValue()).abs();
+                        } else if (val instanceof String) {
+                            try {
+                                thisPeriodAmount = new BigDecimal((String) val).abs();
+                            } catch (NumberFormatException e) {
+                                // Ignore
+                            }
+                        }
+                    }
+                    
+                    // Get YTD value if available
+                    if (fieldData.containsKey("ytd") || fieldData.containsKey("yearToDate")) {
+                        Object ytdVal = fieldData.containsKey("ytd") ? fieldData.get("ytd") : fieldData.get("yearToDate");
+                        if (ytdVal instanceof Number) {
+                            ytdAmount = BigDecimal.valueOf(((Number) ytdVal).doubleValue()).abs();
+                        } else if (ytdVal instanceof String) {
+                            try {
+                                ytdAmount = new BigDecimal((String) ytdVal).abs();
+                            } catch (NumberFormatException e) {
+                                // Ignore
+                            }
+                        }
+                    }
+                } else if (value instanceof Number) {
+                    thisPeriodAmount = BigDecimal.valueOf(((Number) value).doubleValue()).abs();
+                } else if (value instanceof String) {
+                    try {
+                        thisPeriodAmount = new BigDecimal((String) value).abs();
+                    } catch (NumberFormatException e) {
+                        // Ignore
+                    }
+                }
+                
+                // Add row if there's a value (even if 0, to match ADP format)
+                addDeductionRow(voluntaryTable, name, thisPeriodAmount, ytdAmount);
+            }
+
+            document.add(voluntaryTable);
+        } catch (Exception e) {
+            // Log error but don't fail the PDF generation
+            System.err.println("Error processing voluntary deductions: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void addFederalTaxableWages(Document document, PayrollRecord payrollRecord) throws DocumentException {
@@ -600,8 +718,13 @@ public class PDFGenerationService {
 
     private void addTableCell(PdfPTable table, String text, Font font, int alignment) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
-        cell.setPadding(5);
         cell.setBorder(Rectangle.NO_BORDER);
+        cell.setPadding(5);
+        // For right-aligned cells (amounts), ensure consistent padding for proper alignment
+        if (alignment == Element.ALIGN_RIGHT) {
+            cell.setPaddingRight(8);
+            cell.setPaddingLeft(5);
+        }
         cell.setHorizontalAlignment(alignment);
         table.addCell(cell);
     }

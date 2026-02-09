@@ -211,5 +211,14 @@ public class PayrollServiceImpl implements PayrollService {
         return payrollRecordRepository.findLatestByEmployeeId(employeeId)
                 .orElse(null);
     }
+
+    @Override
+    @Transactional
+    public void deletePayrollRecord(Long id) {
+        if (!payrollRecordRepository.existsById(id)) {
+            throw new RuntimeException("Payroll record not found: " + id);
+        }
+        payrollRecordRepository.deleteById(id);
+    }
 }
 

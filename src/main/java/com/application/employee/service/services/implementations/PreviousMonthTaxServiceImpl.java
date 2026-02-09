@@ -108,5 +108,14 @@ public class PreviousMonthTaxServiceImpl implements PreviousMonthTaxService {
     public List<PreviousMonthTax> getAllPreviousMonthTaxRecords() {
         return previousMonthTaxRepository.findAllWithEmployee();
     }
+
+    @Override
+    @Transactional
+    public void deletePreviousMonthTax(Long id) {
+        if (!previousMonthTaxRepository.existsById(id)) {
+            throw new RuntimeException("Previous month tax record not found: " + id);
+        }
+        previousMonthTaxRepository.deleteById(id);
+    }
 }
 

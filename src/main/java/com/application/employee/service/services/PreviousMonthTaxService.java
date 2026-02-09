@@ -16,5 +16,7 @@ public interface PreviousMonthTaxService {
     Map<String, Object> getEmployeeCustomFields(String employeeId);
     
     List<PreviousMonthTax> getAllPreviousMonthTaxRecords();
+    
+    void deletePreviousMonthTax(Long id);
 }
 

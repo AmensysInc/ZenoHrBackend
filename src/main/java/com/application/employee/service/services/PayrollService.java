@@ -27,5 +27,7 @@ public interface PayrollService {
     PayrollRecord getPayrollRecordById(Long id);
     
     PayrollRecord getLatestPayrollRecordByEmployee(String employeeId);
+    
+    void deletePayrollRecord(Long id);
 }
 
