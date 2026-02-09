@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class PDFParsingService {
@@ -37,6 +38,11 @@ public class PDFParsingService {
             try (PDDocument document = Loader.loadPDF(pdfBytes)) {
                 PDFTextStripper stripper = new PDFTextStripper();
                 String text = stripper.getText(document);
+                
+                // Store raw text for debugging (first 2000 chars)
+                if (text != null && text.length() > 0) {
+                    extracted.put("_rawTextPreview", text.substring(0, Math.min(2000, text.length())));
+                }
 
                 // Extract standard fields
                 extractStandardFields(text, extracted);
@@ -49,6 +55,8 @@ public class PDFParsingService {
             }
         } catch (IOException e) {
             throw new IOException("Error parsing PDF file: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new IOException("Unexpected error parsing PDF: " + e.getMessage(), e);
         }
 
         return extracted;
@@ -62,67 +70,80 @@ public class PDFParsingService {
             String line = lines[i].trim();
             String lowerLine = line.toLowerCase();
             
-            // Extract Gross Pay from earnings section
-            if (lowerLine.contains("gross pay") && !extracted.containsKey("totalGrossPay")) {
-                BigDecimal value = extractValueFromThisPeriodColumn(line);
-                if (value != null) {
+            // Extract Gross Pay from earnings section - try multiple patterns
+            if ((lowerLine.contains("gross pay") || (lowerLine.contains("gross") && lowerLine.contains("pay"))) 
+                && extracted.get("totalGrossPay") == null) {
+                BigDecimal value = extractValueFromLine(line, i, lines);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
                     extracted.put("totalGrossPay", value);
                 }
             }
             
             // Extract Net Pay
-            if (lowerLine.contains("net pay") && !extracted.containsKey("totalNetPay")) {
-                BigDecimal value = extractValueFromThisPeriodColumn(line);
-                if (value != null) {
+            if ((lowerLine.contains("net pay") || (lowerLine.contains("net") && lowerLine.contains("pay"))) 
+                && extracted.get("totalNetPay") == null) {
+                BigDecimal value = extractValueFromLine(line, i, lines);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
                     extracted.put("totalNetPay", value);
                 }
             }
             
-            // Extract Federal Tax
-            if ((lowerLine.contains("federal income") || lowerLine.contains("federal tax")) && 
-                !extracted.containsKey("federalTaxWithheld")) {
-                BigDecimal value = extractValueFromThisPeriodColumn(line);
+            // Extract Federal Tax - multiple patterns
+            if ((lowerLine.contains("federal income") || lowerLine.contains("federal tax") || 
+                 lowerLine.contains("federal withholding") || (lowerLine.contains("federal") && lowerLine.contains("tax"))) 
+                && extracted.get("federalTaxWithheld") == null) {
+                BigDecimal value = extractValueFromLine(line, i, lines);
                 if (value != null) {
                     extracted.put("federalTaxWithheld", value);
                 }
             }
             
             // Extract State Tax with state name
-            if ((lowerLine.contains("state income") || lowerLine.contains("california state income") || 
-                 lowerLine.contains("illinois state income") || lowerLine.contains("new jersey state income")) &&
-                !extracted.containsKey("stateTaxWithheld")) {
+            if ((lowerLine.contains("state income") || lowerLine.contains("state tax") ||
+                 lowerLine.contains("california") || lowerLine.contains("illinois") || 
+                 lowerLine.contains("new jersey") || lowerLine.contains("texas") ||
+                 lowerLine.contains("new york") || lowerLine.contains("florida")) &&
+                extracted.get("stateTaxWithheld") == null) {
                 // Extract state name
-                Pattern stateNamePattern = Pattern.compile("([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)\\s+State\\s+Income", Pattern.CASE_INSENSITIVE);
+                Pattern stateNamePattern = Pattern.compile("([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)\\s+State\\s+(?:Income|Tax)", Pattern.CASE_INSENSITIVE);
                 Matcher stateNameMatcher = stateNamePattern.matcher(line);
                 if (stateNameMatcher.find()) {
                     extracted.put("stateTaxName", stateNameMatcher.group(1) + " State Income");
+                } else {
+                    // Try simpler pattern
+                    Pattern simpleStatePattern = Pattern.compile("(California|Illinois|New Jersey|Texas|New York|Florida|Arizona|Georgia|North Carolina|Washington)", Pattern.CASE_INSENSITIVE);
+                    Matcher simpleMatcher = simpleStatePattern.matcher(line);
+                    if (simpleMatcher.find()) {
+                        extracted.put("stateTaxName", simpleMatcher.group(1) + " State Income");
+                    }
                 }
-                BigDecimal value = extractValueFromThisPeriodColumn(line);
+                BigDecimal value = extractValueFromLine(line, i, lines);
                 if (value != null) {
                     extracted.put("stateTaxWithheld", value);
                 }
             }
             
             // Extract Local Tax
-            if (lowerLine.contains("local tax") && !extracted.containsKey("localTaxWithheld")) {
-                BigDecimal value = extractValueFromThisPeriodColumn(line);
+            if (lowerLine.contains("local tax") && extracted.get("localTaxWithheld") == null) {
+                BigDecimal value = extractValueFromLine(line, i, lines);
                 if (value != null) {
                     extracted.put("localTaxWithheld", value);
                 }
             }
             
-            // Extract Social Security
-            if (lowerLine.contains("social security") && !extracted.containsKey("socialSecurityWithheld")) {
-                BigDecimal value = extractValueFromThisPeriodColumn(line);
+            // Extract Social Security - multiple patterns
+            if ((lowerLine.contains("social security") || lowerLine.contains("ss tax") || 
+                 lowerLine.contains("oasdi")) && extracted.get("socialSecurityWithheld") == null) {
+                BigDecimal value = extractValueFromLine(line, i, lines);
                 if (value != null) {
                     extracted.put("socialSecurityWithheld", value);
                 }
             }
             
-            // Extract Medicare
-            if (lowerLine.contains("medicare") && !lowerLine.contains("additional") && 
-                !extracted.containsKey("medicareWithheld")) {
-                BigDecimal value = extractValueFromThisPeriodColumn(line);
+            // Extract Medicare - exclude additional medicare
+            if ((lowerLine.contains("medicare") || lowerLine.contains("med tax")) && 
+                !lowerLine.contains("additional") && extracted.get("medicareWithheld") == null) {
+                BigDecimal value = extractValueFromLine(line, i, lines);
                 if (value != null) {
                     extracted.put("medicareWithheld", value);
                 }
@@ -130,45 +151,95 @@ public class PDFParsingService {
         }
     }
     
-    private BigDecimal extractValueFromThisPeriodColumn(String line) {
-        // Look for pattern: "this period" followed by value, or value in "this period" column
-        // Handle both negative and positive values
-        Pattern pattern = Pattern.compile("this\\s*period[\\s:]*(-?[\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE);
+    private BigDecimal extractValueFromLine(String line, int lineIndex, String[] allLines) {
+        // Strategy 1: Look for "this period" followed by value
+        Pattern pattern = Pattern.compile("this\\s*period[\\s:]*\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(line);
         if (matcher.find()) {
-            return parseDecimal(matcher.group(1).replace("-", ""));
+            BigDecimal value = parseDecimal(matcher.group(1).replace("-", ""));
+            if (value != null) return value;
         }
         
-        // Alternative: look for value before "year to date"
-        pattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)\\s+year\\s+to\\s+date", Pattern.CASE_INSENSITIVE);
+        // Strategy 2: Look for value before "year to date" or "ytd"
+        pattern = Pattern.compile("\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)\\s+(?:year\\s+to\\s+date|ytd)", Pattern.CASE_INSENSITIVE);
         matcher = pattern.matcher(line);
         if (matcher.find()) {
-            return parseDecimal(matcher.group(1).replace("-", ""));
+            BigDecimal value = parseDecimal(matcher.group(1).replace("-", ""));
+            if (value != null) return value;
         }
         
-        // Fallback: extract any decimal value (for simpler formats)
-        pattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)");
+        // Strategy 3: Look for value in next line (common in table formats)
+        if (lineIndex + 1 < allLines.length) {
+            String nextLine = allLines[lineIndex + 1].trim();
+            pattern = Pattern.compile("\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)");
+            matcher = pattern.matcher(nextLine);
+            if (matcher.find()) {
+                BigDecimal value = parseDecimal(matcher.group(1).replace("-", ""));
+                if (value != null && value.compareTo(BigDecimal.ZERO) >= 0) return value;
+            }
+        }
+        
+        // Strategy 4: Extract all decimal values and take the first reasonable one
+        pattern = Pattern.compile("\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)");
         matcher = pattern.matcher(line);
-        if (matcher.find()) {
-            return parseDecimal(matcher.group(1).replace("-", ""));
+        List<BigDecimal> values = new ArrayList<>();
+        while (matcher.find()) {
+            BigDecimal value = parseDecimal(matcher.group(1).replace("-", ""));
+            if (value != null && value.compareTo(BigDecimal.ZERO) >= 0) {
+                values.add(value);
+            }
+        }
+        
+        // If multiple values, prefer the larger one (usually the "this period" value is larger than YTD for first pay)
+        if (!values.isEmpty()) {
+            return values.stream().max(BigDecimal::compareTo).orElse(values.get(0));
         }
         
         return null;
     }
+    
+    // Keep old method for backward compatibility
+    private BigDecimal extractValueFromThisPeriodColumn(String line) {
+        return extractValueFromLine(line, 0, new String[]{line});
+    }
 
     private void extractDates(String text, Map<String, Object> extracted) {
-        // Extract Period Start Date
-        Pattern periodStartPattern = Pattern.compile("period\\s*start(?:ing)?[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE);
-        Matcher periodStartMatcher = periodStartPattern.matcher(text);
-        if (periodStartMatcher.find()) {
-            extracted.put("periodStartDate", parseDate(periodStartMatcher.group(1)));
+        // Extract Period Start Date - multiple patterns
+        Pattern[] startPatterns = {
+            Pattern.compile("period\\s*start(?:ing)?[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("pay\\s*period\\s*start[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("from[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})\\s*to", Pattern.CASE_INSENSITIVE)
+        };
+        
+        for (Pattern pattern : startPatterns) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                LocalDate date = parseDate(matcher.group(1));
+                if (date != null) {
+                    extracted.put("periodStartDate", date);
+                    break;
+                }
+            }
         }
 
-        // Extract Period End Date
-        Pattern periodEndPattern = Pattern.compile("period\\s*end(?:ing)?[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE);
-        Matcher periodEndMatcher = periodEndPattern.matcher(text);
-        if (periodEndMatcher.find()) {
-            extracted.put("periodEndDate", parseDate(periodEndMatcher.group(1)));
+        // Extract Period End Date - multiple patterns
+        Pattern[] endPatterns = {
+            Pattern.compile("period\\s*end(?:ing)?[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("pay\\s*period\\s*end[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("to[:\\s]*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})\\s*pay\\s*date", Pattern.CASE_INSENSITIVE)
+        };
+        
+        for (Pattern pattern : endPatterns) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                LocalDate date = parseDate(matcher.group(1));
+                if (date != null) {
+                    extracted.put("periodEndDate", date);
+                    break;
+                }
+            }
         }
     }
 
