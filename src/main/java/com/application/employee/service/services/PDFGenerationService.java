@@ -352,11 +352,14 @@ public class PDFGenerationService {
             "Your federal taxable wages this period are " + formatCurrency(payrollRecord.getGrossPay()),
             SMALL_FONT
         );
-        federalTaxable.setSpacingAfter(10);
+        federalTaxable.setSpacingAfter(8);
         document.add(federalTaxable);
     }
 
     private void addCheckSection(Document document, Employee employee, PayrollRecord payrollRecord, PdfWriter writer) throws DocumentException {
+        // Add some space before check section
+        document.add(new Paragraph(" ", SMALL_FONT));
+        
         // Get current Y position before adding check content
         float checkSectionStartY = writer.getVerticalPosition(false);
         
@@ -369,7 +372,7 @@ public class PDFGenerationService {
         float pageWidth = document.right() - document.left();
         float watermarkX = pageWidth / 2f + document.leftMargin();
         // Position it at the top of the check section
-        float watermarkY = checkSectionStartY - 20f;
+        float watermarkY = checkSectionStartY - 10f;
         
         ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
             watermarkX, watermarkY, 0f);
@@ -377,12 +380,13 @@ public class PDFGenerationService {
         PdfPTable checkTable = new PdfPTable(2);
         checkTable.setWidthPercentage(100);
         checkTable.setWidths(new float[]{50f, 50f});
-        checkTable.setSpacingAfter(5);
+        checkTable.setSpacingAfter(10);
 
         // Left Column - Company Info (bottom aligned)
         PdfPCell leftCell = new PdfPCell();
         leftCell.setBorder(Rectangle.NO_BORDER);
         leftCell.setPadding(5);
+        leftCell.setPaddingTop(15);
         leftCell.setVerticalAlignment(Element.ALIGN_BOTTOM);
 
         String companyNameStr = "Ingenious Heads LLC";
@@ -405,6 +409,7 @@ public class PDFGenerationService {
         PdfPCell rightCell = new PdfPCell();
         rightCell.setBorder(Rectangle.NO_BORDER);
         rightCell.setPadding(5);
+        rightCell.setPaddingTop(15);
         rightCell.setVerticalAlignment(Element.ALIGN_TOP);
 
         // Get bank routing and account from employee details
@@ -430,13 +435,14 @@ public class PDFGenerationService {
             SMALL_FONT
         );
         Paragraph payToOrder = new Paragraph("Pay to the order of: " + fullName.trim(), SMALL_FONT);
-        payToOrder.setSpacingBefore(5);
+        payToOrder.setSpacingBefore(8);
         Paragraph payeeAddress = new Paragraph(empAddress, SMALL_FONT);
+        payeeAddress.setSpacingBefore(2);
         Paragraph amountWords = new Paragraph(
             numberToWords(payrollRecord.getNetPay()),
             SMALL_FONT
         );
-        amountWords.setSpacingBefore(5);
+        amountWords.setSpacingBefore(8);
         
         Paragraph netPayBox = new Paragraph(formatCurrency(payrollRecord.getNetPay()), BOLD_FONT);
         netPayBox.setAlignment(Element.ALIGN_RIGHT);
@@ -458,7 +464,7 @@ public class PDFGenerationService {
         // Add "NOT A CHECK" text below
         Paragraph notACheck = new Paragraph("NOT A CHECK", new Font(Font.HELVETICA, 9, Font.BOLD, new Color(150, 150, 150)));
         notACheck.setAlignment(Element.ALIGN_CENTER);
-        notACheck.setSpacingBefore(5);
+        notACheck.setSpacingBefore(10);
         document.add(notACheck);
     }
 
