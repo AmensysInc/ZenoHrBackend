@@ -357,6 +357,9 @@ public class PDFGenerationService {
     }
 
     private void addCheckSection(Document document, Employee employee, PayrollRecord payrollRecord, PdfWriter writer) throws DocumentException {
+        // Get current Y position before adding check content
+        float checkSectionStartY = writer.getVerticalPosition(false);
+        
         // Add watermark first (behind the content) - smaller and at top of check section
         PdfContentByte canvas = writer.getDirectContentUnder();
         Font watermarkFont = new Font(Font.HELVETICA, 35, Font.BOLD, new Color(200, 200, 200));
@@ -364,11 +367,9 @@ public class PDFGenerationService {
         
         // Position watermark at the top of check section
         float pageWidth = document.right() - document.left();
-        float pageHeight = document.top() - document.bottom();
         float watermarkX = pageWidth / 2f + document.leftMargin();
-        // Position it higher up, near the top of the check section
-        float currentY = document.getPageSize().getHeight() - document.top() + document.bottomMargin();
-        float watermarkY = currentY - 50f; // Adjust based on current position
+        // Position it at the top of the check section
+        float watermarkY = checkSectionStartY - 20f;
         
         ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
             watermarkX, watermarkY, 0f);
