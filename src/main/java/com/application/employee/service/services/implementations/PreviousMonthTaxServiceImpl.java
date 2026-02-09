@@ -69,39 +69,53 @@ public class PreviousMonthTaxServiceImpl implements PreviousMonthTaxService {
 
     @Override
     public Optional<PreviousMonthTax> getPreviousMonthTaxByEmployee(String employeeId) {
-        return previousMonthTaxRepository.findByEmployeeEmployeeID(employeeId);
+        // Get the most recent record by period end date
+        java.util.List<PreviousMonthTax> records = previousMonthTaxRepository.findAllByEmployeeEmployeeIDOrderByPeriodEndDateDesc(employeeId);
+        if (records != null && !records.isEmpty()) {
+            return Optional.of(records.get(0));
+        }
+        return Optional.empty();
     }
 
     @Override
     public Map<String, Object> getEmployeeCustomFields(String employeeId) {
-        Optional<PreviousMonthTax> taxDataOpt = previousMonthTaxRepository.findByEmployeeEmployeeID(employeeId);
-        if (taxDataOpt.isPresent() && taxDataOpt.get().getAdditionalFieldsJson() != null) {
-            try {
-                Map<String, Object> additionalFields = objectMapper.readValue(
-                        taxDataOpt.get().getAdditionalFieldsJson(),
-                        new TypeReference<Map<String, Object>>() {}
-                );
-                
-                // Convert to format expected by frontend
-                Map<String, Object> customFields = new HashMap<>();
-                for (Map.Entry<String, Object> entry : additionalFields.entrySet()) {
-                    if (entry.getValue() instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> fieldData = (Map<String, Object>) entry.getValue();
-                        customFields.put(entry.getKey(), fieldData);
-                    } else {
-                        Map<String, Object> fieldData = new HashMap<>();
-                        fieldData.put("name", entry.getKey());
-                        fieldData.put("defaultValue", entry.getValue());
-                        customFields.put(entry.getKey(), fieldData);
-                    }
-                }
-                return customFields;
-            } catch (Exception e) {
-                return new HashMap<>();
-            }
+        // Get the most recent record by period end date
+        java.util.List<PreviousMonthTax> records = previousMonthTaxRepository.findAllByEmployeeEmployeeIDOrderByPeriodEndDateDesc(employeeId);
+        if (records == null || records.isEmpty()) {
+            return new HashMap<>();
         }
-        return new HashMap<>();
+        
+        PreviousMonthTax taxData = records.get(0);
+        if (taxData.getAdditionalFieldsJson() == null || taxData.getAdditionalFieldsJson().trim().isEmpty()) {
+            return new HashMap<>();
+        }
+        
+        try {
+            Map<String, Object> additionalFields = objectMapper.readValue(
+                    taxData.getAdditionalFieldsJson(),
+                    new TypeReference<Map<String, Object>>() {}
+            );
+            
+            // Convert to format expected by frontend
+            Map<String, Object> customFields = new HashMap<>();
+            for (Map.Entry<String, Object> entry : additionalFields.entrySet()) {
+                if (entry.getValue() instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> fieldData = (Map<String, Object>) entry.getValue();
+                    customFields.put(entry.getKey(), fieldData);
+                } else {
+                    Map<String, Object> fieldData = new HashMap<>();
+                    fieldData.put("name", entry.getKey());
+                    fieldData.put("defaultValue", entry.getValue());
+                    customFields.put(entry.getKey(), fieldData);
+                }
+            }
+            return customFields;
+        } catch (Exception e) {
+            System.err.println("Error parsing additionalFieldsJson for employee " + employeeId + ": " + e.getMessage());
+            e.printStackTrace();
+            return new HashMap<>();
+        }
     }
 
     @Override

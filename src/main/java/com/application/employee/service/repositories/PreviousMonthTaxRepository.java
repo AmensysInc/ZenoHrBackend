@@ -11,8 +11,11 @@ import java.util.Optional;
 @Repository
 public interface PreviousMonthTaxRepository extends JpaRepository<PreviousMonthTax, Long> {
     
-    @Query("SELECT p FROM PreviousMonthTax p LEFT JOIN FETCH p.employee WHERE p.employee.employeeID = :employeeId")
+    @Query("SELECT p FROM PreviousMonthTax p LEFT JOIN FETCH p.employee WHERE p.employee.employeeID = :employeeId ORDER BY p.periodEndDate DESC")
     Optional<PreviousMonthTax> findByEmployeeEmployeeID(@Param("employeeId") String employeeId);
+    
+    @Query("SELECT p FROM PreviousMonthTax p LEFT JOIN FETCH p.employee WHERE p.employee.employeeID = :employeeId ORDER BY p.periodEndDate DESC")
+    java.util.List<PreviousMonthTax> findAllByEmployeeEmployeeIDOrderByPeriodEndDateDesc(@Param("employeeId") String employeeId);
     
     @Query("SELECT p FROM PreviousMonthTax p LEFT JOIN FETCH p.employee ORDER BY p.createdAt DESC")
     java.util.List<PreviousMonthTax> findAllWithEmployee();
