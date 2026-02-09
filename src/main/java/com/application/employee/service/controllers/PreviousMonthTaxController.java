@@ -105,6 +105,12 @@ public class PreviousMonthTaxController {
                         basePath = basePath.replace("/", "\\");
                     }
                     
+                    // Create base directory first if it doesn't exist
+                    Path baseDir = Paths.get(basePath);
+                    if (!Files.exists(baseDir)) {
+                        Files.createDirectories(baseDir);
+                    }
+                    
                     // Create the directory path for this employee's tax documents
                     Path taxDir = Paths.get(basePath, "previous-month-tax", request.getEmployeeId());
                     
@@ -129,12 +135,11 @@ public class PreviousMonthTaxController {
                     taxData.setPdfFilePath(filePath.toString().replace("\\", "/"));
                     taxData.setPdfFileName(fileName);
                 } catch (Exception e) {
-                    // Log the full error for debugging
-                    String errorMsg = "Failed to save PDF file: " + e.getMessage();
-                    if (e.getCause() != null) {
-                        errorMsg += " (Cause: " + e.getCause().getMessage() + ")";
-                    }
-                    throw new RuntimeException(errorMsg, e);
+                    // Log the full error for debugging but don't fail the entire request
+                    // PDF is optional - save the tax data even if PDF save fails
+                    System.err.println("Warning: Failed to save PDF file: " + e.getMessage());
+                    e.printStackTrace();
+                    // Continue without PDF - the tax data will still be saved
                 }
             }
 
