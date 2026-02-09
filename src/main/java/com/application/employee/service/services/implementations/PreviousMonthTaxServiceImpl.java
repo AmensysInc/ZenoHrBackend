@@ -1,0 +1,100 @@
+package com.application.employee.service.services.implementations;
+
+import com.application.employee.service.entities.Employee;
+import com.application.employee.service.entities.PreviousMonthTax;
+import com.application.employee.service.repositories.PreviousMonthTaxRepository;
+import com.application.employee.service.services.EmployeeService;
+import com.application.employee.service.services.PreviousMonthTaxService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+@Service
+public class PreviousMonthTaxServiceImpl implements PreviousMonthTaxService {
+
+    @Autowired
+    private PreviousMonthTaxRepository previousMonthTaxRepository;
+
+    @Autowired
+    private EmployeeService employeeService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Override
+    @Transactional
+    public PreviousMonthTax savePreviousMonthTax(String employeeId, PreviousMonthTax taxData) {
+        Employee employee = employeeService.getEmployee(employeeId);
+        if (employee == null) {
+            throw new RuntimeException("Employee not found: " + employeeId);
+        }
+
+        // Check if previous month tax already exists for this employee
+        Optional<PreviousMonthTax> existingOpt = previousMonthTaxRepository.findByEmployeeEmployeeID(employeeId);
+        if (existingOpt.isPresent()) {
+            PreviousMonthTax existing = existingOpt.get();
+            // Update existing record
+            existing.setPeriodStartDate(taxData.getPeriodStartDate());
+            existing.setPeriodEndDate(taxData.getPeriodEndDate());
+            existing.setFederalTaxWithheld(taxData.getFederalTaxWithheld());
+            existing.setStateTaxWithheld(taxData.getStateTaxWithheld());
+            existing.setStateTaxName(taxData.getStateTaxName());
+            existing.setLocalTaxWithheld(taxData.getLocalTaxWithheld());
+            existing.setSocialSecurityWithheld(taxData.getSocialSecurityWithheld());
+            existing.setMedicareWithheld(taxData.getMedicareWithheld());
+            existing.setTotalGrossPay(taxData.getTotalGrossPay());
+            existing.setTotalNetPay(taxData.getTotalNetPay());
+            existing.setH1bWage(taxData.getH1bWage());
+            existing.setH1bPrevailingWage(taxData.getH1bPrevailingWage());
+            existing.setAdditionalFieldsJson(taxData.getAdditionalFieldsJson());
+            return previousMonthTaxRepository.save(existing);
+        } else {
+            // Create new record
+            taxData.setEmployee(employee);
+            return previousMonthTaxRepository.save(taxData);
+        }
+    }
+
+    @Override
+    public Optional<PreviousMonthTax> getPreviousMonthTaxByEmployee(String employeeId) {
+        return previousMonthTaxRepository.findByEmployeeEmployeeID(employeeId);
+    }
+
+    @Override
+    public Map<String, Object> getEmployeeCustomFields(String employeeId) {
+        Optional<PreviousMonthTax> taxDataOpt = previousMonthTaxRepository.findByEmployeeEmployeeID(employeeId);
+        if (taxDataOpt.isPresent() && taxDataOpt.get().getAdditionalFieldsJson() != null) {
+            try {
+                Map<String, Object> additionalFields = objectMapper.readValue(
+                        taxDataOpt.get().getAdditionalFieldsJson(),
+                        new TypeReference<Map<String, Object>>() {}
+                );
+                
+                // Convert to format expected by frontend
+                Map<String, Object> customFields = new HashMap<>();
+                for (Map.Entry<String, Object> entry : additionalFields.entrySet()) {
+                    if (entry.getValue() instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> fieldData = (Map<String, Object>) entry.getValue();
+                        customFields.put(entry.getKey(), fieldData);
+                    } else {
+                        Map<String, Object> fieldData = new HashMap<>();
+                        fieldData.put("name", entry.getKey());
+                        fieldData.put("defaultValue", entry.getValue());
+                        customFields.put(entry.getKey(), fieldData);
+                    }
+                }
+                return customFields;
+            } catch (Exception e) {
+                return new HashMap<>();
+            }
+        }
+        return new HashMap<>();
+    }
+}
+
