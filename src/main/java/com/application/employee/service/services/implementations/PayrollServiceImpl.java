@@ -207,7 +207,7 @@ public class PayrollServiceImpl implements PayrollService {
 
         // Update YTD values
         ytdData = taxCalculatorService.updateYTDValues(ytdData, taxCalculations, netPay,
-                healthInsurance, retirement401k, otherDeductionsAmount);
+                healthInsurance, otherDeductionsAmount);
         ytdData.setLastPayPeriod(payDate);
         ytdDataRepository.save(ytdData);
 
