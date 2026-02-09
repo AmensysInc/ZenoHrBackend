@@ -192,7 +192,7 @@ public class PDFGenerationService {
 
         // Regular Earnings Row
         addTableCell(earningsTable, "Regular", NORMAL_FONT);
-        addTableCell(earningsTable, "15.0000", NORMAL_FONT, Element.ALIGN_RIGHT);
+        addTableCell(earningsTable, "", NORMAL_FONT, Element.ALIGN_RIGHT); // Rate can be blank for salaried
         addTableCell(earningsTable, "0.00", NORMAL_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(payrollRecord.getGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
@@ -247,7 +247,7 @@ public class PDFGenerationService {
         addDeductionRow(deductionsTable, "Federal Income", payrollRecord.getFederalTax(), 
             ytdData != null ? ytdData.getYtdFederalTax() : null);
 
-        // State Tax
+        // State Tax (should come before Social Security and Medicare)
         if (payrollRecord.getStateTax() != null) {
             String stateTaxName = payrollRecord.getStateTaxName() != null ? 
                 payrollRecord.getStateTaxName() : "State Income";
@@ -314,32 +314,29 @@ public class PDFGenerationService {
             }
         }
 
-        document.add(deductionsTable);
-        document.add(new Paragraph(" "));
-    }
-
-    private void addNetPayAndNotes(Document document, PayrollRecord payrollRecord) throws DocumentException {
-        PdfPTable netPayTable = new PdfPTable(3);
-        netPayTable.setWidthPercentage(100);
-        netPayTable.setWidths(new float[]{50f, 25f, 25f});
-
+        // Net Pay Row - part of the deductions table
         PdfPCell netPayLabel = new PdfPCell(new Phrase("Net Pay", BOLD_FONT));
         netPayLabel.setBorder(Rectangle.NO_BORDER);
         netPayLabel.setPadding(5);
-        netPayTable.addCell(netPayLabel);
+        deductionsTable.addCell(netPayLabel);
         
         PdfPCell netPayValue = new PdfPCell(new Phrase(formatCurrency(payrollRecord.getNetPay()), BOLD_FONT));
         netPayValue.setBorder(Rectangle.NO_BORDER);
         netPayValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
         netPayValue.setPadding(5);
-        netPayTable.addCell(netPayValue);
+        deductionsTable.addCell(netPayValue);
         
         PdfPCell emptyCell = new PdfPCell();
         emptyCell.setBorder(Rectangle.NO_BORDER);
-        netPayTable.addCell(emptyCell);
+        deductionsTable.addCell(emptyCell);
 
-        document.add(netPayTable);
+        document.add(deductionsTable);
         document.add(new Paragraph(" "));
+    }
+
+    private void addNetPayAndNotes(Document document, PayrollRecord payrollRecord) throws DocumentException {
+        // Net Pay is now part of the deductions table, so this method is empty
+        // Keeping it for structure but not adding anything
     }
 
     private void addFederalTaxableWages(Document document, PayrollRecord payrollRecord) throws DocumentException {
@@ -352,11 +349,25 @@ public class PDFGenerationService {
     }
 
     private void addCheckSection(Document document, Employee employee, PayrollRecord payrollRecord, PdfWriter writer) throws DocumentException {
+        // Add watermark first (behind the content)
+        PdfContentByte canvas = writer.getDirectContentUnder();
+        Font watermarkFont = new Font(Font.HELVETICA, 60, Font.BOLD, new Color(180, 180, 180));
+        Phrase watermark = new Phrase("VOID NON-NEGOTIABLE", watermarkFont);
+        
+        // Position watermark in the lower portion of the page (where check is)
+        float pageWidth = document.right() - document.left();
+        float pageHeight = document.top() - document.bottom();
+        float watermarkX = pageWidth / 2 + document.leftMargin();
+        float watermarkY = pageHeight * 0.25 + document.bottomMargin(); // Lower quarter of page
+        
+        ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
+            watermarkX, watermarkY, 0f);
+
         PdfPTable checkTable = new PdfPTable(2);
         checkTable.setWidthPercentage(100);
         checkTable.setWidths(new float[]{50f, 50f});
 
-        // Left Column - Company Info
+        // Left Column - Company Info (bottom aligned)
         PdfPCell leftCell = new PdfPCell();
         leftCell.setBorder(Rectangle.NO_BORDER);
         leftCell.setPadding(5);
@@ -399,7 +410,7 @@ public class PDFGenerationService {
 
         Paragraph bankRouting = new Paragraph(bankInfo, SMALL_FONT);
         Paragraph payrollCheck = new Paragraph(
-            "Payroll Check Number: " + (payrollRecord.getId() != null ? String.format("%05d", payrollRecord.getId()) : "50803"),
+            "Payroll Check Number: " + (payrollRecord.getId() != null ? String.format("%05d", payrollRecord.getId()) : "00001"),
             SMALL_FONT
         );
         Paragraph payDate = new Paragraph(
@@ -431,19 +442,6 @@ public class PDFGenerationService {
         checkTable.addCell(rightCell);
 
         document.add(checkTable);
-
-        // Add watermark
-        PdfContentByte canvas = writer.getDirectContentUnder();
-        Font watermarkFont = new Font(Font.HELVETICA, 72, Font.BOLD, new Color(200, 200, 200));
-        Phrase watermark = new Phrase("VOID - NON NEGOTIABLE", watermarkFont);
-        ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
-            (document.right() - document.left()) / 2 + document.leftMargin(),
-            (document.top() - document.bottom()) / 2 + document.bottomMargin(),
-            45f);
-        
-        Paragraph notACheck = new Paragraph("NOT A CHECK", new Font(Font.HELVETICA, 10, Font.BOLD, new Color(150, 150, 150)));
-        notACheck.setAlignment(Element.ALIGN_CENTER);
-        document.add(notACheck);
     }
 
     private String getCompanyAddress(Companies company) {
