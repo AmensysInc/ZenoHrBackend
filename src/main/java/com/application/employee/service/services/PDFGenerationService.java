@@ -180,10 +180,12 @@ public class PDFGenerationService {
         centerCell.addElement(localOverride);
         centerCell.addElement(new Paragraph(" "));
 
-        // Earnings Table
+        // Earnings Table - No borders for ADP style
         PdfPTable earningsTable = new PdfPTable(5);
         earningsTable.setWidthPercentage(100);
         earningsTable.setWidths(new float[]{30f, 15f, 20f, 17.5f, 17.5f});
+        earningsTable.setSpacingBefore(0);
+        earningsTable.setSpacingAfter(0);
 
         addTableHeader(earningsTable, "Earnings");
         addTableHeader(earningsTable, "rate");
@@ -211,6 +213,7 @@ public class PDFGenerationService {
         summaryCell.setColspan(3);
         summaryCell.setBorder(Rectangle.NO_BORDER);
         summaryCell.setPadding(5);
+        summaryCell.setPaddingTop(10);
         earningsTable.addCell(summaryCell);
         addTableCell(earningsTable, formatCurrency(payrollRecord.getGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
@@ -249,6 +252,8 @@ public class PDFGenerationService {
         PdfPTable deductionsTable = new PdfPTable(3);
         deductionsTable.setWidthPercentage(100);
         deductionsTable.setWidths(new float[]{50f, 25f, 25f});
+        deductionsTable.setSpacingBefore(0);
+        deductionsTable.setSpacingAfter(0);
 
         // Header
         addTableHeader(deductionsTable, "Statutory Deductions");
@@ -520,6 +525,7 @@ public class PDFGenerationService {
     private void addTableHeader(PdfPTable table, String text) {
         PdfPCell cell = new PdfPCell(new Phrase(text, BOLD_FONT));
         cell.setPadding(5);
+        cell.setBorder(Rectangle.NO_BORDER);
         cell.setBackgroundColor(new Color(240, 240, 240));
         table.addCell(cell);
     }
@@ -531,6 +537,7 @@ public class PDFGenerationService {
     private void addTableCell(PdfPTable table, String text, Font font, int alignment) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setPadding(5);
+        cell.setBorder(Rectangle.NO_BORDER);
         cell.setHorizontalAlignment(alignment);
         table.addCell(cell);
     }
