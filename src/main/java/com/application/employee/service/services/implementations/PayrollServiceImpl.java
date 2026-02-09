@@ -85,7 +85,7 @@ public class PayrollServiceImpl implements PayrollService {
                                         LocalDate payPeriodStart, LocalDate payPeriodEnd,
                                         LocalDate payDate, TaxCalculations taxCalculations,
                                         Map<String, BigDecimal> otherDeductions,
-                                        Map<String, BigDecimal> customDeductions) {
+                                        Map<String, Object> customDeductions) {
         Employee employee = employeeService.getEmployee(employeeId);
         if (employee == null) {
             throw new RuntimeException("Employee not found: " + employeeId);
@@ -119,11 +119,33 @@ public class PayrollServiceImpl implements PayrollService {
                 otherDeductions.getOrDefault("otherDeductions", BigDecimal.ZERO) : BigDecimal.ZERO;
 
         // Calculate total custom deductions
+        // Handle both simple Map<String, BigDecimal> and Map<String, Object> with name/value structure
         BigDecimal totalCustomDeductions = BigDecimal.ZERO;
         if (customDeductions != null) {
-            for (BigDecimal value : customDeductions.values()) {
-                if (value != null) {
-                    totalCustomDeductions = totalCustomDeductions.add(value);
+            for (Object value : customDeductions.values()) {
+                BigDecimal deductionAmount = BigDecimal.ZERO;
+                if (value instanceof BigDecimal) {
+                    deductionAmount = (BigDecimal) value;
+                } else if (value instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> fieldData = (Map<String, Object>) value;
+                    if (fieldData.containsKey("value")) {
+                        Object val = fieldData.get("value");
+                        if (val instanceof Number) {
+                            deductionAmount = BigDecimal.valueOf(((Number) val).doubleValue());
+                        } else if (val instanceof String) {
+                            try {
+                                deductionAmount = new BigDecimal((String) val);
+                            } catch (NumberFormatException e) {
+                                // Ignore invalid values
+                            }
+                        }
+                    }
+                } else if (value instanceof Number) {
+                    deductionAmount = BigDecimal.valueOf(((Number) value).doubleValue());
+                }
+                if (deductionAmount != null && deductionAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    totalCustomDeductions = totalCustomDeductions.add(deductionAmount);
                 }
             }
         }

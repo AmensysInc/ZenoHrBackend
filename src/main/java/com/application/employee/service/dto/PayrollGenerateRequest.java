@@ -21,6 +21,6 @@ public class PayrollGenerateRequest {
     private BigDecimal additionalMedicare;
     private BigDecimal netPay;
     private Map<String, BigDecimal> otherDeductions;
-    private Map<String, BigDecimal> customDeductions;
+    private Map<String, Object> customDeductions; // Can be Map<String, BigDecimal> or Map<String, Object> with name/value
 }
 

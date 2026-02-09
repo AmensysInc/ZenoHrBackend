@@ -18,7 +18,7 @@ public interface PayrollService {
                                   LocalDate payPeriodStart, LocalDate payPeriodEnd,
                                   LocalDate payDate, TaxCalculations taxCalculations,
                                   Map<String, BigDecimal> otherDeductions,
-                                  Map<String, BigDecimal> customDeductions);
+                                  Map<String, Object> customDeductions);
     
     List<PayrollRecord> getAllPayrollRecords();
     
