@@ -52,6 +52,12 @@ public class PreviousMonthTaxServiceImpl implements PreviousMonthTaxService {
             existing.setH1bWage(taxData.getH1bWage());
             existing.setH1bPrevailingWage(taxData.getH1bPrevailingWage());
             existing.setAdditionalFieldsJson(taxData.getAdditionalFieldsJson());
+            if (taxData.getPdfFilePath() != null) {
+                existing.setPdfFilePath(taxData.getPdfFilePath());
+            }
+            if (taxData.getPdfFileName() != null) {
+                existing.setPdfFileName(taxData.getPdfFileName());
+            }
             return previousMonthTaxRepository.save(existing);
         } else {
             // Create new record
@@ -95,6 +101,11 @@ public class PreviousMonthTaxServiceImpl implements PreviousMonthTaxService {
             }
         }
         return new HashMap<>();
+    }
+
+    @Override
+    public List<PreviousMonthTax> getAllPreviousMonthTaxRecords() {
+        return previousMonthTaxRepository.findAllWithEmployee();
     }
 }
 

@@ -70,6 +70,13 @@ public class PreviousMonthTax {
     @Column(name = "ADDITIONAL_FIELDS", columnDefinition = "TEXT")
     private String additionalFieldsJson;
 
+    // PDF file path
+    @Column(name = "PDF_FILE_PATH")
+    private String pdfFilePath;
+
+    @Column(name = "PDF_FILE_NAME")
+    private String pdfFileName;
+
     @Column(name = "CREATED_AT", nullable = false)
     private LocalDateTime createdAt;
 

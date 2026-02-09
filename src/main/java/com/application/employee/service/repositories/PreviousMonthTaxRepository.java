@@ -13,5 +13,8 @@ public interface PreviousMonthTaxRepository extends JpaRepository<PreviousMonthT
     
     @Query("SELECT p FROM PreviousMonthTax p LEFT JOIN FETCH p.employee WHERE p.employee.employeeID = :employeeId")
     Optional<PreviousMonthTax> findByEmployeeEmployeeID(@Param("employeeId") String employeeId);
+    
+    @Query("SELECT p FROM PreviousMonthTax p LEFT JOIN FETCH p.employee ORDER BY p.createdAt DESC")
+    java.util.List<PreviousMonthTax> findAllWithEmployee();
 }
 

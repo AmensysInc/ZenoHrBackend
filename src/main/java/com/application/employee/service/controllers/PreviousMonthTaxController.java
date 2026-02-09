@@ -6,13 +6,23 @@ import com.application.employee.service.services.PDFParsingService;
 import com.application.employee.service.services.PreviousMonthTaxService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,12 +37,18 @@ public class PreviousMonthTaxController {
     @Autowired
     private PDFParsingService pdfParsingService;
 
+    @Value("${file.upload.path:D:\\My Drive\\New folder}")
+    private String uploadPath;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
-    public ResponseEntity<Map<String, Object>> savePreviousMonthTax(@RequestBody PreviousMonthTaxRequest request) {
+    public ResponseEntity<Map<String, Object>> savePreviousMonthTax(
+            @RequestPart("data") String requestJson,
+            @RequestPart(value = "pdf", required = false) MultipartFile pdfFile) {
         try {
+            PreviousMonthTaxRequest request = objectMapper.readValue(requestJson, PreviousMonthTaxRequest.class);
             PreviousMonthTax taxData = new PreviousMonthTax();
             taxData.setPeriodStartDate(request.getPeriodStartDate());
             taxData.setPeriodEndDate(request.getPeriodEndDate());
@@ -50,6 +66,23 @@ public class PreviousMonthTaxController {
             // Convert additionalFields to JSON
             if (request.getAdditionalFields() != null && !request.getAdditionalFields().isEmpty()) {
                 taxData.setAdditionalFieldsJson(objectMapper.writeValueAsString(request.getAdditionalFields()));
+            }
+
+            // Save PDF file if provided
+            if (pdfFile != null && !pdfFile.isEmpty()) {
+                try {
+                    Path taxDir = Paths.get(uploadPath, "previous-month-tax", request.getEmployeeId());
+                    if (!Files.exists(taxDir)) {
+                        Files.createDirectories(taxDir);
+                    }
+                    String fileName = pdfFile.getOriginalFilename();
+                    Path filePath = taxDir.resolve(fileName);
+                    Files.write(filePath, pdfFile.getBytes());
+                    taxData.setPdfFilePath(filePath.toString());
+                    taxData.setPdfFileName(fileName);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to save PDF file: " + e.getMessage(), e);
+                }
             }
 
             PreviousMonthTax saved = previousMonthTaxService.savePreviousMonthTax(request.getEmployeeId(), taxData);
@@ -135,6 +168,58 @@ public class PreviousMonthTaxController {
             errorResponse.put("success", false);
             errorResponse.put("error", "Error processing PDF: " + e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
+    public ResponseEntity<Map<String, Object>> getAllPreviousMonthTaxRecords() {
+        try {
+            List<PreviousMonthTax> records = previousMonthTaxService.getAllPreviousMonthTaxRecords();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", records);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @GetMapping("/download-pdf/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
+    public ResponseEntity<Resource> downloadPDF(@PathVariable Long id) {
+        try {
+            List<PreviousMonthTax> allRecords = previousMonthTaxService.getAllPreviousMonthTaxRecords();
+            PreviousMonthTax taxData = allRecords.stream()
+                    .filter(r -> r.getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (taxData == null || taxData.getPdfFilePath() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Path filePath = Paths.get(taxData.getPdfFilePath());
+            
+            if (!Files.exists(filePath)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] fileBytes = Files.readAllBytes(filePath);
+            ByteArrayResource resource = new ByteArrayResource(fileBytes);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", taxData.getPdfFileName() != null ? taxData.getPdfFileName() : "paystub.pdf");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
