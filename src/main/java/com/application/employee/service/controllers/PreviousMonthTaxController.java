@@ -80,14 +80,37 @@ public class PreviousMonthTaxController {
             if (pdfFile != null && !pdfFile.isEmpty()) {
                 try {
                     // Normalize the upload path to handle both Windows and Unix paths
-                    String normalizedUploadPath = uploadPath.replace("\\", "/");
-                    if (normalizedUploadPath.contains(":")) {
-                        // Windows path - extract just the path part after the drive letter
-                        normalizedUploadPath = normalizedUploadPath.substring(normalizedUploadPath.indexOf(":") + 1).replace("\\", "/");
-                    }
-                    // Remove leading slash if present to make it relative
-                    if (normalizedUploadPath.startsWith("/")) {
-                        normalizedUploadPath = normalizedUploadPath.substring(1);
+                    String normalizedUploadPath = uploadPath;
+                    
+                    // Check if running in Docker/Linux environment (path starts with /app or /)
+                    boolean isUnixEnvironment = System.getProperty("os.name").toLowerCase().contains("linux") || 
+                                                normalizedUploadPath.startsWith("/app") ||
+                                                normalizedUploadPath.startsWith("/");
+                    
+                    if (isUnixEnvironment) {
+                        // For Unix/Docker: convert Windows path to Unix path
+                        normalizedUploadPath = normalizedUploadPath.replace("\\", "/");
+                        if (normalizedUploadPath.contains(":")) {
+                            // Windows path like "D:\My Drive\New folder" - extract path after drive letter
+                            String driveAndPath = normalizedUploadPath.substring(normalizedUploadPath.indexOf(":") + 1);
+                            normalizedUploadPath = driveAndPath.replace("\\", "/").trim();
+                            // Remove leading slash if present
+                            if (normalizedUploadPath.startsWith("/")) {
+                                normalizedUploadPath = normalizedUploadPath.substring(1);
+                            }
+                            // Use /app/uploads as base in Docker, or just the path
+                            if (normalizedUploadPath.startsWith("app/") || normalizedUploadPath.startsWith("/app/")) {
+                                // Already has /app prefix
+                            } else {
+                                normalizedUploadPath = "/app/uploads/" + normalizedUploadPath;
+                            }
+                        } else if (!normalizedUploadPath.startsWith("/")) {
+                            // Relative path - make it absolute in Docker
+                            normalizedUploadPath = "/app/uploads/" + normalizedUploadPath;
+                        }
+                    } else {
+                        // Windows environment - keep as is but normalize separators
+                        normalizedUploadPath = normalizedUploadPath.replace("/", "\\");
                     }
                     
                     Path taxDir = Paths.get(normalizedUploadPath, "previous-month-tax", request.getEmployeeId());
@@ -100,6 +123,7 @@ public class PreviousMonthTaxController {
                     }
                     Path filePath = taxDir.resolve(fileName);
                     Files.write(filePath, pdfFile.getBytes());
+                    // Store path with forward slashes for consistency
                     taxData.setPdfFilePath(filePath.toString().replace("\\", "/"));
                     taxData.setPdfFileName(fileName);
                 } catch (IOException e) {
