@@ -79,55 +79,62 @@ public class PreviousMonthTaxController {
             // Save PDF file if provided
             if (pdfFile != null && !pdfFile.isEmpty()) {
                 try {
-                    // Normalize the upload path to handle both Windows and Unix paths
-                    String normalizedUploadPath = uploadPath;
+                    // Determine the base upload path
+                    String basePath = uploadPath;
                     
-                    // Check if running in Docker/Linux environment (path starts with /app or /)
-                    boolean isUnixEnvironment = System.getProperty("os.name").toLowerCase().contains("linux") || 
-                                                normalizedUploadPath.startsWith("/app") ||
-                                                normalizedUploadPath.startsWith("/");
+                    // Check if we're in a Docker/Linux environment
+                    String osName = System.getProperty("os.name", "").toLowerCase();
+                    boolean isLinux = osName.contains("linux") || osName.contains("unix");
                     
-                    if (isUnixEnvironment) {
-                        // For Unix/Docker: convert Windows path to Unix path
-                        normalizedUploadPath = normalizedUploadPath.replace("\\", "/");
-                        if (normalizedUploadPath.contains(":")) {
-                            // Windows path like "D:\My Drive\New folder" - extract path after drive letter
-                            String driveAndPath = normalizedUploadPath.substring(normalizedUploadPath.indexOf(":") + 1);
-                            normalizedUploadPath = driveAndPath.replace("\\", "/").trim();
-                            // Remove leading slash if present
-                            if (normalizedUploadPath.startsWith("/")) {
-                                normalizedUploadPath = normalizedUploadPath.substring(1);
-                            }
-                            // Use /app/uploads as base in Docker, or just the path
-                            if (normalizedUploadPath.startsWith("app/") || normalizedUploadPath.startsWith("/app/")) {
-                                // Already has /app prefix
-                            } else {
-                                normalizedUploadPath = "/app/uploads/" + normalizedUploadPath;
-                            }
-                        } else if (!normalizedUploadPath.startsWith("/")) {
-                            // Relative path - make it absolute in Docker
-                            normalizedUploadPath = "/app/uploads/" + normalizedUploadPath;
+                    // If uploadPath contains Windows drive letter (like D:\) and we're on Linux, use /app/uploads
+                    if (isLinux && basePath != null && basePath.contains(":")) {
+                        // Extract the path part after the drive letter
+                        String pathPart = basePath.substring(basePath.indexOf(":") + 1).trim();
+                        pathPart = pathPart.replace("\\", "/").replace("//", "/");
+                        // Remove leading slash
+                        if (pathPart.startsWith("/")) {
+                            pathPart = pathPart.substring(1);
                         }
+                        // Use /app/uploads as base in Docker
+                        basePath = "/app/uploads/" + pathPart;
+                    } else if (isLinux && (basePath == null || basePath.trim().isEmpty() || basePath.contains(":"))) {
+                        // Default to /app/uploads in Docker if path is invalid
+                        basePath = "/app/uploads";
                     } else {
-                        // Windows environment - keep as is but normalize separators
-                        normalizedUploadPath = normalizedUploadPath.replace("/", "\\");
+                        // Windows or valid path - normalize separators
+                        basePath = basePath.replace("/", "\\");
                     }
                     
-                    Path taxDir = Paths.get(normalizedUploadPath, "previous-month-tax", request.getEmployeeId());
+                    // Create the directory path for this employee's tax documents
+                    Path taxDir = Paths.get(basePath, "previous-month-tax", request.getEmployeeId());
+                    
+                    // Create directories if they don't exist
                     if (!Files.exists(taxDir)) {
                         Files.createDirectories(taxDir);
                     }
+                    
+                    // Get or generate filename
                     String fileName = pdfFile.getOriginalFilename();
-                    if (fileName == null || fileName.isEmpty()) {
+                    if (fileName == null || fileName.trim().isEmpty()) {
                         fileName = "paystub_" + System.currentTimeMillis() + ".pdf";
                     }
+                    // Sanitize filename
+                    fileName = fileName.replaceAll("[^a-zA-Z0-9._-]", "_");
+                    
+                    // Save the file
                     Path filePath = taxDir.resolve(fileName);
                     Files.write(filePath, pdfFile.getBytes());
-                    // Store path with forward slashes for consistency
+                    
+                    // Store path with forward slashes for consistency (works on both Windows and Unix)
                     taxData.setPdfFilePath(filePath.toString().replace("\\", "/"));
                     taxData.setPdfFileName(fileName);
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to save PDF file: " + e.getMessage(), e);
+                } catch (Exception e) {
+                    // Log the full error for debugging
+                    String errorMsg = "Failed to save PDF file: " + e.getMessage();
+                    if (e.getCause() != null) {
+                        errorMsg += " (Cause: " + e.getCause().getMessage() + ")";
+                    }
+                    throw new RuntimeException(errorMsg, e);
                 }
             }
 
