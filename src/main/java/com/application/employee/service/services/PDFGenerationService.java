@@ -526,7 +526,7 @@ public class PDFGenerationService {
         PdfPCell cell = new PdfPCell(new Phrase(text, BOLD_FONT));
         cell.setPadding(5);
         cell.setBorder(Rectangle.NO_BORDER);
-        cell.setBackgroundColor(new Color(240, 240, 240));
+        cell.setBackgroundColor(Color.WHITE); // No background color for ADP style
         table.addCell(cell);
     }
 
