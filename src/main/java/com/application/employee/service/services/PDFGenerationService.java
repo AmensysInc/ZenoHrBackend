@@ -360,34 +360,31 @@ public class PDFGenerationService {
         // Add some space before check section
         document.add(new Paragraph(" ", SMALL_FONT));
         
-        // Get current Y position before adding check content
+        // Get current Y position before adding check content for watermark
         float checkSectionStartY = writer.getVerticalPosition(false);
         
-        // Add watermark first (behind the content) - smaller and at top of check section
+        // Add watermark first (behind the content) - "THIS IS NOT A CHECK" and "VOID - NON NEGOTIABLE"
         PdfContentByte canvas = writer.getDirectContentUnder();
-        Font watermarkFont = new Font(Font.HELVETICA, 35, Font.BOLD, new Color(200, 200, 200));
-        Phrase watermark = new Phrase("VOID NON-NEGOTIABLE", watermarkFont);
+        Font watermarkFont1 = new Font(Font.HELVETICA, 40, Font.BOLD, new Color(200, 200, 200));
+        Font watermarkFont2 = new Font(Font.HELVETICA, 30, Font.BOLD, new Color(200, 200, 200));
         
-        // Position watermark at the top of check section
         float pageWidth = document.right() - document.left();
         float watermarkX = pageWidth / 2f + document.leftMargin();
-        // Position it at the top of the check section
-        float watermarkY = checkSectionStartY - 10f;
+        float watermarkY = checkSectionStartY - 20f;
         
-        ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
+        Phrase watermark1 = new Phrase("THIS IS NOT A CHECK", watermarkFont1);
+        ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark1,
             watermarkX, watermarkY, 0f);
+        
+        Phrase watermark2 = new Phrase("VOID - NON NEGOTIABLE", watermarkFont2);
+        ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark2,
+            watermarkX, watermarkY - 30f, 0f);
 
-        PdfPTable checkTable = new PdfPTable(2);
-        checkTable.setWidthPercentage(100);
-        checkTable.setWidths(new float[]{50f, 50f});
-        checkTable.setSpacingAfter(10);
-
-        // Left Column - Company Info (bottom aligned)
-        PdfPCell leftCell = new PdfPCell();
-        leftCell.setBorder(Rectangle.NO_BORDER);
-        leftCell.setPadding(5);
-        leftCell.setPaddingTop(15);
-        leftCell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+        // Top section: Company info on left, Federal taxable wages on right
+        PdfPTable topTable = new PdfPTable(2);
+        topTable.setWidthPercentage(100);
+        topTable.setWidths(new float[]{50f, 50f});
+        topTable.setSpacingAfter(10);
 
         String companyNameStr = "Ingenious Heads LLC";
         String companyAddressStr = "21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279";
@@ -398,74 +395,129 @@ public class PDFGenerationService {
             companyAddressStr = getCompanyAddress(employee.getCompany());
         }
 
-        Paragraph companyInfo = new Paragraph(
-            companyNameStr + ", " + companyAddressStr,
+        PdfPCell companyCell = new PdfPCell();
+        companyCell.setBorder(Rectangle.NO_BORDER);
+        companyCell.setPadding(5);
+        companyCell.setPaddingTop(15);
+        companyCell.setVerticalAlignment(Element.ALIGN_TOP);
+        Paragraph companyName = new Paragraph(companyNameStr, SMALL_FONT);
+        Paragraph companyAddr = new Paragraph(companyAddressStr, SMALL_FONT);
+        companyCell.addElement(companyName);
+        companyCell.addElement(companyAddr);
+
+        PdfPCell taxableCell = new PdfPCell();
+        taxableCell.setBorder(Rectangle.NO_BORDER);
+        taxableCell.setPadding(5);
+        taxableCell.setPaddingTop(15);
+        taxableCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        taxableCell.setVerticalAlignment(Element.ALIGN_TOP);
+        Paragraph taxableWages = new Paragraph(
+            "Your federal taxable wages this period are " + formatCurrency(payrollRecord.getGrossPay()),
             SMALL_FONT
         );
+        taxableCell.addElement(taxableWages);
 
-        leftCell.addElement(companyInfo);
+        topTable.addCell(companyCell);
+        topTable.addCell(taxableCell);
+        document.add(topTable);
 
-        // Right Column - Check Details
-        PdfPCell rightCell = new PdfPCell();
-        rightCell.setBorder(Rectangle.NO_BORDER);
-        rightCell.setPadding(5);
-        rightCell.setPaddingTop(15);
-        rightCell.setVerticalAlignment(Element.ALIGN_TOP);
+        // Middle section: Pay to order, amount in words, amount in numbers
+        PdfPTable middleTable = new PdfPTable(2);
+        middleTable.setWidthPercentage(100);
+        middleTable.setWidths(new float[]{60f, 40f});
+        middleTable.setSpacingAfter(10);
 
-        // Get bank routing and account from employee details
+        String fullName = (employee.getFirstName() != null ? employee.getFirstName() : "") + " " +
+            (employee.getLastName() != null ? employee.getLastName() : "");
+
+        PdfPCell payToCell = new PdfPCell();
+        payToCell.setBorder(Rectangle.NO_BORDER);
+        payToCell.setPadding(5);
+        payToCell.setVerticalAlignment(Element.ALIGN_TOP);
+        Paragraph payToOrder = new Paragraph("Pay to the order of: " + fullName.trim(), SMALL_FONT);
+        payToOrder.setSpacingAfter(8);
+        Paragraph amountWords = new Paragraph(numberToWords(payrollRecord.getNetPay()), SMALL_FONT);
+        amountWords.setSpacingAfter(5);
+        payToCell.addElement(payToOrder);
+        payToCell.addElement(amountWords);
+
+        PdfPCell amountCell = new PdfPCell();
+        amountCell.setBorder(Rectangle.NO_BORDER);
+        amountCell.setPadding(5);
+        amountCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        amountCell.setVerticalAlignment(Element.ALIGN_TOP);
+        Paragraph netPayAmount = new Paragraph(formatCurrency(payrollRecord.getNetPay()), BOLD_FONT);
+        netPayAmount.setAlignment(Element.ALIGN_RIGHT);
+        amountCell.addElement(netPayAmount);
+
+        middleTable.addCell(payToCell);
+        middleTable.addCell(amountCell);
+        document.add(middleTable);
+
+        // Bottom section: Routing number top right, check details, bank name bottom left, recipient address bottom middle
+        PdfPTable bottomTable = new PdfPTable(3);
+        bottomTable.setWidthPercentage(100);
+        bottomTable.setWidths(new float[]{33f, 34f, 33f});
+        bottomTable.setSpacingAfter(10);
+
+        // Left column - Bank name
+        PdfPCell bankCell = new PdfPCell();
+        bankCell.setBorder(Rectangle.NO_BORDER);
+        bankCell.setPadding(5);
+        bankCell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+        String bankName = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getBankName() != null ?
+            employee.getEmployeeDetails().getBankName() : "Chase";
+        Paragraph bankNamePara = new Paragraph(bankName, SMALL_FONT);
+        bankCell.addElement(bankNamePara);
+
+        // Middle column - Recipient address
+        PdfPCell addressCell = new PdfPCell();
+        addressCell.setBorder(Rectangle.NO_BORDER);
+        addressCell.setPadding(5);
+        addressCell.setVerticalAlignment(Element.ALIGN_BOTTOM);
+        String empAddress = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getResidentialAddress() != null ?
+            employee.getEmployeeDetails().getResidentialAddress() : "152 Pampano Ln, Saint Charles, MO 63301";
+        Paragraph recipientName = new Paragraph(fullName.trim(), SMALL_FONT);
+        Paragraph recipientAddr = new Paragraph(empAddress, SMALL_FONT);
+        addressCell.addElement(recipientName);
+        addressCell.addElement(recipientAddr);
+
+        // Right column - Routing number (top), check number and pay date
+        PdfPCell checkDetailsCell = new PdfPCell();
+        checkDetailsCell.setBorder(Rectangle.NO_BORDER);
+        checkDetailsCell.setPadding(5);
+        checkDetailsCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        checkDetailsCell.setVerticalAlignment(Element.ALIGN_TOP);
+        
         String routingNumber = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getRoutingNumber() != null ?
             employee.getEmployeeDetails().getRoutingNumber() : "68-426";
         String accountNumber = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getAccNumber() != null ?
             maskAccountNumber(employee.getEmployeeDetails().getAccNumber()) : "514";
         String bankInfo = routingNumber + "/" + accountNumber;
-
+        
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        String fullName = (employee.getFirstName() != null ? employee.getFirstName() : "") + " " +
-            (employee.getLastName() != null ? employee.getLastName() : "");
-        String empAddress = employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getResidentialAddress() != null ?
-            employee.getEmployeeDetails().getResidentialAddress() : "152 Pampano Ln, Saint Charles, MO 63301";
-
         Paragraph bankRouting = new Paragraph(bankInfo, SMALL_FONT);
+        bankRouting.setAlignment(Element.ALIGN_RIGHT);
+        bankRouting.setSpacingAfter(5);
         Paragraph payrollCheck = new Paragraph(
             "Payroll Check Number: " + (payrollRecord.getId() != null ? String.format("%05d", payrollRecord.getId()) : "00001"),
             SMALL_FONT
         );
+        payrollCheck.setAlignment(Element.ALIGN_RIGHT);
         Paragraph payDate = new Paragraph(
             "Pay Date: " + payrollRecord.getPayDate().format(dateFormatter),
             SMALL_FONT
         );
-        Paragraph payToOrder = new Paragraph("Pay to the order of: " + fullName.trim(), SMALL_FONT);
-        payToOrder.setSpacingBefore(8);
-        Paragraph payeeAddress = new Paragraph(empAddress, SMALL_FONT);
-        payeeAddress.setSpacingBefore(2);
-        Paragraph amountWords = new Paragraph(
-            numberToWords(payrollRecord.getNetPay()),
-            SMALL_FONT
-        );
-        amountWords.setSpacingBefore(8);
+        payDate.setAlignment(Element.ALIGN_RIGHT);
         
-        Paragraph netPayBox = new Paragraph(formatCurrency(payrollRecord.getNetPay()), BOLD_FONT);
-        netPayBox.setAlignment(Element.ALIGN_RIGHT);
-        netPayBox.setSpacingBefore(5);
+        checkDetailsCell.addElement(bankRouting);
+        checkDetailsCell.addElement(payrollCheck);
+        checkDetailsCell.addElement(payDate);
 
-        rightCell.addElement(bankRouting);
-        rightCell.addElement(payrollCheck);
-        rightCell.addElement(payDate);
-        rightCell.addElement(payToOrder);
-        rightCell.addElement(payeeAddress);
-        rightCell.addElement(amountWords);
-        rightCell.addElement(netPayBox);
-
-        checkTable.addCell(leftCell);
-        checkTable.addCell(rightCell);
-
-        document.add(checkTable);
-        
-        // Add "NOT A CHECK" text below
-        Paragraph notACheck = new Paragraph("NOT A CHECK", new Font(Font.HELVETICA, 9, Font.BOLD, new Color(150, 150, 150)));
-        notACheck.setAlignment(Element.ALIGN_CENTER);
-        notACheck.setSpacingBefore(10);
-        document.add(notACheck);
+        bottomTable.addCell(bankCell);
+        bottomTable.addCell(addressCell);
+        bottomTable.addCell(checkDetailsCell);
+        document.add(bottomTable);
     }
 
     private void addHorizontalLine(Document document) throws DocumentException {
