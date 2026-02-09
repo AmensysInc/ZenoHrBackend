@@ -121,7 +121,8 @@ public class EmployeeServiceImplementation implements EmployeeService {
 
     @Override
     public List<Employee> getEmployeesByCompanyOrAll(Long company_id) {
-        return employeeRespository.findByCompanyOrAll(company_id);
+        Integer companyId = company_id != null ? company_id.intValue() : null;
+        return employeeRespository.findByCompanyOrAll(companyId);
     }
 
     @Override
