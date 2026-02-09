@@ -15,7 +15,8 @@ public interface CheckSettingsRepository extends JpaRepository<CheckSettings, Lo
     
     Optional<CheckSettings> findByCompany(Companies company);
     
-    Optional<CheckSettings> findByCompanyId(Integer companyId);
+    @Query("SELECT c FROM CheckSettings c WHERE c.company.companyId = :companyId")
+    Optional<CheckSettings> findByCompanyId(@Param("companyId") Integer companyId);
     
     @Query("SELECT c FROM CheckSettings c LEFT JOIN FETCH c.company")
     List<CheckSettings> findAllWithCompany();
