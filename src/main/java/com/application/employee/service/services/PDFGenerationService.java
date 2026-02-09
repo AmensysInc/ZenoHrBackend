@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
@@ -40,8 +41,8 @@ public class PDFGenerationService {
         // Statutory Deductions Section
         addStatutoryDeductionsSection(document, payrollRecord, ytdData);
 
-        // Net Pay and Important Notes
-        addNetPayAndNotes(document, payrollRecord);
+        // Net Pay (separate, below deductions table)
+        addNetPaySection(document, payrollRecord);
 
         // Federal Taxable Wages
         addFederalTaxableWages(document, payrollRecord);
@@ -76,7 +77,7 @@ public class PDFGenerationService {
 
         Paragraph companyCode = new Paragraph("Company Code: K5/MEL 25841619", SMALL_FONT);
         Paragraph locDept = new Paragraph("Loc/Dept: 01/", SMALL_FONT);
-        Paragraph number = new Paragraph("Number: " + (payrollRecord.getId() != null ? String.format("%05d", payrollRecord.getId()) : "50803"), SMALL_FONT);
+        Paragraph number = new Paragraph("Number: " + (payrollRecord.getId() != null ? String.format("%05d", payrollRecord.getId()) : "00001"), SMALL_FONT);
         Paragraph page = new Paragraph("Page: 1 of 1", SMALL_FONT);
         Paragraph companyName = new Paragraph(companyNameStr, BOLD_FONT);
         Paragraph companyAddress = new Paragraph(companyAddressStr, SMALL_FONT);
@@ -190,9 +191,17 @@ public class PDFGenerationService {
         addTableHeader(earningsTable, "this period");
         addTableHeader(earningsTable, "year to date");
 
+        // Calculate rate (gross pay / hours, or use a default for salaried)
+        String rateValue = "";
+        if (payrollRecord.getGrossPay() != null && payrollRecord.getGrossPay().compareTo(BigDecimal.ZERO) > 0) {
+            // For salaried, show a calculated rate (e.g., monthly salary / 160 hours)
+            BigDecimal monthlyRate = payrollRecord.getGrossPay().divide(BigDecimal.valueOf(160), 4, RoundingMode.HALF_UP);
+            rateValue = String.format("%.4f", monthlyRate);
+        }
+
         // Regular Earnings Row
         addTableCell(earningsTable, "Regular", NORMAL_FONT);
-        addTableCell(earningsTable, "", NORMAL_FONT, Element.ALIGN_RIGHT); // Rate can be blank for salaried
+        addTableCell(earningsTable, rateValue, NORMAL_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, "0.00", NORMAL_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(payrollRecord.getGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
@@ -208,17 +217,20 @@ public class PDFGenerationService {
 
         centerCell.addElement(earningsTable);
 
-        // Right Column - Other Benefits
+        // Right Column - Important Notes
         PdfPCell rightCell = new PdfPCell();
         rightCell.setBorder(Rectangle.NO_BORDER);
         rightCell.setPadding(5);
         rightCell.setVerticalAlignment(Element.ALIGN_TOP);
 
+        Paragraph importantNotesTitle = new Paragraph("Important Notes", SMALL_FONT);
         Paragraph totalHoursTitle = new Paragraph("Total Hours Worked", SMALL_FONT);
         Paragraph totalHoursThisPeriod = new Paragraph("This Period: 0.00", SMALL_FONT);
         Paragraph totalHoursYTD = new Paragraph("Year to Date: 0.00", SMALL_FONT);
         Paragraph basisOfPay = new Paragraph("Basis of pay: Salaried", SMALL_FONT);
 
+        rightCell.addElement(importantNotesTitle);
+        rightCell.addElement(new Paragraph(" "));
         rightCell.addElement(totalHoursTitle);
         rightCell.addElement(totalHoursThisPeriod);
         rightCell.addElement(totalHoursYTD);
@@ -247,14 +259,6 @@ public class PDFGenerationService {
         addDeductionRow(deductionsTable, "Federal Income", payrollRecord.getFederalTax(), 
             ytdData != null ? ytdData.getYtdFederalTax() : null);
 
-        // State Tax (should come before Social Security and Medicare)
-        if (payrollRecord.getStateTax() != null) {
-            String stateTaxName = payrollRecord.getStateTaxName() != null ? 
-                payrollRecord.getStateTaxName() : "State Income";
-            addDeductionRow(deductionsTable, stateTaxName, payrollRecord.getStateTax(),
-                ytdData != null ? ytdData.getYtdStateTax() : null);
-        }
-
         // Social Security
         if (payrollRecord.getSocialSecurity() != null && payrollRecord.getSocialSecurity().compareTo(BigDecimal.ZERO) > 0) {
             addDeductionRow(deductionsTable, "Social Security", payrollRecord.getSocialSecurity(),
@@ -265,6 +269,14 @@ public class PDFGenerationService {
         if (payrollRecord.getMedicare() != null && payrollRecord.getMedicare().compareTo(BigDecimal.ZERO) > 0) {
             addDeductionRow(deductionsTable, "Medicare", payrollRecord.getMedicare(),
                 ytdData != null ? ytdData.getYtdMedicare() : null);
+        }
+
+        // State Tax
+        if (payrollRecord.getStateTax() != null) {
+            String stateTaxName = payrollRecord.getStateTaxName() != null ? 
+                payrollRecord.getStateTaxName() : "State Income";
+            addDeductionRow(deductionsTable, stateTaxName, payrollRecord.getStateTax(),
+                ytdData != null ? ytdData.getYtdStateTax() : null);
         }
 
         // Local Tax
@@ -314,29 +326,33 @@ public class PDFGenerationService {
             }
         }
 
-        // Net Pay Row - part of the deductions table
+        document.add(deductionsTable);
+        document.add(new Paragraph(" "));
+    }
+
+    private void addNetPaySection(Document document, PayrollRecord payrollRecord) throws DocumentException {
+        // Net Pay is BELOW the deductions table, not inside it
+        PdfPTable netPayTable = new PdfPTable(3);
+        netPayTable.setWidthPercentage(100);
+        netPayTable.setWidths(new float[]{50f, 25f, 25f});
+
         PdfPCell netPayLabel = new PdfPCell(new Phrase("Net Pay", BOLD_FONT));
         netPayLabel.setBorder(Rectangle.NO_BORDER);
         netPayLabel.setPadding(5);
-        deductionsTable.addCell(netPayLabel);
+        netPayTable.addCell(netPayLabel);
         
         PdfPCell netPayValue = new PdfPCell(new Phrase(formatCurrency(payrollRecord.getNetPay()), BOLD_FONT));
         netPayValue.setBorder(Rectangle.NO_BORDER);
         netPayValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
         netPayValue.setPadding(5);
-        deductionsTable.addCell(netPayValue);
+        netPayTable.addCell(netPayValue);
         
         PdfPCell emptyCell = new PdfPCell();
         emptyCell.setBorder(Rectangle.NO_BORDER);
-        deductionsTable.addCell(emptyCell);
+        netPayTable.addCell(emptyCell);
 
-        document.add(deductionsTable);
+        document.add(netPayTable);
         document.add(new Paragraph(" "));
-    }
-
-    private void addNetPayAndNotes(Document document, PayrollRecord payrollRecord) throws DocumentException {
-        // Net Pay is now part of the deductions table, so this method is empty
-        // Keeping it for structure but not adding anything
     }
 
     private void addFederalTaxableWages(Document document, PayrollRecord payrollRecord) throws DocumentException {
@@ -442,6 +458,11 @@ public class PDFGenerationService {
         checkTable.addCell(rightCell);
 
         document.add(checkTable);
+        
+        // Add "NOT A CHECK" text below
+        Paragraph notACheck = new Paragraph("NOT A CHECK", new Font(Font.HELVETICA, 10, Font.BOLD, new Color(150, 150, 150)));
+        notACheck.setAlignment(Element.ALIGN_CENTER);
+        document.add(notACheck);
     }
 
     private String getCompanyAddress(Companies company) {
