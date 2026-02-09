@@ -5,6 +5,7 @@ import com.application.employee.service.entities.PayrollRecord;
 import com.application.employee.service.entities.YTDData;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+import java.awt.Color;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -50,7 +51,7 @@ public class PDFGenerationService {
     private void addHeader(Document document, Employee employee, PayrollRecord payrollRecord) throws DocumentException {
         PdfPTable headerTable = new PdfPTable(3);
         headerTable.setWidthPercentage(100);
-        headerTable.setWidths(new float[]{40, 20, 40});
+        headerTable.setWidths(new float[]{40f, 20f, 40f});
 
         // Left Column - Company Info
         PdfPCell leftCell = new PdfPCell();
@@ -95,8 +96,8 @@ public class PDFGenerationService {
             BOLD_FONT
         );
         Paragraph employeeAddress = new Paragraph(
-            employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getAddress() != null ?
-                employee.getEmployeeDetails().getAddress() : "152 Pampano Ln, Saint Charles, MO 63301",
+            employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getResidentialAddress() != null ?
+                employee.getEmployeeDetails().getResidentialAddress() : "152 Pampano Ln, Saint Charles, MO 63301",
             SMALL_FONT
         );
 
@@ -120,7 +121,7 @@ public class PDFGenerationService {
     private void addEarningsSection(Document document, PayrollRecord payrollRecord, YTDData ytdData) throws DocumentException {
         PdfPTable earningsTable = new PdfPTable(5);
         earningsTable.setWidthPercentage(100);
-        earningsTable.setWidths(new float[]{30, 15, 20, 17.5, 17.5});
+        earningsTable.setWidths(new float[]{30f, 15f, 20f, 17.5f, 17.5f});
 
         // Header
         addTableHeader(earningsTable, "Earnings");
@@ -151,7 +152,7 @@ public class PDFGenerationService {
     private void addStatutoryDeductionsSection(Document document, PayrollRecord payrollRecord, YTDData ytdData) throws DocumentException {
         PdfPTable deductionsTable = new PdfPTable(3);
         deductionsTable.setWidthPercentage(100);
-        deductionsTable.setWidths(new float[]{50, 25, 25});
+        deductionsTable.setWidths(new float[]{50f, 25f, 25f});
 
         // Header
         addTableHeader(deductionsTable, "Statutory Deductions");
@@ -198,7 +199,7 @@ public class PDFGenerationService {
             try {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 Map<String, Object> customDeductions = mapper.readValue(payrollRecord.getCustomDeductionsJson(), 
-                    com.fasterxml.jackson.core.type.TypeReference.forType(Map.class));
+                    new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
                 
                 for (Map.Entry<String, Object> entry : customDeductions.entrySet()) {
                     String key = entry.getKey();
@@ -256,7 +257,7 @@ public class PDFGenerationService {
     private void addFooter(Document document, Employee employee, PayrollRecord payrollRecord) throws DocumentException {
         PdfPTable footerTable = new PdfPTable(2);
         footerTable.setWidthPercentage(100);
-        footerTable.setWidths(new float[]{50, 50});
+        footerTable.setWidths(new float[]{50f, 50f});
 
         // Left Column
         PdfPCell leftCell = new PdfPCell();

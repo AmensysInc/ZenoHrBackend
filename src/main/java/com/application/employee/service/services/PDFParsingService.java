@@ -1,5 +1,6 @@
 package com.application.employee.service.services;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class PDFParsingService {
         extracted.put("periodEndDate", null);
         extracted.put("additionalFields", new HashMap<String, Object>());
 
-        try (PDDocument document = PDDocument.load(file.getInputStream())) {
+        try (PDDocument document = Loader.loadPDF(file.getInputStream())) {
             PDFTextStripper stripper = new PDFTextStripper();
             String text = stripper.getText(document);
 
