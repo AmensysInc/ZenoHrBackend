@@ -65,47 +65,62 @@ public class PDFParsingService {
     private void extractStandardFields(String text, Map<String, Object> extracted) {
         String[] lines = text.split("\n");
         
+        // First pass: Find table structure and column positions
+        int thisPeriodColIndex = -1;
+        int ytdColIndex = -1;
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].toLowerCase();
+            if (line.contains("this period") && line.contains("year to date")) {
+                // Found header row - identify column positions
+                String[] parts = lines[i].split("\\s+");
+                for (int j = 0; j < parts.length; j++) {
+                    if (parts[j].toLowerCase().contains("period") && thisPeriodColIndex == -1) {
+                        thisPeriodColIndex = j;
+                    }
+                    if (parts[j].toLowerCase().contains("year") || parts[j].toLowerCase().contains("ytd")) {
+                        ytdColIndex = j;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        
         // Extract from table format with "this period" and "year to date" columns
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             String lowerLine = line.toLowerCase();
             
-            // Extract Gross Pay from earnings section - try multiple patterns
-            if ((lowerLine.contains("gross pay") || (lowerLine.contains("gross") && lowerLine.contains("pay"))) 
-                && extracted.get("totalGrossPay") == null) {
-                BigDecimal value = extractValueFromLine(line, i, lines);
+            // Extract Gross Pay from earnings section - must match exactly "gross pay"
+            if (lowerLine.matches(".*\\bgross\\s+pay\\b.*") && extracted.get("totalGrossPay") == null) {
+                BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
                     extracted.put("totalGrossPay", value);
                 }
             }
             
-            // Extract Net Pay
-            if ((lowerLine.contains("net pay") || (lowerLine.contains("net") && lowerLine.contains("pay"))) 
-                && extracted.get("totalNetPay") == null) {
-                BigDecimal value = extractValueFromLine(line, i, lines);
+            // Extract Net Pay - must match exactly "net pay"
+            if (lowerLine.matches(".*\\bnet\\s+pay\\b.*") && extracted.get("totalNetPay") == null) {
+                BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
                     extracted.put("totalNetPay", value);
                 }
             }
             
-            // Extract Federal Tax - multiple patterns
-            if ((lowerLine.contains("federal income") || lowerLine.contains("federal tax") || 
-                 lowerLine.contains("federal withholding") || (lowerLine.contains("federal") && lowerLine.contains("tax"))) 
-                && extracted.get("federalTaxWithheld") == null) {
-                BigDecimal value = extractValueFromLine(line, i, lines);
+            // Extract Federal Tax - must be "federal income" (not just "federal")
+            if (lowerLine.matches(".*\\bfederal\\s+income\\b.*") && extracted.get("federalTaxWithheld") == null) {
+                BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null) {
-                    extracted.put("federalTaxWithheld", value);
+                    extracted.put("federalTaxWithheld", value.abs()); // Take absolute value for deductions
                 }
             }
             
-            // Extract State Tax with state name
-            if ((lowerLine.contains("state income") || lowerLine.contains("state tax") ||
-                 lowerLine.contains("california") || lowerLine.contains("illinois") || 
-                 lowerLine.contains("new jersey") || lowerLine.contains("texas") ||
-                 lowerLine.contains("new york") || lowerLine.contains("florida")) &&
+            // Extract State Tax - must be "state income" (not "state ui", "state di", etc.)
+            if (lowerLine.matches(".*\\bstate\\s+income\\b.*") && 
+                !lowerLine.contains("ui") && !lowerLine.contains("di") && !lowerLine.contains("fli") &&
                 extracted.get("stateTaxWithheld") == null) {
                 // Extract state name
-                Pattern stateNamePattern = Pattern.compile("([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)\\s+State\\s+(?:Income|Tax)", Pattern.CASE_INSENSITIVE);
+                Pattern stateNamePattern = Pattern.compile("([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)\\s+State\\s+Income", Pattern.CASE_INSENSITIVE);
                 Matcher stateNameMatcher = stateNamePattern.matcher(line);
                 if (stateNameMatcher.find()) {
                     extracted.put("stateTaxName", stateNameMatcher.group(1) + " State Income");
@@ -117,42 +132,116 @@ public class PDFParsingService {
                         extracted.put("stateTaxName", simpleMatcher.group(1) + " State Income");
                     }
                 }
-                BigDecimal value = extractValueFromLine(line, i, lines);
+                BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null) {
-                    extracted.put("stateTaxWithheld", value);
+                    extracted.put("stateTaxWithheld", value.abs()); // Take absolute value
                 }
             }
             
             // Extract Local Tax
-            if (lowerLine.contains("local tax") && extracted.get("localTaxWithheld") == null) {
-                BigDecimal value = extractValueFromLine(line, i, lines);
+            if (lowerLine.matches(".*\\blocal\\s+tax\\b.*") && extracted.get("localTaxWithheld") == null) {
+                BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null) {
-                    extracted.put("localTaxWithheld", value);
+                    extracted.put("localTaxWithheld", value.abs());
                 }
             }
             
-            // Extract Social Security - multiple patterns
-            if ((lowerLine.contains("social security") || lowerLine.contains("ss tax") || 
-                 lowerLine.contains("oasdi")) && extracted.get("socialSecurityWithheld") == null) {
-                BigDecimal value = extractValueFromLine(line, i, lines);
+            // Extract Social Security - must match exactly
+            if ((lowerLine.matches(".*\\bsocial\\s+security\\b.*") || lowerLine.matches(".*\\boasdi\\b.*")) 
+                && extracted.get("socialSecurityWithheld") == null) {
+                BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null) {
-                    extracted.put("socialSecurityWithheld", value);
+                    extracted.put("socialSecurityWithheld", value.abs());
                 }
             }
             
             // Extract Medicare - exclude additional medicare
-            if ((lowerLine.contains("medicare") || lowerLine.contains("med tax")) && 
+            if (lowerLine.matches(".*\\bmedicare\\b.*") && 
                 !lowerLine.contains("additional") && extracted.get("medicareWithheld") == null) {
-                BigDecimal value = extractValueFromLine(line, i, lines);
+                BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null) {
-                    extracted.put("medicareWithheld", value);
+                    extracted.put("medicareWithheld", value.abs());
                 }
             }
         }
     }
     
+    private BigDecimal extractThisPeriodValue(String line, int lineIndex, String[] allLines, int thisPeriodColIndex) {
+        // Extract all numeric values from the line
+        Pattern pattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)");
+        Matcher matcher = pattern.matcher(line);
+        List<BigDecimal> values = new ArrayList<>();
+        List<Integer> positions = new ArrayList<>();
+        
+        while (matcher.find()) {
+            BigDecimal value = parseDecimal(matcher.group(1));
+            if (value != null) {
+                values.add(value);
+                positions.add(matcher.start());
+            }
+        }
+        
+        if (values.isEmpty()) {
+            return null;
+        }
+        
+        // If we know the column index, use it
+        if (thisPeriodColIndex >= 0 && thisPeriodColIndex < values.size()) {
+            return values.get(thisPeriodColIndex);
+        }
+        
+        // Otherwise, for table format with "this period" and "year to date":
+        // - First value is usually "this period" (for earnings/deductions in table)
+        // - But we need to check if line has "this period" or "year to date" text
+        String lowerLine = line.toLowerCase();
+        if (lowerLine.contains("this period") || lowerLine.contains("year to date")) {
+            // This might be a header row, check next line
+            if (lineIndex + 1 < allLines.length) {
+                return extractThisPeriodValue(allLines[lineIndex + 1], lineIndex + 1, allLines, -1);
+            }
+        }
+        
+        // For deduction lines, first value is typically "this period"
+        // For earnings, it depends on format - but usually first value
+        // Since we're looking for "this period", take the first value
+        // But if there are multiple values and one is clearly larger (YTD), take the smaller one
+        if (values.size() >= 2) {
+            // Compare values - "this period" is usually smaller than YTD for cumulative values
+            // But for first pay, they might be equal
+            BigDecimal first = values.get(0);
+            BigDecimal second = values.get(1);
+            
+            // If second is much larger, first is likely "this period"
+            if (second.compareTo(first.multiply(new BigDecimal("5"))) > 0) {
+                return first;
+            }
+            // Otherwise, take first (this period column)
+            return first;
+        }
+        
+        return values.get(0);
+    }
+    
     private BigDecimal extractValueFromLine(String line, int lineIndex, String[] allLines) {
-        // Strategy 1: Look for "this period" followed by value
+        // Strategy 1: Look for table format with "this period" and "year to date" columns
+        // Pattern: field name, then value (this period), then value (ytd)
+        // We want the FIRST value after the field name (this period column)
+        Pattern tablePattern = Pattern.compile("(?:this\\s*period|year\\s*to\\s*date|ytd)", Pattern.CASE_INSENSITIVE);
+        if (tablePattern.matcher(line).find()) {
+            // This line has column headers, check next line for values
+            if (lineIndex + 1 < allLines.length) {
+                String nextLine = allLines[lineIndex + 1].trim();
+                // Extract first value (this period column)
+                Pattern valuePattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)");
+                Matcher valueMatcher = valuePattern.matcher(nextLine);
+                if (valueMatcher.find()) {
+                    BigDecimal value = parseDecimal(valueMatcher.group(1).replace("-", ""));
+                    if (value != null) return value;
+                }
+            }
+        }
+        
+        // Strategy 2: Look for "this period" followed by value
         Pattern pattern = Pattern.compile("this\\s*period[\\s:]*\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(line);
         if (matcher.find()) {
@@ -160,39 +249,56 @@ public class PDFParsingService {
             if (value != null) return value;
         }
         
-        // Strategy 2: Look for value before "year to date" or "ytd"
-        pattern = Pattern.compile("\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)\\s+(?:year\\s+to\\s+date|ytd)", Pattern.CASE_INSENSITIVE);
+        // Strategy 3: Extract values from line and identify "this period" vs "ytd"
+        // Look for pattern: field name, then this period value, then ytd value
+        // In table format, "this period" is usually the first value column
+        pattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)");
         matcher = pattern.matcher(line);
-        if (matcher.find()) {
+        List<BigDecimal> values = new ArrayList<>();
+        while (matcher.find()) {
             BigDecimal value = parseDecimal(matcher.group(1).replace("-", ""));
-            if (value != null) return value;
+            if (value != null) {
+                values.add(value);
+            }
         }
         
-        // Strategy 3: Look for value in next line (common in table formats)
+        // If we have multiple values, we need to determine which is "this period"
+        // Check if line contains "year to date" or "ytd" to identify columns
+        String lowerLine = line.toLowerCase();
+        boolean hasYtdMarker = lowerLine.contains("year to date") || lowerLine.contains("ytd");
+        
+        if (values.size() >= 2 && hasYtdMarker) {
+            // First value is typically "this period", second is "ytd"
+            // But we need to check the context - look at surrounding lines
+            // For gross pay/net pay, "this period" is usually smaller than YTD (unless it's the first pay)
+            // For deductions, both are usually similar or YTD is larger
+            return values.get(0); // First value is "this period"
+        } else if (values.size() >= 2) {
+            // No YTD marker, but multiple values - check if we can infer from context
+            // Look at previous/next lines for context
+            if (lineIndex > 0) {
+                String prevLine = allLines[lineIndex - 1].toLowerCase();
+                if (prevLine.contains("this period") || prevLine.contains("year to date")) {
+                    // Previous line has headers, first value is "this period"
+                    return values.get(0);
+                }
+            }
+            // If no clear context, prefer smaller value for gross/net (this period is usually smaller)
+            // But for deductions, either could work - take first
+            return values.get(0);
+        } else if (values.size() == 1) {
+            return values.get(0);
+        }
+        
+        // Strategy 4: Look for value in next line (common in table formats)
         if (lineIndex + 1 < allLines.length) {
             String nextLine = allLines[lineIndex + 1].trim();
             pattern = Pattern.compile("\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)");
             matcher = pattern.matcher(nextLine);
             if (matcher.find()) {
                 BigDecimal value = parseDecimal(matcher.group(1).replace("-", ""));
-                if (value != null && value.compareTo(BigDecimal.ZERO) >= 0) return value;
+                if (value != null) return value;
             }
-        }
-        
-        // Strategy 4: Extract all decimal values and take the first reasonable one
-        pattern = Pattern.compile("\\$?\\s*(-?[\\d,]+(?:\\.\\d{2})?)");
-        matcher = pattern.matcher(line);
-        List<BigDecimal> values = new ArrayList<>();
-        while (matcher.find()) {
-            BigDecimal value = parseDecimal(matcher.group(1).replace("-", ""));
-            if (value != null && value.compareTo(BigDecimal.ZERO) >= 0) {
-                values.add(value);
-            }
-        }
-        
-        // If multiple values, prefer the larger one (usually the "this period" value is larger than YTD for first pay)
-        if (!values.isEmpty()) {
-            return values.stream().max(BigDecimal::compareTo).orElse(values.get(0));
         }
         
         return null;
