@@ -2,10 +2,18 @@ package com.application.employee.service.controllers;
 
 import com.application.employee.service.dto.PayrollCalculationRequest;
 import com.application.employee.service.dto.PayrollGenerateRequest;
+import com.application.employee.service.entities.Employee;
 import com.application.employee.service.entities.PayrollRecord;
+import com.application.employee.service.entities.YTDData;
+import com.application.employee.service.repositories.YTDDataRepository;
+import com.application.employee.service.services.EmployeeService;
+import com.application.employee.service.services.PDFGenerationService;
 import com.application.employee.service.services.PayrollService;
 import com.application.employee.service.services.TaxCalculatorService.TaxCalculations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +29,15 @@ public class PayrollController {
 
     @Autowired
     private PayrollService payrollService;
+
+    @Autowired
+    private PDFGenerationService pdfGenerationService;
+
+    @Autowired
+    private EmployeeService employeeService;
+
+    @Autowired
+    private YTDDataRepository ytdDataRepository;
 
     @PostMapping("/calculate")
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
@@ -147,6 +164,32 @@ public class PayrollController {
             errorResponse.put("success", false);
             errorResponse.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @PostMapping("/generate-paystub-pdf/{payrollRecordId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
+    public ResponseEntity<byte[]> generatePaystubPDF(@PathVariable Long payrollRecordId) {
+        try {
+            PayrollRecord payrollRecord = payrollService.getPayrollRecordById(payrollRecordId);
+            Employee employee = employeeService.getEmployee(payrollRecord.getEmployee().getEmployeeID());
+            
+            // Get YTD data
+            Integer currentYear = java.time.LocalDate.now().getYear();
+            YTDData ytdData = ytdDataRepository.findByEmployeeEmployeeIDAndCurrentYear(
+                employee.getEmployeeID(), currentYear).orElse(null);
+
+            byte[] pdfBytes = pdfGenerationService.generateADPPaystub(payrollRecord, employee, ytdData);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", 
+                "paystub_" + employee.getEmployeeID() + "_" + payrollRecord.getPayDate() + ".pdf");
+            headers.setContentLength(pdfBytes.length);
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
