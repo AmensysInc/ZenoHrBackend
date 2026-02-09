@@ -8,6 +8,7 @@ import com.application.employee.service.repositories.EmployeeRespository;
 import com.application.employee.service.repositories.PayrollRecordRepository;
 import com.application.employee.service.repositories.PreviousMonthTaxRepository;
 import com.application.employee.service.repositories.YTDDataRepository;
+import com.application.employee.service.services.CheckSettingsService;
 import com.application.employee.service.services.EmployeeService;
 import com.application.employee.service.services.PayrollService;
 import com.application.employee.service.services.TaxCalculatorService;
@@ -47,6 +48,9 @@ public class PayrollServiceImpl implements PayrollService {
 
     @Autowired
     private EmployeeService employeeService;
+
+    @Autowired
+    private CheckSettingsService checkSettingsService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -171,6 +175,12 @@ public class PayrollServiceImpl implements PayrollService {
         Optional<PreviousMonthTax> previousMonthTaxOpt = previousMonthTaxRepository.findByEmployeeEmployeeID(employeeId);
         if (previousMonthTaxOpt.isPresent() && previousMonthTaxOpt.get().getStateTaxName() != null) {
             payrollRecord.setStateTaxName(previousMonthTaxOpt.get().getStateTaxName());
+        }
+
+        // Get and assign check number based on company
+        if (employee.getCompany() != null && employee.getCompany().getCompanyId() != null) {
+            Long checkNumber = checkSettingsService.getNextCheckNumber(employee.getCompany().getCompanyId());
+            payrollRecord.setCheckNumber(checkNumber);
         }
 
         // Save payroll record

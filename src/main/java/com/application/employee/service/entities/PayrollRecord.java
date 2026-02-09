@@ -96,6 +96,9 @@ public class PayrollRecord {
     @Column(name = "PAYSTUB_GENERATED")
     private Boolean paystubGenerated = false;
 
+    @Column(name = "CHECK_NUMBER")
+    private Long checkNumber;
+
     @Column(name = "CREATED_AT", nullable = false)
     private LocalDateTime createdAt;
 

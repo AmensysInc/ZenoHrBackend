@@ -618,7 +618,7 @@ public class PDFGenerationService {
         bankRouting.setAlignment(Element.ALIGN_RIGHT);
         bankRouting.setSpacingAfter(5);
         Paragraph payrollCheck = new Paragraph(
-            "Payroll Check Number: " + (payrollRecord.getId() != null ? String.format("%05d", payrollRecord.getId()) : "00001"),
+            "Payroll Check Number: " + (payrollRecord.getCheckNumber() != null ? String.format("%05d", payrollRecord.getCheckNumber()) : "00001"),
             SMALL_FONT
         );
         payrollCheck.setAlignment(Element.ALIGN_RIGHT);

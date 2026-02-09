@@ -354,32 +354,70 @@ public class PDFParsingService {
         Map<String, Object> additionalFields = (Map<String, Object>) extracted.get("additionalFields");
         
         String[] lines = text.split("\n");
-        boolean inDeductionsSection = false;
+        boolean inVoluntaryDeductionsSection = false;
+        boolean inStatutoryDeductionsSection = false;
         Set<String> standardFields = new HashSet<>(Arrays.asList(
             "federal income", "federal tax", "social security", "medicare",
             "gross pay", "net pay", "state income", "california state income",
-            "illinois state income", "local tax"
+            "illinois state income", "local tax", "additional medicare"
         ));
+
+        // First, find column positions for "this period" and "year to date"
+        int thisPeriodColIndex = -1;
+        int ytdColIndex = -1;
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].toLowerCase();
+            if (line.contains("this period") && line.contains("year to date")) {
+                String[] parts = lines[i].split("\\s+");
+                for (int j = 0; j < parts.length; j++) {
+                    if (parts[j].toLowerCase().contains("period") && thisPeriodColIndex == -1) {
+                        thisPeriodColIndex = j;
+                    }
+                    if (parts[j].toLowerCase().contains("year") || parts[j].toLowerCase().contains("ytd")) {
+                        ytdColIndex = j;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
 
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             String lowerLine = line.toLowerCase();
 
-            // Detect deductions section
-            if (lowerLine.contains("statutory deductions") || lowerLine.contains("voluntary deductions")) {
-                inDeductionsSection = true;
+            // Detect voluntary deductions section specifically
+            if (lowerLine.contains("voluntary deductions")) {
+                inVoluntaryDeductionsSection = true;
+                inStatutoryDeductionsSection = false;
+                continue;
+            }
+
+            // Detect statutory deductions section
+            if (lowerLine.contains("statutory deductions")) {
+                inStatutoryDeductionsSection = true;
+                inVoluntaryDeductionsSection = false;
                 continue;
             }
 
             // Stop if we hit net pay or other sections
             if (lowerLine.contains("net pay") || lowerLine.contains("important notes") || 
-                lowerLine.contains("basis of pay") || lowerLine.contains("federal taxable")) {
-                inDeductionsSection = false;
+                lowerLine.contains("basis of pay") || lowerLine.contains("federal taxable") ||
+                lowerLine.contains("check") || lowerLine.contains("pay to the order")) {
+                inVoluntaryDeductionsSection = false;
+                inStatutoryDeductionsSection = false;
                 continue;
             }
 
-            if (inDeductionsSection && !line.isEmpty()) {
-                // Check if it's a standard field
+            // Only process voluntary deductions section
+            if (inVoluntaryDeductionsSection && !line.isEmpty()) {
+                // Skip header rows
+                if (lowerLine.contains("this period") || lowerLine.contains("year to date") || 
+                    lowerLine.contains("voluntary deductions")) {
+                    continue;
+                }
+
+                // Check if it's a standard field (shouldn't be in voluntary, but check anyway)
                 boolean isStandard = false;
                 for (String standard : standardFields) {
                     if (lowerLine.contains(standard)) {
@@ -389,32 +427,88 @@ public class PDFParsingService {
                 }
                 
                 if (!isStandard) {
-                    // Extract deduction name (everything before the first number)
-                    Pattern namePattern = Pattern.compile("^([A-Za-z\\s]+?)(?=\\s+-?[\\d,])", Pattern.CASE_INSENSITIVE);
+                    // Extract deduction name - everything before the first number or dash
+                    // Pattern: name followed by optional spaces, then optional dash, then number
+                    Pattern namePattern = Pattern.compile("^([A-Za-z][A-Za-z\\s]+?)(?=\\s*-?\\s*[\\d,])", Pattern.CASE_INSENSITIVE);
                     Matcher nameMatcher = namePattern.matcher(line);
                     
+                    String deductionName = null;
                     if (nameMatcher.find()) {
-                        String deductionName = nameMatcher.group(1).trim();
-                        
-                        // Extract amount from "this period" column
-                        BigDecimal amount = extractValueFromThisPeriodColumn(line);
-                        
-                        if (deductionName.length() > 2 && amount != null && amount.compareTo(BigDecimal.ZERO) >= 0) {
-                            // Create a clean key
-                            String key = deductionName.toLowerCase()
-                                .replaceAll("[^a-z0-9\\s]", "")
-                                .replaceAll("\\s+", "_")
-                                .substring(0, Math.min(50, deductionName.length()));
-                            
-                            // Only add if not already exists or if this is a better match
-                            if (!additionalFields.containsKey(key) || 
-                                (additionalFields.containsKey(key) && amount.compareTo(BigDecimal.ZERO) > 0)) {
-                                Map<String, Object> fieldData = new HashMap<>();
-                                fieldData.put("name", deductionName);
-                                fieldData.put("value", amount);
-                                additionalFields.put(key, fieldData);
+                        deductionName = nameMatcher.group(1).trim();
+                    } else {
+                        // Try alternative: extract first word(s) before any number
+                        Pattern altPattern = Pattern.compile("^([A-Za-z]+(?:\\s+[A-Za-z]+)*)", Pattern.CASE_INSENSITIVE);
+                        Matcher altMatcher = altPattern.matcher(line);
+                        if (altMatcher.find()) {
+                            deductionName = altMatcher.group(1).trim();
+                        }
+                    }
+                    
+                    if (deductionName != null && deductionName.length() > 1) {
+                        // Extract all numeric values from the line
+                        Pattern valuePattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)");
+                        Matcher valueMatcher = valuePattern.matcher(line);
+                        List<BigDecimal> allValues = new ArrayList<>();
+                        while (valueMatcher.find()) {
+                            BigDecimal val = parseDecimal(valueMatcher.group(1));
+                            if (val != null) {
+                                allValues.add(val.abs()); // Store absolute values
                             }
                         }
+                        
+                        // If no values on current line, check next line (common in table formats)
+                        if (allValues.isEmpty() && i + 1 < lines.length) {
+                            String nextLine = lines[i + 1].trim();
+                            valueMatcher = valuePattern.matcher(nextLine);
+                            while (valueMatcher.find()) {
+                                BigDecimal val = parseDecimal(valueMatcher.group(1));
+                                if (val != null) {
+                                    allValues.add(val.abs());
+                                }
+                            }
+                        }
+                        
+                        BigDecimal thisPeriodAmount = null;
+                        BigDecimal ytdAmount = null;
+                        
+                        // If we have multiple values, first is "this period", second is "year to date"
+                        if (allValues.size() >= 2) {
+                            thisPeriodAmount = allValues.get(0);
+                            ytdAmount = allValues.get(1);
+                        } else if (allValues.size() == 1) {
+                            thisPeriodAmount = allValues.get(0);
+                        }
+                        
+                        // If still no value, try extractThisPeriodValue method
+                        if (thisPeriodAmount == null) {
+                            thisPeriodAmount = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
+                            if (thisPeriodAmount != null) {
+                                thisPeriodAmount = thisPeriodAmount.abs();
+                            }
+                        }
+                        
+                        // Create a clean key
+                        String key = deductionName.toLowerCase()
+                            .replaceAll("[^a-z0-9\\s]", "")
+                            .replaceAll("\\s+", "_");
+                        
+                        if (key.length() > 50) {
+                            key = key.substring(0, 50);
+                        }
+                        
+                        // Always add the field - set to 0 if no amount found
+                        // This ensures "Advance" with $0.00 and "Miscellaneous" are captured
+                        if (thisPeriodAmount == null) {
+                            thisPeriodAmount = BigDecimal.ZERO;
+                        }
+                        
+                        Map<String, Object> fieldData = new HashMap<>();
+                        fieldData.put("name", deductionName);
+                        fieldData.put("value", thisPeriodAmount);
+                        if (ytdAmount != null) {
+                            fieldData.put("ytd", ytdAmount);
+                        }
+                        additionalFields.put(key, fieldData);
                     }
                 }
             }
