@@ -32,18 +32,23 @@ public class PDFParsingService {
         extracted.put("periodEndDate", null);
         extracted.put("additionalFields", new HashMap<String, Object>());
 
-        try (PDDocument document = Loader.loadPDF(file.getInputStream())) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            String text = stripper.getText(document);
+        try {
+            byte[] pdfBytes = file.getInputStream().readAllBytes();
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                String text = stripper.getText(document);
 
-            // Extract standard fields
-            extractStandardFields(text, extracted);
+                // Extract standard fields
+                extractStandardFields(text, extracted);
 
-            // Extract dates
-            extractDates(text, extracted);
+                // Extract dates
+                extractDates(text, extracted);
 
-            // Extract additional/custom deductions dynamically
-            extractCustomDeductions(text, extracted);
+                // Extract additional/custom deductions dynamically
+                extractCustomDeductions(text, extracted);
+            }
+        } catch (IOException e) {
+            throw new IOException("Error parsing PDF file: " + e.getMessage(), e);
         }
 
         return extracted;
