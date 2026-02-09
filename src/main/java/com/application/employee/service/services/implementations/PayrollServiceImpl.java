@@ -113,8 +113,6 @@ public class PayrollServiceImpl implements PayrollService {
         // Extract standard deductions
         BigDecimal healthInsurance = otherDeductions != null ? 
                 otherDeductions.getOrDefault("healthInsurance", BigDecimal.ZERO) : BigDecimal.ZERO;
-        BigDecimal retirement401k = otherDeductions != null ? 
-                otherDeductions.getOrDefault("retirement401k", BigDecimal.ZERO) : BigDecimal.ZERO;
         BigDecimal otherDeductionsAmount = otherDeductions != null ? 
                 otherDeductions.getOrDefault("otherDeductions", BigDecimal.ZERO) : BigDecimal.ZERO;
 
@@ -153,12 +151,11 @@ public class PayrollServiceImpl implements PayrollService {
 
         // Calculate net pay
         BigDecimal netPay = taxCalculatorService.calculateNetPay(grossPay, taxCalculations,
-                healthInsurance, retirement401k, otherDeductionsAmount, totalCustomDeductions);
+                healthInsurance, otherDeductionsAmount, totalCustomDeductions);
 
         // Calculate total deductions
         BigDecimal totalDeductions = taxCalculations.getTotalTaxes()
                 .add(healthInsurance)
-                .add(retirement401k)
                 .add(otherDeductionsAmount)
                 .add(totalCustomDeductions)
                 .setScale(2, RoundingMode.HALF_UP);
@@ -177,7 +174,7 @@ public class PayrollServiceImpl implements PayrollService {
         payrollRecord.setMedicare(taxCalculations.getMedicare());
         payrollRecord.setAdditionalMedicare(taxCalculations.getAdditionalMedicare());
         payrollRecord.setHealthInsurance(healthInsurance);
-        payrollRecord.setRetirement401k(retirement401k);
+        payrollRecord.setRetirement401k(BigDecimal.ZERO); // Set to zero as field is deprecated but kept for backward compatibility
         payrollRecord.setOtherDeductions(otherDeductionsAmount);
         payrollRecord.setTotalDeductions(totalDeductions);
         payrollRecord.setNetPay(netPay);

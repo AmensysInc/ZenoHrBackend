@@ -207,11 +207,10 @@ public class TaxCalculatorService {
     }
 
     public BigDecimal calculateNetPay(BigDecimal grossPay, TaxCalculations taxes, 
-                                     BigDecimal healthInsurance, BigDecimal retirement401k, 
+                                     BigDecimal healthInsurance, 
                                      BigDecimal otherDeductions, BigDecimal totalCustomDeductions) {
         BigDecimal totalDeductions = taxes.getTotalTaxes()
                 .add(healthInsurance != null ? healthInsurance : BigDecimal.ZERO)
-                .add(retirement401k != null ? retirement401k : BigDecimal.ZERO)
                 .add(otherDeductions != null ? otherDeductions : BigDecimal.ZERO)
                 .add(totalCustomDeductions != null ? totalCustomDeductions : BigDecimal.ZERO);
         
@@ -220,7 +219,7 @@ public class TaxCalculatorService {
 
     public YTDData updateYTDValues(YTDData currentYTD, TaxCalculations calculations, 
                                    BigDecimal netPay, BigDecimal healthInsurance, 
-                                   BigDecimal retirement401k, BigDecimal otherDeductions) {
+                                   BigDecimal otherDeductions) {
         if (currentYTD == null) {
             currentYTD = new YTDData();
             currentYTD.setYtdGrossPay(BigDecimal.ZERO);
