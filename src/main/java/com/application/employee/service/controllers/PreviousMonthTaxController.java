@@ -79,14 +79,28 @@ public class PreviousMonthTaxController {
             // Save PDF file if provided
             if (pdfFile != null && !pdfFile.isEmpty()) {
                 try {
-                    Path taxDir = Paths.get(uploadPath, "previous-month-tax", request.getEmployeeId());
+                    // Normalize the upload path to handle both Windows and Unix paths
+                    String normalizedUploadPath = uploadPath.replace("\\", "/");
+                    if (normalizedUploadPath.contains(":")) {
+                        // Windows path - extract just the path part after the drive letter
+                        normalizedUploadPath = normalizedUploadPath.substring(normalizedUploadPath.indexOf(":") + 1).replace("\\", "/");
+                    }
+                    // Remove leading slash if present to make it relative
+                    if (normalizedUploadPath.startsWith("/")) {
+                        normalizedUploadPath = normalizedUploadPath.substring(1);
+                    }
+                    
+                    Path taxDir = Paths.get(normalizedUploadPath, "previous-month-tax", request.getEmployeeId());
                     if (!Files.exists(taxDir)) {
                         Files.createDirectories(taxDir);
                     }
                     String fileName = pdfFile.getOriginalFilename();
+                    if (fileName == null || fileName.isEmpty()) {
+                        fileName = "paystub_" + System.currentTimeMillis() + ".pdf";
+                    }
                     Path filePath = taxDir.resolve(fileName);
                     Files.write(filePath, pdfFile.getBytes());
-                    taxData.setPdfFilePath(filePath.toString());
+                    taxData.setPdfFilePath(filePath.toString().replace("\\", "/"));
                     taxData.setPdfFileName(fileName);
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to save PDF file: " + e.getMessage(), e);
