@@ -1,6 +1,9 @@
 package com.application.employee.service.entities;
 
+import com.application.employee.service.deserializer.CustomLocalDateSerializer;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,9 +33,13 @@ public class PreviousMonthTax {
     private Employee employee;
 
     @Column(name = "PERIOD_START_DATE", nullable = false)
+    @JsonSerialize(using = CustomLocalDateSerializer.class)
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate periodStartDate;
 
     @Column(name = "PERIOD_END_DATE", nullable = false)
+    @JsonSerialize(using = CustomLocalDateSerializer.class)
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate periodEndDate;
 
     @Column(name = "FEDERAL_TAX_WITHHELD", precision = 10, scale = 2)

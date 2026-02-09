@@ -1,5 +1,6 @@
 package com.application.employee.service.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -9,7 +10,9 @@ import java.util.Map;
 @Data
 public class PreviousMonthTaxRequest {
     private String employeeId;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate periodStartDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate periodEndDate;
     private BigDecimal federalTaxWithheld;
     private BigDecimal stateTaxWithheld;
