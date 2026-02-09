@@ -1,5 +1,6 @@
 package com.application.employee.service.services;
 
+import com.application.employee.service.entities.Companies;
 import com.application.employee.service.entities.Employee;
 import com.application.employee.service.entities.PayrollRecord;
 import com.application.employee.service.entities.YTDData;
@@ -58,12 +59,24 @@ public class PDFGenerationService {
         leftCell.setBorder(Rectangle.NO_BORDER);
         leftCell.setPadding(5);
 
+        // Get company information from employee
+        String companyNameStr = "Ingenious Heads LLC";
+        String companyAddressStr = "21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279";
+        
+        if (employee.getCompany() != null) {
+            companyNameStr = employee.getCompany().getCompanyName() != null ? 
+                employee.getCompany().getCompanyName() : companyNameStr;
+            
+            // Get company address - use database fields if available, otherwise use mapping
+            companyAddressStr = getCompanyAddress(employee.getCompany());
+        }
+
         Paragraph companyCode = new Paragraph("Company Code: K5/MEL 25841619", SMALL_FONT);
         Paragraph locDept = new Paragraph("Loc/Dept: 01/", SMALL_FONT);
         Paragraph number = new Paragraph("Number: " + (payrollRecord.getId() != null ? String.format("%05d", payrollRecord.getId()) : "50803"), SMALL_FONT);
         Paragraph page = new Paragraph("Page: 1 of 1", SMALL_FONT);
-        Paragraph companyName = new Paragraph("Ingenious Heads LLC", BOLD_FONT);
-        Paragraph companyAddress = new Paragraph("21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279", SMALL_FONT);
+        Paragraph companyName = new Paragraph(companyNameStr, BOLD_FONT);
+        Paragraph companyAddress = new Paragraph(companyAddressStr, SMALL_FONT);
 
         leftCell.addElement(companyCode);
         leftCell.addElement(locDept);
@@ -328,6 +341,47 @@ public class PDFGenerationService {
         Paragraph voidText = new Paragraph("VOID - NON NEGOTIABLE", SMALL_FONT);
         voidText.setAlignment(Element.ALIGN_CENTER);
         document.add(voidText);
+    }
+
+    private String getCompanyAddress(Companies company) {
+        if (company == null) {
+            return "21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279"; // Default Ingenious address
+        }
+
+        // First, try to use database address fields if available
+        if (company.getAddressLine1() != null && !company.getAddressLine1().trim().isEmpty()) {
+            StringBuilder address = new StringBuilder();
+            address.append(company.getAddressLine1());
+            if (company.getAddressLine2() != null && !company.getAddressLine2().trim().isEmpty()) {
+                address.append(", ").append(company.getAddressLine2());
+            }
+            if (company.getCity() != null && !company.getCity().trim().isEmpty()) {
+                address.append(", ").append(company.getCity());
+            }
+            if (company.getState() != null && !company.getState().trim().isEmpty()) {
+                address.append(", ").append(company.getState());
+            }
+            if (company.getZipCode() != null && !company.getZipCode().trim().isEmpty()) {
+                address.append(" ").append(company.getZipCode());
+            }
+            return address.toString();
+        }
+
+        // Fallback to hardcoded addresses based on company name
+        String companyName = company.getCompanyName() != null ? company.getCompanyName().toLowerCase() : "";
+        
+        if (companyName.contains("saibersys")) {
+            return "2840 Keller Springs Rd., Suite 401, Carrollton, TX 75006";
+        } else if (companyName.contains("amensys")) {
+            return "860 Hebron Parkway, #603-604, Lewisville, TX 75057";
+        } else if (companyName.contains("ingenious")) {
+            return "21135 Whitfield Place, Suite 207, Sterling, Virginia 20165";
+        } else if (companyName.contains("itiyam")) {
+            return "44790 Maynard Square, Suite #230, Ashburn, VA 20147";
+        }
+        
+        // Default to Ingenious address
+        return "21135 Whitfield Place, Suite 207, Sterling, Virginia 20165";
     }
 
     private void addTableHeader(PdfPTable table, String text) {
