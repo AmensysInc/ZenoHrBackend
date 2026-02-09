@@ -357,8 +357,8 @@ public class PDFGenerationService {
         // Position watermark in the lower portion of the page (where check is)
         float pageWidth = document.right() - document.left();
         float pageHeight = document.top() - document.bottom();
-        float watermarkX = pageWidth / 2 + document.leftMargin();
-        float watermarkY = pageHeight * 0.25 + document.bottomMargin(); // Lower quarter of page
+        float watermarkX = pageWidth / 2f + document.leftMargin();
+        float watermarkY = pageHeight * 0.25f + document.bottomMargin(); // Lower quarter of page
         
         ColumnText.showTextAligned(canvas, Element.ALIGN_CENTER, watermark,
             watermarkX, watermarkY, 0f);
