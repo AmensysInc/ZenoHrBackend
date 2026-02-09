@@ -58,7 +58,23 @@ public class CheckSettingsServiceImpl implements CheckSettingsService {
 
     @Override
     public List<CheckSettings> getAllCheckSettings() {
-        return checkSettingsRepository.findAllWithCompany();
+        // Get all companies
+        List<Companies> allCompanies = companiesRepository.findAll();
+        
+        // For each company, get or create check settings
+        return allCompanies.stream()
+                .map(company -> {
+                    Optional<CheckSettings> existing = checkSettingsRepository.findByCompanyId(company.getCompanyId());
+                    if (existing.isPresent()) {
+                        return existing.get();
+                    }
+                    // Create default check settings for companies that don't have them
+                    CheckSettings newSettings = new CheckSettings();
+                    newSettings.setCompany(company);
+                    newSettings.setCurrentCheckNumber(1L);
+                    return checkSettingsRepository.save(newSettings);
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override

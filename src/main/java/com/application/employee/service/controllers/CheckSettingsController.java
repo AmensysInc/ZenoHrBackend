@@ -57,9 +57,16 @@ public class CheckSettingsController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<Map<String, Object>> updateCheckNumber(
             @PathVariable Integer companyId,
-            @RequestBody Map<String, Long> request) {
+            @RequestBody Map<String, Object> request) {
         try {
-            Long checkNumber = request.get("checkNumber");
+            // Support both "checkNumber" and "newCheckNumber" for backward compatibility
+            Long checkNumber = null;
+            if (request.get("checkNumber") != null) {
+                checkNumber = Long.valueOf(request.get("checkNumber").toString());
+            } else if (request.get("newCheckNumber") != null) {
+                checkNumber = Long.valueOf(request.get("newCheckNumber").toString());
+            }
+            
             if (checkNumber == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
