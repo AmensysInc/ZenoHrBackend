@@ -57,7 +57,7 @@ public class Employee {
     private Companies company;
 
     @Column(name = "COMPANY_ID", insertable = false, updatable = false)
-    private Long CompanyId;
+    private Integer CompanyId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ROLE")

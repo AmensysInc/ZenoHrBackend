@@ -24,10 +24,10 @@ public interface EmployeeRespository extends JpaRepository<Employee, String> {
     Optional<Employee> findByIdWithDetails(@Param("id") String id);
 
     @Query("SELECT e FROM Employee e WHERE (:CompanyId IS NULL OR e.CompanyId = :CompanyId)")
-    List<Employee> findByCompanyOrAll(@Param("CompanyId") Long company_id);
+    List<Employee> findByCompanyOrAll(@Param("CompanyId") Integer company_id);
 
     @Query("SELECT e FROM Employee e WHERE e.CompanyId = :companyId")
-    List<Employee> findByCompanyCompanyId(@Param("companyId") Long companyId);
+    List<Employee> findByCompanyCompanyId(@Param("companyId") Integer companyId);
 
     @Query("SELECT e.company.email FROM Employee e WHERE e.emailID = :email")
     String findCompanyEmailByEmployeeEmail(String email);

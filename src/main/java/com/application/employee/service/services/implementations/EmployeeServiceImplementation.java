@@ -674,7 +674,7 @@ public class EmployeeServiceImplementation implements EmployeeService {
         
         // Filter employees by company if companyId is provided
         if (companyId != null) {
-            employees = employeeRespository.findByCompanyCompanyId(companyId.longValue());
+            employees = employeeRespository.findByCompanyCompanyId(companyId);
         } else {
             employees = employeeRespository.findAll();
         }
