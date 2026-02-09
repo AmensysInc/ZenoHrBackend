@@ -167,7 +167,7 @@ public class PayrollController {
         }
     }
 
-    @PostMapping("/generate-paystub-pdf/{payrollRecordId}")
+    @GetMapping("/generate-paystub-pdf/{payrollRecordId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<byte[]> generatePaystubPDF(@PathVariable Long payrollRecordId) {
         try {
