@@ -354,12 +354,14 @@ public class PDFParsingService {
         Map<String, Object> additionalFields = (Map<String, Object>) extracted.get("additionalFields");
         
         String[] lines = text.split("\n");
+        boolean inDeductionsSection = false;
         boolean inVoluntaryDeductionsSection = false;
         boolean inStatutoryDeductionsSection = false;
         Set<String> standardFields = new HashSet<>(Arrays.asList(
             "federal income", "federal tax", "social security", "medicare",
             "gross pay", "net pay", "state income", "california state income",
-            "illinois state income", "local tax", "additional medicare"
+            "illinois state income", "local tax", "additional medicare",
+            "state ui", "state di", "state fli", "state sdi", "state sui"
         ));
 
         // First, find column positions for "this period" and "year to date"
@@ -382,42 +384,45 @@ public class PDFParsingService {
             }
         }
 
+        // Track which sections we're in
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             String lowerLine = line.toLowerCase();
 
-            // Detect voluntary deductions section specifically
-            if (lowerLine.contains("voluntary deductions")) {
-                inVoluntaryDeductionsSection = true;
-                inStatutoryDeductionsSection = false;
-                continue;
-            }
-
-            // Detect statutory deductions section
-            if (lowerLine.contains("statutory deductions")) {
-                inStatutoryDeductionsSection = true;
-                inVoluntaryDeductionsSection = false;
+            // Detect any deductions section
+            if (lowerLine.contains("deductions") || lowerLine.contains("voluntary") || lowerLine.contains("statutory")) {
+                inDeductionsSection = true;
+                if (lowerLine.contains("voluntary")) {
+                    inVoluntaryDeductionsSection = true;
+                    inStatutoryDeductionsSection = false;
+                } else if (lowerLine.contains("statutory")) {
+                    inStatutoryDeductionsSection = true;
+                    inVoluntaryDeductionsSection = false;
+                }
                 continue;
             }
 
             // Stop if we hit net pay or other sections
             if (lowerLine.contains("net pay") || lowerLine.contains("important notes") || 
                 lowerLine.contains("basis of pay") || lowerLine.contains("federal taxable") ||
-                lowerLine.contains("check") || lowerLine.contains("pay to the order")) {
+                lowerLine.contains("check") || lowerLine.contains("pay to the order") ||
+                lowerLine.contains("earnings statement") || lowerLine.contains("employee information")) {
+                inDeductionsSection = false;
                 inVoluntaryDeductionsSection = false;
                 inStatutoryDeductionsSection = false;
                 continue;
             }
 
-            // Only process voluntary deductions section
-            if (inVoluntaryDeductionsSection && !line.isEmpty()) {
+            // Process any line in deductions sections OR lines that look like deductions
+            if ((inDeductionsSection || inVoluntaryDeductionsSection || inStatutoryDeductionsSection) && !line.isEmpty()) {
                 // Skip header rows
                 if (lowerLine.contains("this period") || lowerLine.contains("year to date") || 
-                    lowerLine.contains("voluntary deductions")) {
+                    lowerLine.contains("voluntary deductions") || lowerLine.contains("statutory deductions") ||
+                    lowerLine.contains("deductions") && (lowerLine.contains("this period") || lowerLine.contains("year to date"))) {
                     continue;
                 }
 
-                // Check if it's a standard field (shouldn't be in voluntary, but check anyway)
+                // Check if it's a standard field
                 boolean isStandard = false;
                 for (String standard : standardFields) {
                     if (lowerLine.contains(standard)) {
@@ -426,9 +431,9 @@ public class PDFParsingService {
                     }
                 }
                 
+                // Extract any non-standard deduction
                 if (!isStandard) {
                     // Extract deduction name - everything before the first number or dash
-                    // Pattern: name followed by optional spaces, then optional dash, then number
                     Pattern namePattern = Pattern.compile("^([A-Za-z][A-Za-z\\s]+?)(?=\\s*-?\\s*[\\d,])", Pattern.CASE_INSENSITIVE);
                     Matcher nameMatcher = namePattern.matcher(line);
                     
@@ -441,6 +446,27 @@ public class PDFParsingService {
                         Matcher altMatcher = altPattern.matcher(line);
                         if (altMatcher.find()) {
                             deductionName = altMatcher.group(1).trim();
+                        }
+                    }
+                    
+                    // Also try to extract from lines that have numbers but might not match the pattern above
+                    if (deductionName == null || deductionName.length() < 2) {
+                        // Look for common deduction patterns: word(s) followed by numbers
+                        Pattern commonPattern = Pattern.compile("([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)\\s+(-?[\\d,]+(?:\\.\\d{2})?)", Pattern.CASE_INSENSITIVE);
+                        Matcher commonMatcher = commonPattern.matcher(line);
+                        if (commonMatcher.find()) {
+                            String potentialName = commonMatcher.group(1).trim();
+                            // Make sure it's not a standard field
+                            boolean isStandardCheck = false;
+                            for (String standard : standardFields) {
+                                if (potentialName.toLowerCase().contains(standard)) {
+                                    isStandardCheck = true;
+                                    break;
+                                }
+                            }
+                            if (!isStandardCheck && potentialName.length() > 1) {
+                                deductionName = potentialName;
+                            }
                         }
                     }
                     
@@ -502,13 +528,17 @@ public class PDFParsingService {
                             thisPeriodAmount = BigDecimal.ZERO;
                         }
                         
-                        Map<String, Object> fieldData = new HashMap<>();
-                        fieldData.put("name", deductionName);
-                        fieldData.put("value", thisPeriodAmount);
-                        if (ytdAmount != null) {
-                            fieldData.put("ytd", ytdAmount);
+                        // Only add if not already exists or if this is a better match (non-zero amount)
+                        if (!additionalFields.containsKey(key) || 
+                            (additionalFields.containsKey(key) && thisPeriodAmount.compareTo(BigDecimal.ZERO) > 0)) {
+                            Map<String, Object> fieldData = new HashMap<>();
+                            fieldData.put("name", deductionName);
+                            fieldData.put("value", thisPeriodAmount);
+                            if (ytdAmount != null) {
+                                fieldData.put("ytd", ytdAmount);
+                            }
+                            additionalFields.put(key, fieldData);
                         }
-                        additionalFields.put(key, fieldData);
                     }
                 }
             }
