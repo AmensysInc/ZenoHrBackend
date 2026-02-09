@@ -46,7 +46,7 @@ public class PDFGenerationService {
         // Statutory Deductions Section (includes Net Pay)
         addStatutoryDeductionsSection(document, payrollRecord, ytdData);
 
-        // Federal Taxable Wages
+        // Federal Taxable Wages (above the line)
         addFederalTaxableWages(document, payrollRecord);
 
         // Add horizontal line separator
