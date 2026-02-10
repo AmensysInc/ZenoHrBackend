@@ -19,7 +19,14 @@ public interface PayrollService {
                                   LocalDate payPeriodStart, LocalDate payPeriodEnd,
                                   LocalDate payDate, TaxCalculations taxCalculations,
                                   Map<String, BigDecimal> otherDeductions,
-                                  Map<String, Object> customDeductions);
+                                  Map<String, Object> customDeductions,
+                                  java.math.BigDecimal previousYtdGrossPay,
+                                  java.math.BigDecimal previousYtdNetPay,
+                                  java.math.BigDecimal previousYtdFederalTax,
+                                  java.math.BigDecimal previousYtdStateTax,
+                                  java.math.BigDecimal previousYtdLocalTax,
+                                  java.math.BigDecimal previousYtdSocialSecurity,
+                                  java.math.BigDecimal previousYtdMedicare);
     
     List<PayrollRecord> getAllPayrollRecords();
     

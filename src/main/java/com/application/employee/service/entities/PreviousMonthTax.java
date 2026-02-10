@@ -66,6 +66,28 @@ public class PreviousMonthTax {
     @Column(name = "TOTAL_NET_PAY", precision = 10, scale = 2, nullable = false)
     private BigDecimal totalNetPay;
 
+    // YTD (Year-To-Date) values from PDF
+    @Column(name = "YTD_GROSS_PAY", precision = 10, scale = 2)
+    private BigDecimal ytdGrossPay;
+
+    @Column(name = "YTD_NET_PAY", precision = 10, scale = 2)
+    private BigDecimal ytdNetPay;
+
+    @Column(name = "YTD_FEDERAL_TAX", precision = 10, scale = 2)
+    private BigDecimal ytdFederalTax;
+
+    @Column(name = "YTD_STATE_TAX", precision = 10, scale = 2)
+    private BigDecimal ytdStateTax;
+
+    @Column(name = "YTD_LOCAL_TAX", precision = 10, scale = 2)
+    private BigDecimal ytdLocalTax;
+
+    @Column(name = "YTD_SOCIAL_SECURITY", precision = 10, scale = 2)
+    private BigDecimal ytdSocialSecurity;
+
+    @Column(name = "YTD_MEDICARE", precision = 10, scale = 2)
+    private BigDecimal ytdMedicare;
+
     // H1B specific fields
     @Column(name = "H1B_WAGE", precision = 10, scale = 2)
     private BigDecimal h1bWage;

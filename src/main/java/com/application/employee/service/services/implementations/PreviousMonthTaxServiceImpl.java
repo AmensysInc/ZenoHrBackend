@@ -53,6 +53,14 @@ public class PreviousMonthTaxServiceImpl implements PreviousMonthTaxService {
             existing.setH1bWage(taxData.getH1bWage());
             existing.setH1bPrevailingWage(taxData.getH1bPrevailingWage());
             existing.setAdditionalFieldsJson(taxData.getAdditionalFieldsJson());
+            // Update YTD fields
+            existing.setYtdGrossPay(taxData.getYtdGrossPay());
+            existing.setYtdNetPay(taxData.getYtdNetPay());
+            existing.setYtdFederalTax(taxData.getYtdFederalTax());
+            existing.setYtdStateTax(taxData.getYtdStateTax());
+            existing.setYtdLocalTax(taxData.getYtdLocalTax());
+            existing.setYtdSocialSecurity(taxData.getYtdSocialSecurity());
+            existing.setYtdMedicare(taxData.getYtdMedicare());
             if (taxData.getPdfFilePath() != null) {
                 existing.setPdfFilePath(taxData.getPdfFilePath());
             }

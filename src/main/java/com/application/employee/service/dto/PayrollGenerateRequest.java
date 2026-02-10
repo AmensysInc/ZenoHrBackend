@@ -22,5 +22,14 @@ public class PayrollGenerateRequest {
     private BigDecimal netPay;
     private Map<String, BigDecimal> otherDeductions;
     private Map<String, Object> customDeductions; // Can be Map<String, BigDecimal> or Map<String, Object> with name/value
+    
+    // YTD data from previous payroll (optional - if provided, will be used as starting point)
+    private BigDecimal previousYtdGrossPay;
+    private BigDecimal previousYtdNetPay;
+    private BigDecimal previousYtdFederalTax;
+    private BigDecimal previousYtdStateTax;
+    private BigDecimal previousYtdLocalTax;
+    private BigDecimal previousYtdSocialSecurity;
+    private BigDecimal previousYtdMedicare;
 }
 

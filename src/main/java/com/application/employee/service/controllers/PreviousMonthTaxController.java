@@ -70,6 +70,15 @@ public class PreviousMonthTaxController {
             taxData.setTotalNetPay(request.getTotalNetPay());
             taxData.setH1bWage(request.getH1bWage());
             taxData.setH1bPrevailingWage(request.getH1bPrevailingWage());
+            
+            // Set YTD values
+            taxData.setYtdGrossPay(request.getYtdGrossPay());
+            taxData.setYtdNetPay(request.getYtdNetPay());
+            taxData.setYtdFederalTax(request.getYtdFederalTax());
+            taxData.setYtdStateTax(request.getYtdStateTax());
+            taxData.setYtdLocalTax(request.getYtdLocalTax());
+            taxData.setYtdSocialSecurity(request.getYtdSocialSecurity());
+            taxData.setYtdMedicare(request.getYtdMedicare());
 
             // Convert additionalFields to JSON
             if (request.getAdditionalFields() != null && !request.getAdditionalFields().isEmpty()) {

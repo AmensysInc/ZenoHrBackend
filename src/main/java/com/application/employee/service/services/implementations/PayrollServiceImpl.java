@@ -86,7 +86,14 @@ public class PayrollServiceImpl implements PayrollService {
                                         LocalDate payPeriodStart, LocalDate payPeriodEnd,
                                         LocalDate payDate, TaxCalculations taxCalculations,
                                         Map<String, BigDecimal> otherDeductions,
-                                        Map<String, Object> customDeductions) {
+                                        Map<String, Object> customDeductions,
+                                        BigDecimal previousYtdGrossPay,
+                                        BigDecimal previousYtdNetPay,
+                                        BigDecimal previousYtdFederalTax,
+                                        BigDecimal previousYtdStateTax,
+                                        BigDecimal previousYtdLocalTax,
+                                        BigDecimal previousYtdSocialSecurity,
+                                        BigDecimal previousYtdMedicare) {
         Employee employee = employeeService.getEmployee(employeeId);
         if (employee == null) {
             throw new RuntimeException("Employee not found: " + employeeId);
@@ -109,6 +116,29 @@ public class PayrollServiceImpl implements PayrollService {
             ytdData.setYtdMedicare(BigDecimal.ZERO);
             ytdData.setYtdNetPay(BigDecimal.ZERO);
             ytdData.setPayPeriodsCount(0);
+        }
+        
+        // If previous YTD data is provided, use it as the starting point
+        if (previousYtdGrossPay != null) {
+            ytdData.setYtdGrossPay(previousYtdGrossPay);
+        }
+        if (previousYtdNetPay != null) {
+            ytdData.setYtdNetPay(previousYtdNetPay);
+        }
+        if (previousYtdFederalTax != null) {
+            ytdData.setYtdFederalTax(previousYtdFederalTax);
+        }
+        if (previousYtdStateTax != null) {
+            ytdData.setYtdStateTax(previousYtdStateTax);
+        }
+        if (previousYtdLocalTax != null) {
+            ytdData.setYtdLocalTax(previousYtdLocalTax);
+        }
+        if (previousYtdSocialSecurity != null) {
+            ytdData.setYtdSocialSecurity(previousYtdSocialSecurity);
+        }
+        if (previousYtdMedicare != null) {
+            ytdData.setYtdMedicare(previousYtdMedicare);
         }
 
         // Extract standard deductions

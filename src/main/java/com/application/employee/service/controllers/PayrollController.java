@@ -103,7 +103,14 @@ public class PayrollController {
                     request.getPayDate(),
                     taxCalculations,
                     request.getOtherDeductions() != null ? request.getOtherDeductions() : new HashMap<>(),
-                    request.getCustomDeductions() != null ? request.getCustomDeductions() : new HashMap<>()
+                    request.getCustomDeductions() != null ? request.getCustomDeductions() : new HashMap<>(),
+                    request.getPreviousYtdGrossPay(),
+                    request.getPreviousYtdNetPay(),
+                    request.getPreviousYtdFederalTax(),
+                    request.getPreviousYtdStateTax(),
+                    request.getPreviousYtdLocalTax(),
+                    request.getPreviousYtdSocialSecurity(),
+                    request.getPreviousYtdMedicare()
             );
 
             Map<String, Object> response = new HashMap<>();

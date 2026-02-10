@@ -32,6 +32,15 @@ public class PDFParsingService {
         extracted.put("periodStartDate", null);
         extracted.put("periodEndDate", null);
         extracted.put("additionalFields", new HashMap<String, Object>());
+        
+        // YTD (Year-To-Date) values
+        extracted.put("ytdGrossPay", null);
+        extracted.put("ytdNetPay", null);
+        extracted.put("ytdFederalTax", null);
+        extracted.put("ytdStateTax", null);
+        extracted.put("ytdLocalTax", null);
+        extracted.put("ytdSocialSecurity", null);
+        extracted.put("ytdMedicare", null);
 
         try {
             byte[] pdfBytes = file.getInputStream().readAllBytes();
@@ -46,6 +55,9 @@ public class PDFParsingService {
 
                 // Extract standard fields
                 extractStandardFields(text, extracted);
+
+                // Extract YTD fields
+                extractYtdFields(text, extracted);
 
                 // Extract dates
                 extractDates(text, extracted);

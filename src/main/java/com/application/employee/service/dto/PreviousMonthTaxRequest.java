@@ -25,5 +25,14 @@ public class PreviousMonthTaxRequest {
     private BigDecimal h1bWage;
     private BigDecimal h1bPrevailingWage;
     private Map<String, Object> additionalFields;
+    
+    // YTD (Year-To-Date) values
+    private BigDecimal ytdGrossPay;
+    private BigDecimal ytdNetPay;
+    private BigDecimal ytdFederalTax;
+    private BigDecimal ytdStateTax;
+    private BigDecimal ytdLocalTax;
+    private BigDecimal ytdSocialSecurity;
+    private BigDecimal ytdMedicare;
 }
 
