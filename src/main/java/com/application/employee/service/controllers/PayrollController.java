@@ -49,7 +49,8 @@ public class PayrollController {
                     request.getPayPeriodStart(),
                     request.getPayPeriodEnd(),
                     request.getPayDate(),
-                    request.getOtherDeductions() != null ? request.getOtherDeductions() : new HashMap<>()
+                    request.getOtherDeductions() != null ? request.getOtherDeductions() : new HashMap<>(),
+                    request.getCustomDeductions() != null ? request.getCustomDeductions() : new HashMap<>()
             );
 
             Map<String, Object> response = new HashMap<>();

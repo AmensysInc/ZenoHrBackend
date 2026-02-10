@@ -12,7 +12,8 @@ public interface PayrollService {
     
     TaxCalculations calculatePayroll(String employeeId, BigDecimal grossPay, 
                                      LocalDate payPeriodStart, LocalDate payPeriodEnd, 
-                                     LocalDate payDate, Map<String, BigDecimal> otherDeductions);
+                                     LocalDate payDate, Map<String, BigDecimal> otherDeductions,
+                                     Map<String, Object> customDeductions);
     
     PayrollRecord generatePayroll(String employeeId, BigDecimal grossPay,
                                   LocalDate payPeriodStart, LocalDate payPeriodEnd,

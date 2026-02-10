@@ -58,7 +58,8 @@ public class PayrollServiceImpl implements PayrollService {
     @Transactional
     public TaxCalculations calculatePayroll(String employeeId, BigDecimal grossPay,
                                            LocalDate payPeriodStart, LocalDate payPeriodEnd,
-                                           LocalDate payDate, Map<String, BigDecimal> otherDeductions) {
+                                           LocalDate payDate, Map<String, BigDecimal> otherDeductions,
+                                           Map<String, Object> customDeductions) {
         Employee employee = employeeService.getEmployee(employeeId);
         if (employee == null) {
             throw new RuntimeException("Employee not found: " + employeeId);

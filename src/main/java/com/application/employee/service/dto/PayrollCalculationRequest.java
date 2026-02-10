@@ -14,5 +14,6 @@ public class PayrollCalculationRequest {
     private LocalDate payPeriodEnd;
     private LocalDate payDate;
     private Map<String, BigDecimal> otherDeductions;
+    private Map<String, Object> customDeductions; // For custom deductions with names
 }
 
