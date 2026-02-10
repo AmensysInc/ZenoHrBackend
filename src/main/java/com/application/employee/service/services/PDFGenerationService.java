@@ -263,12 +263,13 @@ public class PDFGenerationService {
         addTableCell(earningsTable, formatCurrencyNoDollar(payrollRecord.getGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrencyNoDollar(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), NORMAL_FONT, Element.ALIGN_RIGHT);
 
-        // Gross Pay Summary Row
+        // Gross Pay Summary Row - center align to match "Regular" text above
         PdfPCell summaryCell = new PdfPCell(new Phrase("Gross Pay", BOLD_FONT));
         summaryCell.setColspan(3);
         summaryCell.setBorder(Rectangle.NO_BORDER);
         summaryCell.setPadding(5);
         summaryCell.setPaddingTop(8);
+        summaryCell.setHorizontalAlignment(Element.ALIGN_LEFT); // Left align to match "Regular" text
         earningsTable.addCell(summaryCell);
         addTableCell(earningsTable, formatCurrency(payrollRecord.getGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
         addTableCell(earningsTable, formatCurrency(ytdData != null ? ytdData.getYtdGrossPay() : payrollRecord.getYtdGrossPay()), BOLD_FONT, Element.ALIGN_RIGHT);
