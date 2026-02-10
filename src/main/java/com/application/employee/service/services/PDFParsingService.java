@@ -178,6 +178,132 @@ public class PDFParsingService {
         }
     }
     
+    private void extractYtdFields(String text, Map<String, Object> extracted) {
+        String[] lines = text.split("\n");
+        
+        // Find YTD column index
+        int ytdColIndex = -1;
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].toLowerCase();
+            if (line.contains("this period") && line.contains("year to date")) {
+                // Found header row - identify YTD column position
+                String[] parts = lines[i].split("\\s+");
+                for (int j = 0; j < parts.length; j++) {
+                    if (parts[j].toLowerCase().contains("year") || parts[j].toLowerCase().contains("ytd")) {
+                        ytdColIndex = j;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        
+        // Extract YTD values from table format
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            String lowerLine = line.toLowerCase();
+            
+            // Extract YTD Gross Pay
+            if (lowerLine.matches(".*\\bgross\\s+pay\\b.*") && extracted.get("ytdGrossPay") == null) {
+                BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                    extracted.put("ytdGrossPay", value);
+                }
+            }
+            
+            // Extract YTD Net Pay
+            if (lowerLine.matches(".*\\bnet\\s+pay\\b.*") && extracted.get("ytdNetPay") == null) {
+                BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                    extracted.put("ytdNetPay", value);
+                }
+            }
+            
+            // Extract YTD Federal Tax
+            if (lowerLine.matches(".*\\bfederal\\s+income\\b.*") && extracted.get("ytdFederalTax") == null) {
+                BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                    extracted.put("ytdFederalTax", value.abs());
+                }
+            }
+            
+            // Extract YTD State Tax
+            if (lowerLine.matches(".*\\bstate\\s+income\\b.*") && 
+                !lowerLine.contains("ui") && !lowerLine.contains("di") && !lowerLine.contains("fli") &&
+                extracted.get("ytdStateTax") == null) {
+                BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                    extracted.put("ytdStateTax", value.abs());
+                }
+            }
+            
+            // Extract YTD Local Tax
+            if (lowerLine.matches(".*\\blocal\\s+tax\\b.*") && extracted.get("ytdLocalTax") == null) {
+                BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                    extracted.put("ytdLocalTax", value.abs());
+                }
+            }
+            
+            // Extract YTD Social Security
+            if ((lowerLine.matches(".*\\bsocial\\s+security\\b.*") || lowerLine.matches(".*\\boasdi\\b.*")) 
+                && extracted.get("ytdSocialSecurity") == null) {
+                BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                    extracted.put("ytdSocialSecurity", value.abs());
+                }
+            }
+            
+            // Extract YTD Medicare
+            if (lowerLine.matches(".*\\bmedicare\\b.*") && 
+                !lowerLine.contains("additional") && extracted.get("ytdMedicare") == null) {
+                BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
+                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                    extracted.put("ytdMedicare", value.abs());
+                }
+            }
+        }
+    }
+    
+    private BigDecimal extractYtdValue(String line, int lineIndex, String[] allLines, int ytdColIndex) {
+        // Extract all numeric values from the line
+        Pattern pattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)");
+        Matcher matcher = pattern.matcher(line);
+        List<BigDecimal> values = new ArrayList<>();
+        
+        while (matcher.find()) {
+            BigDecimal value = parseDecimal(matcher.group(1));
+            if (value != null) {
+                values.add(value);
+            }
+        }
+        
+        if (values.isEmpty()) {
+            return null;
+        }
+        
+        // If we know the YTD column index, use it
+        if (ytdColIndex >= 0 && ytdColIndex < values.size()) {
+            return values.get(ytdColIndex);
+        }
+        
+        // Otherwise, for table format with "this period" and "year to date":
+        // - First value is usually "this period"
+        // - Second value is usually "year to date" (YTD)
+        if (values.size() >= 2) {
+            // YTD is typically the second value (larger value for cumulative amounts)
+            return values.get(1);
+        }
+        
+        // If only one value, it might be YTD if the line explicitly mentions it
+        String lowerLine = line.toLowerCase();
+        if (lowerLine.contains("year to date") || lowerLine.contains("ytd")) {
+            return values.get(0);
+        }
+        
+        return null;
+    }
+    
     private BigDecimal extractThisPeriodValue(String line, int lineIndex, String[] allLines, int thisPeriodColIndex) {
         // Extract all numeric values from the line
         Pattern pattern = Pattern.compile("(-?[\\d,]+(?:\\.\\d{2})?)");
