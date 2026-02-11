@@ -509,15 +509,30 @@ public class HTMLPaystubTemplateService {
             @SuppressWarnings("unchecked")
             Map<String, Object> map = (Map<String, Object>) value;
             if (map.containsKey("name")) {
-                return String.valueOf(map.get("name"));
+                String name = String.valueOf(map.get("name"));
+                // Fix common misspellings
+                if (name.equalsIgnoreCase("miscellanous")) {
+                    return "Miscellaneous";
+                }
+                return name;
             }
+        }
+        // Fix common misspellings in keys
+        String normalizedKey = key.toLowerCase();
+        if (normalizedKey.equals("miscellanous") || normalizedKey.equals("miscellanous")) {
+            return "Miscellaneous";
         }
         // Convert key to readable format: replace underscores and capitalize first letter of each word
         String[] words = key.replace("_", " ").split(" ");
         StringBuilder formattedName = new StringBuilder();
         for (String word : words) {
             if (!word.isEmpty()) {
-                formattedName.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase()).append(" ");
+                String lowerWord = word.toLowerCase();
+                if (lowerWord.equals("miscellanous")) {
+                    formattedName.append("Miscellaneous ");
+                } else {
+                    formattedName.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase()).append(" ");
+                }
             }
         }
         return formattedName.toString().trim();
@@ -690,6 +705,8 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .header-right {\n" +
                "            text-align: right;\n" +
+               "            flex: 1;\n" +
+               "            min-width: 0;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
                "            font-size: 11pt;\n" +
@@ -970,6 +987,8 @@ public class HTMLPaystubTemplateService {
                "        .check-stub-right {\n" +
                "            text-align: right;\n" +
                "            line-height: 1.2;\n" +
+               "            flex: 1;\n" +
+               "            min-width: 0;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
