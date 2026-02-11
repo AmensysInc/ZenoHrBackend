@@ -152,9 +152,6 @@ public class HTMLPaystubTemplateService {
         // Net Pay
         html.append(generateNetPay(payrollRecord.getNetPay()));
         
-        // Spacer inside main-left to anchor spacing in the flow
-        html.append("                    <div class=\"section-spacer\"></div>\n");
-        
         html.append("                </div>\n");
         html.append("                <div class=\"main-right\">\n");
         html.append("                    <!-- Important Notes - at the top, aligned with tax info -->\n");
@@ -653,7 +650,6 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .paystub-html-container {\n" +
                "            width: 8.5in;\n" +
-               "            height: 11in;\n" +
                "            margin: 0 auto;\n" +
                "            background: white;\n" +
                "            position: relative;\n" +
@@ -661,7 +657,6 @@ public class HTMLPaystubTemplateService {
                "        .paystub-html {\n" +
                "            background: white;\n" +
                "            width: 8.5in;\n" +
-               "            min-height: 11in;\n" +
                "            padding: 0.5in;\n" +
                "            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\n" +
                "            position: relative;\n" +
@@ -703,7 +698,7 @@ public class HTMLPaystubTemplateService {
                "        .company-address {\n" +
                "            font-size: 9pt;\n" +
                "            margin-top: 0;\n" +
-               "            margin-bottom: 0;\n" +
+               "            margin-bottom: 4px;\n" +
                "        }\n" +
                "        .header-right {\n" +
                "            text-align: right;\n" +
@@ -760,7 +755,6 @@ public class HTMLPaystubTemplateService {
                "            align-items: flex-start;\n" +
                "            flex-shrink: 0;\n" +
                "            position: relative;\n" +
-               "            min-height: 380px;\n" +
                "        }\n" +
                "        .main-left {\n" +
                "            width: 65%;\n" +
@@ -779,7 +773,7 @@ public class HTMLPaystubTemplateService {
                "            display: flex;\n" +
                "            align-items: flex-start;\n" +
                "            margin-bottom: 10px;\n" +
-               "            margin-top: 0;\n" +
+               "            margin-top: 2px;\n" +
                "            gap: 0;\n" +
                "        }\n" +
                "        .tax-info-section {\n" +
@@ -965,16 +959,10 @@ public class HTMLPaystubTemplateService {
                "        .tax-override-section div, .notes-section div {\n" +
                "            margin-bottom: 1px;\n" +
                "        }\n" +
-               "        .section-spacer {\n" +
-               "            height: 150px;\n" +
-               "            width: 100%;\n" +
-               "            display: block;\n" +
-               "            clear: both;\n" +
-               "        }\n" +
                "        .check-stub-section {\n" +
-               "            margin-top: 0;\n" +
+               "            margin-top: 5px;\n" +
                "            padding-top: 8px;\n" +
-               "            border-top: none;\n" +
+               "            border-top: 1px solid #999;\n" +
                "            position: relative;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
@@ -994,6 +982,7 @@ public class HTMLPaystubTemplateService {
                "            margin-bottom: 8px;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.15;\n" +
+               "            gap: 10px;\n" +
                "        }\n" +
                "        .check-stub-left {\n" +
                "            line-height: 1.2;\n" +
@@ -1006,6 +995,8 @@ public class HTMLPaystubTemplateService {
                "            line-height: 1.2;\n" +
                "            word-wrap: break-word;\n" +
                "            overflow-wrap: break-word;\n" +
+               "            min-width: 0;\n" +
+               "            flex: 0 0 auto;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
@@ -1069,7 +1060,7 @@ public class HTMLPaystubTemplateService {
                "            transform: translate(-50%, -50%) rotate(-32deg);\n" +
                "            font-size: 28pt;\n" +
                "            font-weight: bold;\n" +
-               "            color: rgba(0, 0, 0, 0.12);\n" +
+               "            color: rgba(0, 0, 0, 0.05);\n" +
                "            z-index: 10;\n" +
                "            white-space: nowrap;\n" +
                "            pointer-events: none;\n" +
