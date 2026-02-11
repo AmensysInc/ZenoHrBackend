@@ -7,10 +7,14 @@ import com.application.employee.service.entities.YTDData;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import java.awt.Color;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
@@ -19,47 +23,32 @@ import java.util.Map;
 @Service
 public class PDFGenerationService {
 
+    @Autowired
+    private HTMLPaystubTemplateService htmlTemplateService;
+
     private static final Font TITLE_FONT = new Font(Font.HELVETICA, 16, Font.BOLD);
     private static final Font NORMAL_FONT = new Font(Font.HELVETICA, 9, Font.NORMAL);
     private static final Font BOLD_FONT = new Font(Font.HELVETICA, 9, Font.BOLD);
     private static final Font SMALL_FONT = new Font(Font.HELVETICA, 8, Font.NORMAL);
     private static final Font SMALL_BOLD_FONT = new Font(Font.HELVETICA, 8, Font.BOLD);
 
-    public byte[] generateADPPaystub(PayrollRecord payrollRecord, Employee employee, YTDData ytdData) throws IOException, DocumentException {
-        Document document = new Document(PageSize.LETTER, 36, 36, 36, 36);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PdfWriter writer = PdfWriter.getInstance(document, baos);
-        document.open();
-
-        // Header Section
-        addHeader(document, employee, payrollRecord);
-
-        // Add horizontal line separator
-        addHorizontalLine(document);
-
-        // Tax Filing Status and Earnings Section
-        addTaxAndEarningsSection(document, employee, payrollRecord, ytdData);
-
-        // Add horizontal line separator
-        addHorizontalLine(document);
-
-        // Statutory Deductions Section (includes Net Pay)
-        addStatutoryDeductionsSection(document, payrollRecord, ytdData);
-
-        // Voluntary Deductions Section (custom deductions from PDF)
-        addVoluntaryDeductionsSection(document, payrollRecord, ytdData);
-
-        // Federal Taxable Wages (above the line)
-        addFederalTaxableWages(document, payrollRecord);
-
-        // Add horizontal line separator
-        addHorizontalLine(document);
-
-        // Footer/Check Section
-        addCheckSection(document, employee, payrollRecord, writer);
-
-        document.close();
-        return baos.toByteArray();
+    public byte[] generateADPPaystub(PayrollRecord payrollRecord, Employee employee, YTDData ytdData) throws IOException {
+        try {
+            // Generate HTML using the template service
+            String html = htmlTemplateService.generateHTML(payrollRecord, employee, ytdData);
+            
+            // Convert HTML to PDF using OpenHTMLToPDF
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.withHtmlContent(html, null);
+            builder.toStream(baos);
+            builder.useFastMode();
+            builder.run();
+            
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new IOException("Error generating PDF from HTML: " + e.getMessage(), e);
+        }
     }
 
     private void addHeader(Document document, Employee employee, PayrollRecord payrollRecord) throws DocumentException {
