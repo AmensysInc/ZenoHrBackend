@@ -674,11 +674,11 @@ public class HTMLPaystubTemplateService {
                "        .header-left {\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
-               "            margin-left: -5px;\n" +
-               "            margin-top: -3px;\n" +
+               "            margin-left: -10px;\n" +
+               "            margin-top: -5px;\n" +
                "        }\n" +
                "        .header-spacer {\n" +
-               "            height: 8px;\n" +
+               "            height: 12px;\n" +
                "            width: 100%;\n" +
                "            display: block;\n" +
                "        }\n" +
@@ -700,6 +700,8 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .header-right {\n" +
                "            text-align: right;\n" +
+               "            margin-right: 0;\n" +
+               "            padding-right: 0;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
                "            font-size: 12pt;\n" +
@@ -738,6 +740,7 @@ public class HTMLPaystubTemplateService {
                "            width: 65%;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-left: 0;\n" +
+               "            padding-left: 0;\n" +
                "        }\n" +
                "        .main-right {\n" +
                "            width: 35%;\n" +
@@ -751,6 +754,7 @@ public class HTMLPaystubTemplateService {
                "            display: flex;\n" +
                "            align-items: flex-start;\n" +
                "            margin-bottom: 10px;\n" +
+               "            margin-left: -10px;\n" +
                "            gap: 0;\n" +
                "        }\n" +
                "        .tax-info-section {\n" +
@@ -892,12 +896,13 @@ public class HTMLPaystubTemplateService {
                "        .tax-override-section,\n" +
                "        .notes-section {\n" +
                "            margin-bottom: 10px;\n" +
+               "            margin-top: 0;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
                "        }\n" +
                "        .tax-override-section {\n" +
                "            flex: 0 0 30%;\n" +
-               "            padding-left: 20px;\n" +
+               "            padding-left: 25px;\n" +
                "            overflow: hidden;\n" +
                "            word-wrap: break-word;\n" +
                "        }\n" +
