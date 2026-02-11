@@ -47,7 +47,7 @@ public class PDFGenerationService {
             builder.withHtmlContent(html, "file:///");
             builder.toStream(baos);
             builder.useFastMode();
-            builder.useDefaultPageSize(8.5f, 11.0f, PdfRendererBuilder.PageSizeUnits.INCHES);
+            // Note: useDefaultPageSize might not be available in 1.0.10, using default page size
             builder.run();
             
             byte[] pdfBytes = baos.toByteArray();
