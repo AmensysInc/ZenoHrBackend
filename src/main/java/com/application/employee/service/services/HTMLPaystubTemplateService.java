@@ -439,8 +439,19 @@ public class HTMLPaystubTemplateService {
                 return String.valueOf(map.get("name"));
             }
         }
-        // Convert key to readable format
-        return key.replace("_", " ").replaceAll("\\b\\w", l -> l.toUpperCase());
+        // Convert key to readable format - capitalize first letter of each word
+        String[] words = key.replace("_", " ").split("\\s+");
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < words.length; i++) {
+            if (i > 0) result.append(" ");
+            if (words[i].length() > 0) {
+                result.append(words[i].substring(0, 1).toUpperCase());
+                if (words[i].length() > 1) {
+                    result.append(words[i].substring(1).toLowerCase());
+                }
+            }
+        }
+        return result.toString();
     }
 
     private BigDecimal getDeductionAmount(Object value) {
