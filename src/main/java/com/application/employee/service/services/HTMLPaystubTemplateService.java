@@ -157,8 +157,15 @@ public class HTMLPaystubTemplateService {
         
         html.append("                </div>\n");
         html.append("                <div class=\"main-right\">\n");
-        html.append("                    <!-- Important Notes - at the top, aligned with tax info -->\n");
-        html.append("                    <div class=\"notes-section\" style=\"margin-top: 0;\">\n");
+        html.append("                    <!-- Tax Override - aligned with Taxable Filing Status -->\n");
+        html.append("                    <div class=\"tax-override-section\" style=\"margin-top: 0;\">\n");
+        html.append("                        <div class=\"section-title\">Tax Override:</div>\n");
+        html.append("                        <div>Federal: 0.00 Addnl</div>\n");
+        html.append("                        <div>State:</div>\n");
+        html.append("                        <div>Local:</div>\n");
+        html.append("                    </div>\n");
+        html.append("                    <!-- Important Notes -->\n");
+        html.append("                    <div class=\"notes-section\">\n");
         html.append("                        <div class=\"section-title\">Important Notes</div>\n");
         html.append("                        <div>Basis of pay: Salaried</div>\n");
         html.append("                    </div>\n");
@@ -658,6 +665,9 @@ public class HTMLPaystubTemplateService {
                "            box-sizing: border-box;\n" +
                "            display: flex;\n" +
                "            flex-direction: column;\n" +
+               "            page-break-after: avoid;\n" +
+               "            page-break-inside: avoid;\n" +
+               "            break-inside: avoid;\n" +
                "        }\n" +
                "        .paystub-header {\n" +
                "            display: flex;\n" +
@@ -731,6 +741,8 @@ public class HTMLPaystubTemplateService {
                "            flex-shrink: 0;\n" +
                "            margin-left: 0;\n" +
                "            padding-left: 0;\n" +
+               "            overflow: hidden;\n" +
+               "            word-wrap: break-word;\n" +
                "        }\n" +
                "        .tax-info-wrapper {\n" +
                "            display: flex;\n" +
@@ -880,6 +892,8 @@ public class HTMLPaystubTemplateService {
                "        .tax-override-section {\n" +
                "            flex: 0 0 30%;\n" +
                "            padding-left: 25px;\n" +
+               "            overflow: hidden;\n" +
+               "            word-wrap: break-word;\n" +
                "        }\n" +
                "        .section-title {\n" +
                "            font-weight: bold;\n" +
@@ -898,6 +912,7 @@ public class HTMLPaystubTemplateService {
                "            clear: both;\n" +
                "            flex-grow: 1;\n" +
                "            min-height: 200px;\n" +
+               "            flex-shrink: 1;\n" +
                "        }\n" +
                "        .check-stub-section {\n" +
                "            margin-top: 0;\n" +
@@ -906,6 +921,9 @@ public class HTMLPaystubTemplateService {
                "            position: relative;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
+               "            page-break-inside: avoid;\n" +
+               "            break-inside: avoid;\n" +
+               "            min-height: 3in;\n" +
                "        }\n" +
                "        .federal-taxable {\n" +
                "            font-size: 9pt;\n" +
@@ -930,9 +948,13 @@ public class HTMLPaystubTemplateService {
                "        .check-stub-right {\n" +
                "            text-align: right;\n" +
                "            line-height: 1.6;\n" +
+               "            white-space: normal;\n" +
+               "            word-wrap: break-word;\n" +
+               "            overflow-wrap: break-word;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
+               "            white-space: normal;\n" +
                "        }\n" +
                "        .payee-section {\n" +
                "            margin: 8px 0;\n" +
@@ -997,7 +1019,7 @@ public class HTMLPaystubTemplateService {
                "            font-size: 28pt;\n" +
                "            font-weight: bold;\n" +
                "            color: rgba(0, 0, 0, 0.12);\n" +
-               "            z-index: 10;\n" +
+               "            z-index: 0;\n" +
                "            white-space: nowrap;\n" +
                "            pointer-events: none;\n" +
                "            font-family: 'Times New Roman', serif;\n" +
