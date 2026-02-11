@@ -730,21 +730,19 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .paystub-main {\n" +
                "            display: flex;\n" +
-               "            gap: 0;\n" +
+               "            gap: 20;\n" +
                "            margin-bottom: 10px;\n" +
                "            align-items: flex-start;\n" +
-               "            flex-shrink: 0;\n" +
                "            position: relative;\n" +
                "        }\n" +
                "        .main-left {\n" +
-               "            width: 65%;\n" +
-               "            flex-shrink: 0;\n" +
+               "            flex: 2;\n" +
+               "            min-width: 0;\n" +
                "        }\n" +
                "        .main-right {\n" +
-               "            width: 35%;\n" +
-               "            flex-shrink: 0;\n" +
-               "            margin-left: 0;\n" +
-               "            padding-left: 0;\n" +
+               "            flex: 1;\n" +
+               "            min-width: 0;\n" +
+               "            padding-left: 20px;\n" +
                "        }\n" +
                "        .tax-info-wrapper {\n" +
                "            display: flex;\n" +
@@ -753,23 +751,25 @@ public class HTMLPaystubTemplateService {
                "            width: 100%;\n" +
                "        }\n" +
                "        .tax-info-section {\n" +
-               "            flex: 0 0 70%;\n" +
+               "            flex: 0 0 68%;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
+               "            width: 0;\n" +
                "        }\n" +
                "        .tax-override-section {\n" +
                "            flex: 0 0 30%;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
-               "            padding-left: 25px;\n" +
+               "            padding-left: 20px;\n" +
+               "            width: 0;\n" +
                "        }\n" +
                "        .tax-info-row {\n" +
-               "            margin-bottom: 1px;\n" +
+               "            margin-bottom: 2px;\n" +
                "            display: flex;\n" +
-               "            gap: 10px;\n" +
+               "            gap: 8px;\n" +
                "        }\n" +
                "        .tax-info-row span {\n" +
-               "            white-space: nowrap;\n" +
+               "            white-space: normal;\n" +
                "        }\n" +
                "        .paystub-table {\n" +
                "            width: 100%;\n" +
