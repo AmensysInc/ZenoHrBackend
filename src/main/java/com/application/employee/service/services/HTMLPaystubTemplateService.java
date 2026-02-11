@@ -157,7 +157,7 @@ public class HTMLPaystubTemplateService {
         
         html.append("                </div>\n");
         html.append("                <div class=\"main-right\">\n");
-        html.append("                    <!-- Important Notes -->\n");
+        html.append("                    <!-- Important Notes - at the top, aligned with tax info -->\n");
         html.append("                    <div class=\"notes-section\" style=\"margin-top: 0;\">\n");
         html.append("                        <div class=\"section-title\">Important Notes</div>\n");
         html.append("                        <div>Basis of pay: Salaried</div>\n");
@@ -661,12 +661,12 @@ public class HTMLPaystubTemplateService {
                "        .paystub-html {\n" +
                "            background: white;\n" +
                "            width: 8.5in;\n" +
-               "            height: 11in;\n" +
+               "            min-height: 11in;\n" +
                "            padding: 0.5in;\n" +
                "            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\n" +
                "            position: relative;\n" +
                "            margin: 0 auto;\n" +
-               "            overflow: hidden;\n" +
+               "            overflow: visible;\n" +
                "            box-sizing: border-box;\n" +
                "            page-break-after: avoid;\n" +
                "        }\n" +
@@ -760,7 +760,7 @@ public class HTMLPaystubTemplateService {
                "            align-items: flex-start;\n" +
                "            flex-shrink: 0;\n" +
                "            position: relative;\n" +
-               "            min-height: 420px;\n" +
+               "            min-height: 380px;\n" +
                "        }\n" +
                "        .main-left {\n" +
                "            width: 65%;\n" +
@@ -771,11 +771,15 @@ public class HTMLPaystubTemplateService {
                "            flex-shrink: 0;\n" +
                "            margin-left: 0;\n" +
                "            padding-left: 0;\n" +
+               "            display: flex;\n" +
+               "            flex-direction: column;\n" +
+               "            align-items: flex-start;\n" +
                "        }\n" +
                "        .tax-info-wrapper {\n" +
                "            display: flex;\n" +
                "            align-items: flex-start;\n" +
                "            margin-bottom: 10px;\n" +
+               "            margin-top: 0;\n" +
                "            gap: 0;\n" +
                "        }\n" +
                "        .tax-info-section {\n" +
@@ -962,7 +966,7 @@ public class HTMLPaystubTemplateService {
                "            margin-bottom: 1px;\n" +
                "        }\n" +
                "        .section-spacer {\n" +
-               "            height: 220px;\n" +
+               "            height: 150px;\n" +
                "            width: 100%;\n" +
                "            display: block;\n" +
                "            clear: both;\n" +
