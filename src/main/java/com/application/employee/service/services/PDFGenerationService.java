@@ -7,10 +7,7 @@ import com.application.employee.service.entities.YTDData;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import java.awt.Color;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,63 +20,23 @@ import java.util.Map;
 @Service
 public class PDFGenerationService {
 
-    @Autowired
-    private HTMLPaystubTemplateService htmlTemplateService;
-
     private static final Font TITLE_FONT = new Font(Font.HELVETICA, 16, Font.BOLD);
     private static final Font NORMAL_FONT = new Font(Font.HELVETICA, 9, Font.NORMAL);
     private static final Font BOLD_FONT = new Font(Font.HELVETICA, 9, Font.BOLD);
     private static final Font SMALL_FONT = new Font(Font.HELVETICA, 8, Font.NORMAL);
     private static final Font SMALL_BOLD_FONT = new Font(Font.HELVETICA, 8, Font.BOLD);
 
+    /**
+     * @deprecated Paystub generation has been moved to the frontend.
+     * This method is kept for backward compatibility but will throw an exception.
+     * Use the frontend PaystubHTMLTemplate component instead.
+     */
+    @Deprecated
     public byte[] generateADPPaystub(PayrollRecord payrollRecord, Employee employee, YTDData ytdData) throws IOException {
-        try {
-            // Generate HTML using the template service
-            String html = htmlTemplateService.generateHTML(payrollRecord, employee, ytdData);
-            
-            if (html == null || html.trim().isEmpty()) {
-                throw new IOException("Generated HTML is null or empty");
-            }
-            
-            // Log HTML length for debugging
-            System.out.println("Generated HTML length: " + html.length() + " characters");
-            
-            // Save HTML preview file for local testing
-            try {
-                String previewPath = "paystub-preview.html";
-                htmlTemplateService.generateHTMLPreview(payrollRecord, employee, ytdData, previewPath);
-            } catch (Exception e) {
-                // Don't fail PDF generation if preview file save fails
-                System.err.println("Warning: Could not save HTML preview file: " + e.getMessage());
-            }
-            
-            // Convert HTML to PDF using OpenHTMLToPDF
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.withHtmlContent(html, "file:///");
-            builder.toStream(baos);
-            builder.useFastMode();
-            // Set page size to US Letter (8.5 x 11 inches) - if method exists
-            try {
-                builder.useDefaultPageSize(8.5f, 11f, PdfRendererBuilder.PageSizeUnits.INCHES);
-            } catch (Exception e) {
-                // Method might not be available in this version, use default
-                System.out.println("Note: useDefaultPageSize not available, using default page size");
-            }
-            builder.run();
-            
-            byte[] pdfBytes = baos.toByteArray();
-            
-            if (pdfBytes == null || pdfBytes.length == 0) {
-                throw new IOException("PDF conversion resulted in empty byte array");
-            }
-            
-            return pdfBytes;
-        } catch (Exception e) {
-            System.err.println("ERROR in generateADPPaystub: " + e.getMessage());
-            e.printStackTrace();
-            throw new IOException("Error generating PDF from HTML: " + e.getMessage(), e);
-        }
+        throw new UnsupportedOperationException(
+            "Paystub generation has been moved to the frontend. " +
+            "Please use the PaystubHTMLTemplate component in the frontend to generate paystubs."
+        );
     }
 
     private void addHeader(Document document, Employee employee, PayrollRecord payrollRecord) throws DocumentException {
