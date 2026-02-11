@@ -664,6 +664,7 @@ public class HTMLPaystubTemplateService {
                "            background: white;\n" +
                "            position: relative;\n" +
                "            font-family: 'Times New Roman', serif;\n" +
+               "            overflow: visible;\n" +
                "        }\n" +
                "        .paystub-html {\n" +
                "            background: white;\n" +
@@ -673,7 +674,7 @@ public class HTMLPaystubTemplateService {
                "            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\n" +
                "            position: relative;\n" +
                "            margin: 0 auto;\n" +
-               "            overflow: hidden;\n" +
+               "            overflow: visible;\n" +
                "            box-sizing: border-box;\n" +
                "            display: flex;\n" +
                "            flex-direction: column;\n" +
@@ -724,6 +725,9 @@ public class HTMLPaystubTemplateService {
                "            max-width: 50%;\n" +
                "            flex-shrink: 0;\n" +
                "            align-self: flex-start;\n" +
+               "            white-space: normal;\n" +
+               "            word-wrap: break-word;\n" +
+               "            overflow-wrap: break-word;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
                "            font-size: 11pt;\n" +
@@ -775,8 +779,9 @@ public class HTMLPaystubTemplateService {
                "            flex-shrink: 0;\n" +
                "            margin-left: 0;\n" +
                "            padding-left: 0;\n" +
-               "            overflow: hidden;\n" +
+               "            overflow: visible;\n" +
                "            word-wrap: break-word;\n" +
+               "            overflow-wrap: break-word;\n" +
                "        }\n" +
                "        .tax-info-wrapper {\n" +
                "            display: flex;\n" +
@@ -929,11 +934,15 @@ public class HTMLPaystubTemplateService {
                "            margin-bottom: 10px;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
+               "            overflow: visible;\n" +
+               "            word-wrap: break-word;\n" +
                "        }\n" +
                "        .tax-override-section {\n" +
                "            margin-bottom: 10px;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
+               "            overflow: visible;\n" +
+               "            word-wrap: break-word;\n" +
                "        }\n" +
                "        .section-title {\n" +
                "            font-weight: bold;\n" +
@@ -946,12 +955,12 @@ public class HTMLPaystubTemplateService {
                "            margin-bottom: 1px;\n" +
                "        }\n" +
                "        .section-spacer {\n" +
-               "            height: 150px;\n" +
+               "            height: 120px;\n" +
                "            width: 100%;\n" +
                "            display: block;\n" +
                "            clear: both;\n" +
                "            flex-grow: 1;\n" +
-               "            min-height: 100px;\n" +
+               "            min-height: 80px;\n" +
                "            flex-shrink: 1;\n" +
                "        }\n" +
                "        .check-stub-section {\n" +
@@ -962,6 +971,9 @@ public class HTMLPaystubTemplateService {
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
                "            min-height: 180px;\n" +
+               "            width: 100%;\n" +
+               "            box-sizing: border-box;\n" +
+               "            overflow: visible;\n" +
                "        }\n" +
                "        .federal-taxable {\n" +
                "            font-size: 9pt;\n" +
@@ -980,6 +992,8 @@ public class HTMLPaystubTemplateService {
                "            line-height: 1.15;\n" +
                "            position: relative;\n" +
                "            z-index: 10;\n" +
+               "            width: 100%;\n" +
+               "            box-sizing: border-box;\n" +
                "        }\n" +
                "        .check-stub-left {\n" +
                "            line-height: 1.2;\n" +
@@ -990,9 +1004,15 @@ public class HTMLPaystubTemplateService {
                "        .check-stub-right {\n" +
                "            text-align: right;\n" +
                "            line-height: 1.2;\n" +
+               "            white-space: normal;\n" +
+               "            word-wrap: break-word;\n" +
+               "            overflow-wrap: break-word;\n" +
+               "            max-width: 50%;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
+               "            white-space: normal;\n" +
+               "            word-wrap: break-word;\n" +
                "        }\n" +
                "        .payee-section {\n" +
                "            margin: 8px 0;\n" +
@@ -1095,12 +1115,13 @@ public class HTMLPaystubTemplateService {
                "                height: 11in;\n" +
                "                page-break-after: avoid;\n" +
                "                page-break-inside: avoid;\n" +
-               "                overflow: hidden;\n" +
+               "                overflow: visible;\n" +
                "            }\n" +
                "            .section-spacer {\n" +
                "                flex-shrink: 1;\n" +
                "                min-height: 0;\n" +
                "                height: auto;\n" +
+               "                max-height: 120px;\n" +
                "            }\n" +
                "            .watermark {\n" +
                "                opacity: 0.08;\n" +
