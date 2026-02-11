@@ -705,8 +705,6 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .header-right {\n" +
                "            text-align: right;\n" +
-               "            flex: 1;\n" +
-               "            min-width: 0;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
                "            font-size: 11pt;\n" +
@@ -987,8 +985,6 @@ public class HTMLPaystubTemplateService {
                "        .check-stub-right {\n" +
                "            text-align: right;\n" +
                "            line-height: 1.2;\n" +
-               "            flex: 1;\n" +
-               "            min-width: 0;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
