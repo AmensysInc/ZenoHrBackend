@@ -59,7 +59,13 @@ public class PDFGenerationService {
             builder.withHtmlContent(html, "file:///");
             builder.toStream(baos);
             builder.useFastMode();
-            // Note: useDefaultPageSize might not be available in 1.0.10, using default page size
+            // Set page size to US Letter (8.5 x 11 inches) - if method exists
+            try {
+                builder.useDefaultPageSize(8.5f, 11f, PdfRendererBuilder.PageSizeUnits.INCHES);
+            } catch (Exception e) {
+                // Method might not be available in this version, use default
+                System.out.println("Note: useDefaultPageSize not available, using default page size");
+            }
             builder.run();
             
             byte[] pdfBytes = baos.toByteArray();

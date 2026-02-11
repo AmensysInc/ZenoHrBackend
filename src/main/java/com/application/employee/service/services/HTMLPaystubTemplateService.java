@@ -659,7 +659,7 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .paystub-html-container {\n" +
                "            width: 8.5in;\n" +
-               "            height: 11in;\n" +
+               "            min-height: 11in;\n" +
                "            margin: 0 auto;\n" +
                "            background: white;\n" +
                "            position: relative;\n" +
@@ -669,7 +669,7 @@ public class HTMLPaystubTemplateService {
                "        .paystub-html {\n" +
                "            background: white;\n" +
                "            width: 8.5in;\n" +
-               "            height: 11in;\n" +
+               "            min-height: 11in;\n" +
                "            padding: 0.5in;\n" +
                "            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\n" +
                "            position: relative;\n" +
@@ -966,11 +966,12 @@ public class HTMLPaystubTemplateService {
                "        .check-stub-section {\n" +
                "            margin-top: 0;\n" +
                "            padding-top: 8px;\n" +
+               "            padding-right: 0;\n" +
                "            border-top: 1px solid #999;\n" +
                "            position: relative;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
-               "            min-height: 180px;\n" +
+               "            min-height: 150px;\n" +
                "            width: 100%;\n" +
                "            box-sizing: border-box;\n" +
                "            overflow: visible;\n" +
@@ -994,9 +995,12 @@ public class HTMLPaystubTemplateService {
                "            z-index: 10;\n" +
                "            width: 100%;\n" +
                "            box-sizing: border-box;\n" +
+               "            gap: 10px;\n" +
                "        }\n" +
                "        .check-stub-left {\n" +
                "            line-height: 1.2;\n" +
+               "            flex: 0 0 50%;\n" +
+               "            min-width: 0;\n" +
                "        }\n" +
                "        .check-stub-left div {\n" +
                "            margin-bottom: 1px;\n" +
@@ -1007,12 +1011,16 @@ public class HTMLPaystubTemplateService {
                "            white-space: normal;\n" +
                "            word-wrap: break-word;\n" +
                "            overflow-wrap: break-word;\n" +
-               "            max-width: 50%;\n" +
+               "            flex: 0 0 45%;\n" +
+               "            min-width: 0;\n" +
+               "            padding-left: 10px;\n" +
+               "            box-sizing: border-box;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
                "            white-space: normal;\n" +
                "            word-wrap: break-word;\n" +
+               "            overflow-wrap: break-word;\n" +
                "        }\n" +
                "        .payee-section {\n" +
                "            margin: 8px 0;\n" +
@@ -1075,19 +1083,19 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .check-watermark {\n" +
                "            position: absolute;\n" +
-               "            top: 50%;\n" +
+               "            top: 40%;\n" +
                "            left: 50%;\n" +
                "            transform: translate(-50%, -50%) rotate(-32deg);\n" +
-               "            font-size: 24pt;\n" +
+               "            font-size: 22pt;\n" +
                "            font-weight: bold;\n" +
-               "            color: rgba(0, 0, 0, 0.06);\n" +
+               "            color: rgba(0, 0, 0, 0.08);\n" +
                "            z-index: 0;\n" +
                "            white-space: nowrap;\n" +
                "            pointer-events: none;\n" +
                "            font-family: 'Times New Roman', serif;\n" +
                "            text-align: center;\n" +
                "            line-height: 1.2;\n" +
-               "            width: 100%;\n" +
+               "            width: 80%;\n" +
                "            overflow: visible;\n" +
                "        }\n" +
                "        .void-text {\n" +
@@ -1103,7 +1111,7 @@ public class HTMLPaystubTemplateService {
                "                padding: 0;\n" +
                "                background: white;\n" +
                "                width: 8.5in;\n" +
-               "                height: 11in;\n" +
+               "                min-height: 11in;\n" +
                "                page-break-after: avoid;\n" +
                "                page-break-inside: avoid;\n" +
                "            }\n" +
@@ -1112,7 +1120,7 @@ public class HTMLPaystubTemplateService {
                "                margin: 0;\n" +
                "                padding: 0.5in;\n" +
                "                width: 8.5in;\n" +
-               "                height: 11in;\n" +
+               "                min-height: 11in;\n" +
                "                page-break-after: avoid;\n" +
                "                page-break-inside: avoid;\n" +
                "                overflow: visible;\n" +
@@ -1121,7 +1129,7 @@ public class HTMLPaystubTemplateService {
                "                flex-shrink: 1;\n" +
                "                min-height: 0;\n" +
                "                height: auto;\n" +
-               "                max-height: 120px;\n" +
+               "                max-height: 80px;\n" +
                "            }\n" +
                "            .watermark {\n" +
                "                opacity: 0.08;\n" +
@@ -1130,7 +1138,7 @@ public class HTMLPaystubTemplateService {
                "        @media screen {\n" +
                "            .paystub-html-container {\n" +
                "                width: 8.5in;\n" +
-               "                height: 11in;\n" +
+               "                min-height: 11in;\n" +
                "            }\n" +
                "        }\n" +
                "    </style>\n";
