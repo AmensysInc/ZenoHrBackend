@@ -85,6 +85,9 @@ public class HTMLPaystubTemplateService {
         html.append(generateMainContent(payrollRecord, ytdGrossPay, ytdFederalTax, ytdStateTax, ytdLocalTax, 
             ytdSocialSecurity, ytdMedicare, customDeductions, employee));
         
+        // Spacer between Net Pay and Check Stub
+        html.append("            <div class=\"section-spacer\"></div>\n");
+        
         // Check Stub Section
         html.append(generateCheckStub(companyName, companyAddress, employeeName, employeeAddress, 
             payrollRecord.getGrossPay(), payrollRecord.getNetPay(), checkNumber, payDate, employee));
@@ -635,118 +638,81 @@ public class HTMLPaystubTemplateService {
                "        :root {\n" +
                "            --deduction-indent: 20px;\n" +
                "        }\n" +
-               "        * {\n" +
-               "            margin: 0;\n" +
-               "            padding: 0;\n" +
-               "            box-sizing: border-box;\n" +
-               "        }\n" +
-               "        body {\n" +
-               "            font-family: 'Times New Roman', serif;\n" +
-               "            background: #f5f5f5;\n" +
-               "            padding: 20px;\n" +
-               "            font-size: 9pt;\n" +
-               "            line-height: 1.2;\n" +
-               "            margin: 0;\n" +
-               "        }\n" +
                "        .paystub-html-container {\n" +
                "            width: 8.5in;\n" +
+               "            height: 11in;\n" +
                "            margin: 0 auto;\n" +
                "            background: white;\n" +
                "            position: relative;\n" +
+               "            font-family: 'Times New Roman', serif;\n" +
                "        }\n" +
                "        .paystub-html {\n" +
                "            background: white;\n" +
-               "            width: 100%;\n" +
+               "            width: 8.5in;\n" +
+               "            height: 11in;\n" +
                "            padding: 0.5in;\n" +
                "            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\n" +
                "            position: relative;\n" +
                "            margin: 0 auto;\n" +
-               "            overflow: visible;\n" +
+               "            overflow: hidden;\n" +
                "            box-sizing: border-box;\n" +
-               "            page-break-after: avoid;\n" +
-               "            page-break-inside: avoid;\n" +
+               "            display: flex;\n" +
+               "            flex-direction: column;\n" +
                "        }\n" +
                "        .paystub-header {\n" +
                "            display: flex;\n" +
                "            justify-content: space-between;\n" +
-               "            border-bottom: none;\n" +
-               "            padding-bottom: 6px;\n" +
-               "            margin-bottom: 8px;\n" +
-               "            align-items: flex-start;\n" +
+               "            border-bottom: 2px solid #000;\n" +
+               "            padding-bottom: 8px;\n" +
+               "            margin-bottom: 12px;\n" +
                "        }\n" +
                "        .header-left {\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.05;\n" +
+               "            line-height: 1.2;\n" +
                "        }\n" +
                "        .company-code {\n" +
                "            font-weight: bold;\n" +
-               "            margin-bottom: 0;\n" +
-               "            margin-top: 0;\n" +
                "        }\n" +
-               "        .loc-dept {\n" +
-               "            margin-top: 0;\n" +
-               "            margin-bottom: 0;\n" +
-               "        }\n" +
+               "        .loc-dept,\n" +
                "        .page-number {\n" +
-               "            margin-top: 0;\n" +
-               "            margin-bottom: 0;\n" +
+               "            margin-top: 1px;\n" +
                "        }\n" +
                "        .company-name {\n" +
-               "            font-weight: 700;\n" +
-               "            margin-top: 2px;\n" +
-               "            margin-bottom: 0;\n" +
+               "            font-weight: bold;\n" +
+               "            margin-top: 4px;\n" +
                "            font-size: 10pt;\n" +
                "        }\n" +
                "        .company-address {\n" +
                "            font-size: 9pt;\n" +
-               "            margin-top: 0;\n" +
-               "            margin-bottom: 4px;\n" +
+               "            margin-top: 1px;\n" +
                "        }\n" +
                "        .header-right {\n" +
                "            text-align: right;\n" +
-               "            flex: 1;\n" +
-               "            min-width: 0;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
-               "            font-size: 11pt;\n" +
+               "            font-size: 12pt;\n" +
                "            font-weight: bold;\n" +
-               "            margin-bottom: 2px;\n" +
-               "            margin-top: 0;\n" +
+               "            margin-bottom: 4px;\n" +
                "        }\n" +
                "        .period-info {\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.2;\n" +
-               "            margin-top: 0;\n" +
-               "            word-wrap: break-word;\n" +
-               "            overflow-wrap: break-word;\n" +
-               "        }\n" +
-               "        .period-info div {\n" +
-               "            margin-bottom: 1px;\n" +
-               "        }\n" +
-               "        .period-info div:last-child {\n" +
-               "            margin-bottom: 8px;\n" +
+               "            line-height: 1.3;\n" +
                "        }\n" +
                "        .employee-info {\n" +
                "            margin-bottom: 8px;\n" +
                "            padding-bottom: 4px;\n" +
                "            border-bottom: none;\n" +
-               "            word-wrap: break-word;\n" +
-               "            overflow-wrap: break-word;\n" +
                "        }\n" +
                "        .employee-name {\n" +
                "            font-weight: bold;\n" +
                "            font-size: 10pt;\n" +
                "            margin-bottom: 0;\n" +
                "            margin-top: 0;\n" +
-               "            word-wrap: break-word;\n" +
-               "            overflow-wrap: break-word;\n" +
                "        }\n" +
                "        .employee-address {\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
                "            margin-top: 1px;\n" +
-               "            word-wrap: break-word;\n" +
-               "            overflow-wrap: break-word;\n" +
                "        }\n" +
                "        .paystub-main {\n" +
                "            display: flex;\n" +
@@ -757,30 +723,26 @@ public class HTMLPaystubTemplateService {
                "            position: relative;\n" +
                "        }\n" +
                "        .main-left {\n" +
-               "            width: 70%;\n" +
+               "            width: 65%;\n" +
                "            flex-shrink: 0;\n" +
                "        }\n" +
                "        .main-right {\n" +
-               "            width: 30%;\n" +
+               "            width: 35%;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-left: 0;\n" +
                "            padding-left: 0;\n" +
-               "            display: flex;\n" +
-               "            flex-direction: column;\n" +
-               "            align-items: flex-start;\n" +
                "        }\n" +
                "        .tax-info-wrapper {\n" +
                "            display: flex;\n" +
-               "            justify-content: space-between;\n" +
                "            align-items: flex-start;\n" +
                "            margin-bottom: 10px;\n" +
-               "            gap: 30px;\n" +
+               "            gap: 0;\n" +
                "        }\n" +
                "        .tax-info-section {\n" +
-               "            width: 60%;\n" +
                "            margin-bottom: 0;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
+               "            flex-shrink: 0;\n" +
                "        }\n" +
                "        .tax-info-row {\n" +
                "            margin-bottom: 1px;\n" +
@@ -793,83 +755,47 @@ public class HTMLPaystubTemplateService {
                "        .paystub-table {\n" +
                "            width: 100%;\n" +
                "            border-collapse: collapse;\n" +
-               "            margin-bottom: 10px;\n" +
+               "            margin-bottom: 12px;\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.05;\n" +
-               "            table-layout: fixed;\n" +
-               "        }\n" +
-               "        .paystub-table th:nth-child(1),\n" +
-               "        .paystub-table td:nth-child(1) {\n" +
-               "            width: 25%;\n" +
-               "        }\n" +
-               "        .paystub-table th:nth-child(2),\n" +
-               "        .paystub-table td:nth-child(2) {\n" +
-               "            width: 15%;\n" +
-               "        }\n" +
-               "        .paystub-table th:nth-child(3),\n" +
-               "        .paystub-table td:nth-child(3) {\n" +
-               "            width: 15%;\n" +
-               "        }\n" +
-               "        .paystub-table th:nth-child(4),\n" +
-               "        .paystub-table td:nth-child(4) {\n" +
-               "            width: 22.5%;\n" +
-               "        }\n" +
-               "        .paystub-table th:nth-child(5),\n" +
-               "        .paystub-table td:nth-child(5) {\n" +
-               "            width: 22.5%;\n" +
-               "        }\n" +
-               "        .paystub-table.deductions-table th:nth-child(1),\n" +
-               "        .paystub-table.deductions-table td:nth-child(1) {\n" +
-               "            width: 55%;\n" +
-               "        }\n" +
-               "        .paystub-table.deductions-table th:nth-child(2),\n" +
-               "        .paystub-table.deductions-table td:nth-child(2) {\n" +
-               "            width: 22.5%;\n" +
-               "        }\n" +
-               "        .paystub-table.deductions-table th:nth-child(3),\n" +
-               "        .paystub-table.deductions-table td:nth-child(3) {\n" +
-               "            width: 22.5%;\n" +
+               "            line-height: 1.2;\n" +
                "        }\n" +
                "        .paystub-table thead {\n" +
                "            border-bottom: 1px solid #ccc;\n" +
                "        }\n" +
                "        .paystub-table th {\n" +
                "            text-align: left;\n" +
-               "            padding: 1px 4px;\n" +
+               "            padding: 3px 6px;\n" +
                "            font-weight: bold;\n" +
                "            background: transparent;\n" +
                "            border-bottom: 1px solid #ccc;\n" +
                "            border-top: none;\n" +
-               "            font-size: 9pt;\n" +
                "        }\n" +
                "        .paystub-table th.text-right {\n" +
                "            text-align: right;\n" +
                "        }\n" +
                "        .paystub-table td {\n" +
-               "            padding: 0px 4px;\n" +
+               "            padding: 2px 6px;\n" +
                "            border-bottom: none;\n" +
-               "            font-size: 9pt;\n" +
-               "            height: 16px;\n" +
                "        }\n" +
                "        .paystub-table td.text-right {\n" +
                "            text-align: right;\n" +
                "        }\n" +
                "        .paystub-table .total-row {\n" +
                "            background: transparent;\n" +
-               "            font-weight: 700;\n" +
+               "            font-weight: bold;\n" +
                "        }\n" +
                "        .paystub-table .total-row td {\n" +
-               "            padding-top: 1px;\n" +
-               "            padding-bottom: 1px;\n" +
+               "            padding-top: 4px;\n" +
+               "            padding-bottom: 4px;\n" +
                "            border-top: none;\n" +
                "            border-bottom: none;\n" +
                "        }\n" +
                "        .paystub-table .total-row td:first-child {\n" +
-               "            text-align: left;\n" +
                "            border-top: none;\n" +
                "            border-bottom: none;\n" +
                "            border-left: none;\n" +
                "            border-right: none;\n" +
+               "            text-align: left;\n" +
                "        }\n" +
                "        .paystub-table .total-row td:nth-child(2),\n" +
                "        .paystub-table .total-row td:nth-child(3) {\n" +
@@ -891,7 +817,7 @@ public class HTMLPaystubTemplateService {
                "            border-right: none;\n" +
                "        }\n" +
                "        .deductions-section {\n" +
-               "            margin-bottom: 10px;\n" +
+               "            margin-bottom: 15px;\n" +
                "        }\n" +
                "        .deductions-section .paystub-table thead {\n" +
                "            border-bottom: none;\n" +
@@ -926,8 +852,8 @@ public class HTMLPaystubTemplateService {
                "            margin-top: 10px;\n" +
                "            margin-bottom: 8px;\n" +
                "            padding: 8px 10px;\n" +
-               "            border-top: 2px solid #666;\n" +
-               "            border-bottom: 2px solid #666;\n" +
+               "            border-top: 2px solid #777474d0;\n" +
+               "            border-bottom: 2px solid #8a8282a4;\n" +
                "            border-left: none;\n" +
                "            border-right: none;\n" +
                "            background: #f8f8f8;\n" +
@@ -945,12 +871,7 @@ public class HTMLPaystubTemplateService {
                "            font-size: 13pt;\n" +
                "            font-weight: 700;\n" +
                "        }\n" +
-               "        .tax-override-section {\n" +
-               "            width: 40%;\n" +
-               "            margin-bottom: 10px;\n" +
-               "            font-size: 9pt;\n" +
-               "            line-height: 1.2;\n" +
-               "        }\n" +
+               "        .tax-override-section,\n" +
                "        .notes-section {\n" +
                "            margin-bottom: 10px;\n" +
                "            font-size: 9pt;\n" +
@@ -962,19 +883,25 @@ public class HTMLPaystubTemplateService {
                "            font-size: 9pt;\n" +
                "            margin-top: 0;\n" +
                "        }\n" +
-               "        .tax-override-section div, .notes-section div {\n" +
+               "        .tax-override-section div,\n" +
+               "        .notes-section div {\n" +
                "            margin-bottom: 1px;\n" +
                "        }\n" +
+               "        .section-spacer {\n" +
+               "            height: 200px;\n" +
+               "            width: 100%;\n" +
+               "            display: block;\n" +
+               "            clear: both;\n" +
+               "            flex-grow: 1;\n" +
+               "            min-height: 200px;\n" +
+               "        }\n" +
                "        .check-stub-section {\n" +
-               "            margin-top: 5px;\n" +
+               "            margin-top: 0;\n" +
                "            padding-top: 8px;\n" +
                "            border-top: 1px solid #999;\n" +
                "            position: relative;\n" +
-               "            min-height: 3in;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
-               "            page-break-inside: avoid;\n" +
-               "            break-inside: avoid;\n" +
                "        }\n" +
                "        .federal-taxable {\n" +
                "            font-size: 9pt;\n" +
@@ -989,25 +916,19 @@ public class HTMLPaystubTemplateService {
                "            margin-bottom: 8px;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.15;\n" +
-               "            gap: 10px;\n" +
                "        }\n" +
                "        .check-stub-left {\n" +
-               "            line-height: 1.2;\n" +
+               "            line-height: 1.6;\n" +
                "        }\n" +
                "        .check-stub-left div {\n" +
                "            margin-bottom: 1px;\n" +
                "        }\n" +
                "        .check-stub-right {\n" +
                "            text-align: right;\n" +
-               "            line-height: 1.2;\n" +
-               "            word-wrap: break-word;\n" +
-               "            overflow-wrap: break-word;\n" +
-               "            min-width: 0;\n" +
-               "            flex: 0 0 auto;\n" +
+               "            line-height: 1.6;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
-               "            white-space: normal;\n" +
                "        }\n" +
                "        .payee-section {\n" +
                "            margin: 8px 0;\n" +
@@ -1016,19 +937,14 @@ public class HTMLPaystubTemplateService {
                "            background: white;\n" +
                "            min-height: 50px;\n" +
                "        }\n" +
-               "        .payee-line, .amount-line {\n" +
+               "        .payee-line,\n" +
+               "        .amount-line {\n" +
                "            margin-bottom: 4px;\n" +
                "            font-size: 9pt;\n" +
                "            min-height: 20px;\n" +
                "            border-bottom: 1px solid #ddd;\n" +
                "            padding-bottom: 1px;\n" +
                "            line-height: 1.2;\n" +
-               "            position: relative;\n" +
-               "        }\n" +
-               "        .amount-line {\n" +
-               "            display: flex;\n" +
-               "            justify-content: space-between;\n" +
-               "            align-items: flex-end;\n" +
                "        }\n" +
                "        .check-amount-section {\n" +
                "            text-align: right;\n" +
@@ -1048,6 +964,15 @@ public class HTMLPaystubTemplateService {
                "            text-align: right;\n" +
                "            background: transparent;\n" +
                "        }\n" +
+               "        .payee-line,\n" +
+               "        .amount-line {\n" +
+               "            position: relative;\n" +
+               "        }\n" +
+               "        .amount-line {\n" +
+               "            display: flex;\n" +
+               "            justify-content: space-between;\n" +
+               "            align-items: flex-end;\n" +
+               "        }\n" +
                "        .bank-section {\n" +
                "            margin-top: 10px;\n" +
                "            font-size: 9pt;\n" +
@@ -1065,12 +990,17 @@ public class HTMLPaystubTemplateService {
                "            top: 50%;\n" +
                "            left: 50%;\n" +
                "            transform: translate(-50%, -50%) rotate(-32deg);\n" +
-               "            font-size: 40pt;\n" +
+               "            font-size: 28pt;\n" +
                "            font-weight: bold;\n" +
-               "            color: rgba(0, 0, 0, 0.05);\n" +
-               "            z-index: 0;\n" +
-               "            pointer-events: none;\n" +
+               "            color: rgba(0, 0, 0, 0.12);\n" +
+               "            z-index: 10;\n" +
                "            white-space: nowrap;\n" +
+               "            pointer-events: none;\n" +
+               "            font-family: 'Times New Roman', serif;\n" +
+               "            text-align: center;\n" +
+               "            line-height: 1.2;\n" +
+               "            width: 100%;\n" +
+               "            overflow: visible;\n" +
                "        }\n" +
                "        .void-text {\n" +
                "            font-size: 9pt;\n" +
@@ -1078,28 +1008,30 @@ public class HTMLPaystubTemplateService {
                "            color: #000;\n" +
                "            margin-top: 4px;\n" +
                "            text-align: left;\n" +
+               "            padding-top: 2px;\n" +
                "        }\n" +
                "        @media print {\n" +
-               "            body {\n" +
-               "                padding: 0;\n" +
-               "                margin: 0;\n" +
-               "                background: white;\n" +
-               "            }\n" +
                "            .paystub-html-container {\n" +
-               "                width: 8.5in;\n" +
-               "                margin: 0;\n" +
+               "                padding: 0;\n" +
                "                background: white;\n" +
+               "                width: 8.5in;\n" +
+               "                height: 11in;\n" +
                "            }\n" +
                "            .paystub-html {\n" +
                "                box-shadow: none;\n" +
                "                margin: 0;\n" +
                "                padding: 0.5in;\n" +
                "                width: 8.5in;\n" +
+               "                height: 11in;\n" +
+               "            }\n" +
+               "            .watermark {\n" +
+               "                opacity: 0.08;\n" +
                "            }\n" +
                "        }\n" +
                "        @media screen {\n" +
                "            .paystub-html-container {\n" +
                "                width: 8.5in;\n" +
+               "                height: 11in;\n" +
                "            }\n" +
                "        }\n" +
                "    </style>\n";
