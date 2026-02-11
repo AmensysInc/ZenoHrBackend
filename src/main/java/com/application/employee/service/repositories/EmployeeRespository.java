@@ -22,6 +22,9 @@ public interface EmployeeRespository extends JpaRepository<Employee, String> {
     
     @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.employeeDetails WHERE e.employeeID = :id")
     Optional<Employee> findByIdWithDetails(@Param("id") String id);
+    
+    @Query("SELECT e FROM Employee e LEFT JOIN FETCH e.company LEFT JOIN FETCH e.employeeDetails WHERE e.employeeID = :id")
+    Optional<Employee> findByIdWithCompanyAndDetails(@Param("id") String id);
 
     @Query("SELECT e FROM Employee e WHERE (:CompanyId IS NULL OR e.CompanyId = :CompanyId)")
     List<Employee> findByCompanyOrAll(@Param("CompanyId") Integer company_id);

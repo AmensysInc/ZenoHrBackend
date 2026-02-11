@@ -5,6 +5,7 @@ import com.application.employee.service.dto.PayrollGenerateRequest;
 import com.application.employee.service.entities.Employee;
 import com.application.employee.service.entities.PayrollRecord;
 import com.application.employee.service.entities.YTDData;
+import com.application.employee.service.repositories.EmployeeRespository;
 import com.application.employee.service.repositories.YTDDataRepository;
 import com.application.employee.service.services.EmployeeService;
 import com.application.employee.service.services.PDFGenerationService;
@@ -35,6 +36,9 @@ public class PayrollController {
 
     @Autowired
     private EmployeeService employeeService;
+
+    @Autowired
+    private EmployeeRespository employeeRespository;
 
     @Autowired
     private YTDDataRepository ytdDataRepository;
@@ -180,19 +184,11 @@ public class PayrollController {
     public ResponseEntity<byte[]> generatePaystubPDF(@PathVariable Long payrollRecordId) {
         try {
             PayrollRecord payrollRecord = payrollService.getPayrollRecordById(payrollRecordId);
-            Employee employee = employeeService.getEmployee(payrollRecord.getEmployee().getEmployeeID());
+            String employeeId = payrollRecord.getEmployee().getEmployeeID();
             
-            // Ensure company is loaded (lazy loading)
-            if (employee.getCompany() != null) {
-                // Access company to trigger lazy loading
-                employee.getCompany().getCompanyName();
-            }
-            
-            // Ensure employee details is loaded (lazy loading)
-            if (employee.getEmployeeDetails() != null) {
-                // Access employee details to trigger lazy loading
-                employee.getEmployeeDetails().getResidentialAddress();
-            }
+            // Load employee with company and details eagerly to avoid LazyInitializationException
+            Employee employee = employeeRespository.findByIdWithCompanyAndDetails(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found: " + employeeId));
             
             // Get YTD data
             Integer currentYear = java.time.LocalDate.now().getYear();
