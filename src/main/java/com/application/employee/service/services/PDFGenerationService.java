@@ -44,9 +44,10 @@ public class PDFGenerationService {
             // Convert HTML to PDF using OpenHTMLToPDF
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.withHtmlContent(html, null);
+            builder.withHtmlContent(html, "file:///");
             builder.toStream(baos);
             builder.useFastMode();
+            builder.useDefaultPageSize(8.5f, 11.0f, PdfRendererBuilder.PageSizeUnits.INCHES);
             builder.run();
             
             byte[] pdfBytes = baos.toByteArray();
