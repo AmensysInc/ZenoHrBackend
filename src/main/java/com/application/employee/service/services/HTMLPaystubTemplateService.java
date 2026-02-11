@@ -656,48 +656,62 @@ public class HTMLPaystubTemplateService {
                "            margin: 0 auto;\n" +
                "            overflow: hidden;\n" +
                "            box-sizing: border-box;\n" +
-               "            display: flex;\n" +
-               "            flex-direction: column;\n" +
                "        }\n" +
                "        .paystub-header {\n" +
                "            display: flex;\n" +
                "            justify-content: space-between;\n" +
-               "            border-bottom: 2px solid #000;\n" +
-               "            padding-bottom: 8px;\n" +
-               "            margin-bottom: 12px;\n" +
+               "            border-bottom: none;\n" +
+               "            padding-bottom: 6px;\n" +
+               "            margin-bottom: 8px;\n" +
                "        }\n" +
                "        .header-left {\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.2;\n" +
+               "            line-height: 1.05;\n" +
                "        }\n" +
                "        .company-code {\n" +
                "            font-weight: bold;\n" +
+               "            margin-bottom: 0;\n" +
+               "            margin-top: 0;\n" +
                "        }\n" +
-               "        .loc-dept,\n" +
+               "        .loc-dept {\n" +
+               "            margin-top: 0;\n" +
+               "            margin-bottom: 0;\n" +
+               "        }\n" +
                "        .page-number {\n" +
-               "            margin-top: 1px;\n" +
+               "            margin-top: 0;\n" +
+               "            margin-bottom: 0;\n" +
                "        }\n" +
                "        .company-name {\n" +
-               "            font-weight: bold;\n" +
-               "            margin-top: 4px;\n" +
+               "            font-weight: 700;\n" +
+               "            margin-top: 2px;\n" +
+               "            margin-bottom: 0;\n" +
                "            font-size: 10pt;\n" +
                "        }\n" +
                "        .company-address {\n" +
                "            font-size: 9pt;\n" +
-               "            margin-top: 1px;\n" +
+               "            margin-top: 0;\n" +
+               "            margin-bottom: 0;\n" +
                "        }\n" +
                "        .header-right {\n" +
                "            text-align: right;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
-               "            font-size: 12pt;\n" +
+               "            font-size: 11pt;\n" +
                "            font-weight: bold;\n" +
-               "            margin-bottom: 4px;\n" +
+               "            margin-bottom: 2px;\n" +
+               "            margin-top: 0;\n" +
                "        }\n" +
                "        .period-info {\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.3;\n" +
+               "            line-height: 1.2;\n" +
+               "            margin-top: 0;\n" +
                "        }\n" +
+               "        .period-info div {\n" +
+               "            margin-bottom: 1px;\n" +
+               "        }\n" +
+               "        .period-info div:last-child {\n" +
+               "            margin-bottom: 8px;\n" +
+               "        }\n" + 
                "        .employee-info {\n" +
                "            margin-bottom: 8px;\n" +
                "            padding-bottom: 4px;\n" +
@@ -755,9 +769,10 @@ public class HTMLPaystubTemplateService {
                "        .paystub-table {\n" +
                "            width: 100%;\n" +
                "            border-collapse: collapse;\n" +
-               "            margin-bottom: 12px;\n" +
+               "            margin-bottom: 10px;\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.2;\n" +
+               "            line-height: 1.05;\n" +
+               "            table-layout: fixed;\n" +
                "        }\n" +
                "        .paystub-table thead {\n" +
                "            border-bottom: 1px solid #ccc;\n" +
@@ -852,8 +867,8 @@ public class HTMLPaystubTemplateService {
                "            margin-top: 10px;\n" +
                "            margin-bottom: 8px;\n" +
                "            padding: 8px 10px;\n" +
-               "            border-top: 2px solid #777474d0;\n" +
-               "            border-bottom: 2px solid #8a8282a4;\n" +
+               "            border-top: 2px solid #666;\n" +
+               "            border-bottom: 2px solid #666;\n" +
                "            border-left: none;\n" +
                "            border-right: none;\n" +
                "            background: #f8f8f8;\n" +
@@ -898,7 +913,7 @@ public class HTMLPaystubTemplateService {
                "        .check-stub-section {\n" +
                "            margin-top: 0;\n" +
                "            padding-top: 8px;\n" +
-               "            border-top: 1px solid #999;\n" +
+               "            border-top: none;\n" +
                "            position: relative;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
@@ -918,14 +933,14 @@ public class HTMLPaystubTemplateService {
                "            line-height: 1.15;\n" +
                "        }\n" +
                "        .check-stub-left {\n" +
-               "            line-height: 1.6;\n" +
+               "            line-height: 1.2;\n" +
                "        }\n" +
                "        .check-stub-left div {\n" +
                "            margin-bottom: 1px;\n" +
                "        }\n" +
                "        .check-stub-right {\n" +
                "            text-align: right;\n" +
-               "            line-height: 1.6;\n" +
+               "            line-height: 1.2;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
@@ -945,6 +960,7 @@ public class HTMLPaystubTemplateService {
                "            border-bottom: 1px solid #ddd;\n" +
                "            padding-bottom: 1px;\n" +
                "            line-height: 1.2;\n" +
+               "            position: relative;\n" +
                "        }\n" +
                "        .check-amount-section {\n" +
                "            text-align: right;\n" +
@@ -992,7 +1008,7 @@ public class HTMLPaystubTemplateService {
                "            transform: translate(-50%, -50%) rotate(-32deg);\n" +
                "            font-size: 28pt;\n" +
                "            font-weight: bold;\n" +
-               "            color: rgba(0, 0, 0, 0.12);\n" +
+               "            color: rgba(117, 115, 115, 0.37);\n" +
                "            z-index: 10;\n" +
                "            white-space: nowrap;\n" +
                "            pointer-events: none;\n" +
