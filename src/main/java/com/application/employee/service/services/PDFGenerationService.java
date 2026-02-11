@@ -44,6 +44,15 @@ public class PDFGenerationService {
             // Log HTML length for debugging
             System.out.println("Generated HTML length: " + html.length() + " characters");
             
+            // Save HTML preview file for local testing
+            try {
+                String previewPath = "paystub-preview.html";
+                htmlTemplateService.generateHTMLPreview(payrollRecord, employee, ytdData, previewPath);
+            } catch (Exception e) {
+                // Don't fail PDF generation if preview file save fails
+                System.err.println("Warning: Could not save HTML preview file: " + e.getMessage());
+            }
+            
             // Convert HTML to PDF using OpenHTMLToPDF
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfRendererBuilder builder = new PdfRendererBuilder();
