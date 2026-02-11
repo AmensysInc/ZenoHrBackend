@@ -179,6 +179,13 @@ public class HTMLPaystubTemplateService {
         
         html.append("                </div>\n");
         html.append("                <div class=\"main-right\">\n");
+        html.append("                    <!-- Tax Override - aligned with Taxable Filing Status -->\n");
+        html.append("                    <div class=\"tax-override-section\" style=\"margin-top: 0;\">\n");
+        html.append("                        <div class=\"section-title\">Tax Override:</div>\n");
+        html.append("                        <div>Federal: 0.00 Addnl</div>\n");
+        html.append("                        <div>State:</div>\n");
+        html.append("                        <div>Local:</div>\n");
+        html.append("                    </div>\n");
         html.append("                    <!-- Important Notes -->\n");
         html.append("                    <div class=\"notes-section\">\n");
         html.append("                        <div class=\"section-title\">Important Notes</div>\n");
@@ -191,31 +198,21 @@ public class HTMLPaystubTemplateService {
 
     private String generateTaxInfoWithOverride(Employee employee) {
         StringBuilder html = new StringBuilder();
-        html.append("                    <!-- Tax Information and Tax Override - Side by Side -->\n");
-        html.append("                    <div class=\"tax-info-wrapper\">\n");
-        html.append("                        <div class=\"tax-info-section\">\n");
-        html.append("                            <div class=\"tax-info-row\">\n");
-        html.append("                                <span>Taxable Filing Status: Single</span>\n");
-        html.append("                            </div>\n");
-        html.append("                            <div class=\"tax-info-row\">\n");
-        html.append("                                <span>Exemptions/Allowances:</span>\n");
-        html.append("                            </div>\n");
-        html.append("                            <div class=\"tax-info-row\">\n");
-        html.append("                                <span>Federal: Std W/H</span>\n");
-        html.append("                                <span>State: Table 0 0</span>\n");
-        html.append("                                <span>Local:</span>\n");
-        html.append("                            </div>\n");
-        html.append("                            <div class=\"tax-info-row\">\n");
-        html.append("                                <span>Social Security Number: XXX-XX-XXXX</span>\n");
-        html.append("                            </div>\n");
-                        html.append("                        </div>\n");
-                        html.append("                        \n");
-                        html.append("                        <!-- Tax Override - beside Taxable Filing Status -->\n");
-                        html.append("                        <div class=\"tax-override-section\" style=\"margin-top: 0; margin-left: 20px;\">\n");
-        html.append("                            <div class=\"section-title\">Tax Override:</div>\n");
-        html.append("                            <div>Federal: 0.00 Addnl</div>\n");
-        html.append("                            <div>State:</div>\n");
-        html.append("                            <div>Local:</div>\n");
+        html.append("                    <!-- Tax Information -->\n");
+        html.append("                    <div class=\"tax-info-section\">\n");
+        html.append("                        <div class=\"tax-info-row\">\n");
+        html.append("                            <span>Taxable Filing Status: Single</span>\n");
+        html.append("                        </div>\n");
+        html.append("                        <div class=\"tax-info-row\">\n");
+        html.append("                            <span>Exemptions/Allowances:</span>\n");
+        html.append("                        </div>\n");
+        html.append("                        <div class=\"tax-info-row\">\n");
+        html.append("                            <span>Federal: Std W/H</span>\n");
+        html.append("                            <span>State: Table 0 0</span>\n");
+        html.append("                            <span>Local:</span>\n");
+        html.append("                        </div>\n");
+        html.append("                        <div class=\"tax-info-row\">\n");
+        html.append("                            <span>Social Security Number: XXX-XX-XXXX</span>\n");
         html.append("                        </div>\n");
         html.append("                    </div>\n");
         return html.toString();
@@ -684,6 +681,7 @@ public class HTMLPaystubTemplateService {
                "        .paystub-header {\n" +
                "            display: flex;\n" +
                "            justify-content: space-between;\n" +
+               "            align-items: flex-start;\n" +
                "            border-bottom: none;\n" +
                "            padding-bottom: 6px;\n" +
                "            margin-bottom: 8px;\n" +
@@ -725,6 +723,7 @@ public class HTMLPaystubTemplateService {
                "            text-align: right;\n" +
                "            max-width: 50%;\n" +
                "            flex-shrink: 0;\n" +
+               "            align-self: flex-start;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
                "            font-size: 11pt;\n" +
@@ -786,11 +785,9 @@ public class HTMLPaystubTemplateService {
                "            gap: 0;\n" +
                "        }\n" +
                "        .tax-info-section {\n" +
-               "            margin-bottom: 0;\n" +
+               "            margin-bottom: 10px;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
-               "            flex: 0 0 70%;\n" +
-               "            flex-shrink: 0;\n" +
                "        }\n" +
                "        .tax-info-row {\n" +
                "            margin-bottom: 1px;\n" +
@@ -911,6 +908,8 @@ public class HTMLPaystubTemplateService {
                "            border-left: none;\n" +
                "            border-right: none;\n" +
                "            background: #f8f8f8;\n" +
+               "            width: 100%;\n" +
+               "            box-sizing: border-box;\n" +
                "        }\n" +
                "        .net-pay-row {\n" +
                "            display: flex;\n" +
@@ -932,11 +931,9 @@ public class HTMLPaystubTemplateService {
                "            line-height: 1.2;\n" +
                "        }\n" +
                "        .tax-override-section {\n" +
-               "            flex: 0 0 30%;\n" +
-               "            padding-left: 20px;\n" +
-               "            overflow: hidden;\n" +
-               "            word-wrap: break-word;\n" +
-               "            flex-shrink: 0;\n" +
+               "            margin-bottom: 10px;\n" +
+               "            font-size: 9pt;\n" +
+               "            line-height: 1.2;\n" +
                "        }\n" +
                "        .section-title {\n" +
                "            font-weight: bold;\n" +
@@ -949,12 +946,12 @@ public class HTMLPaystubTemplateService {
                "            margin-bottom: 1px;\n" +
                "        }\n" +
                "        .section-spacer {\n" +
-               "            height: 200px;\n" +
+               "            height: 150px;\n" +
                "            width: 100%;\n" +
                "            display: block;\n" +
                "            clear: both;\n" +
                "            flex-grow: 1;\n" +
-               "            min-height: 200px;\n" +
+               "            min-height: 100px;\n" +
                "            flex-shrink: 1;\n" +
                "        }\n" +
                "        .check-stub-section {\n" +
@@ -964,7 +961,7 @@ public class HTMLPaystubTemplateService {
                "            position: relative;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
-               "            min-height: 200px;\n" +
+               "            min-height: 180px;\n" +
                "        }\n" +
                "        .federal-taxable {\n" +
                "            font-size: 9pt;\n" +
@@ -973,7 +970,7 @@ public class HTMLPaystubTemplateService {
                "            line-height: 1.2;\n" +
                "            margin-top: 0;\n" +
                "            position: relative;\n" +
-               "            z-index: 2;\n" +
+               "            z-index: 10;\n" +
                "        }\n" +
                "        .check-stub-main {\n" +
                "            display: flex;\n" +
@@ -982,7 +979,7 @@ public class HTMLPaystubTemplateService {
                "            font-size: 9pt;\n" +
                "            line-height: 1.15;\n" +
                "            position: relative;\n" +
-               "            z-index: 2;\n" +
+               "            z-index: 10;\n" +
                "        }\n" +
                "        .check-stub-left {\n" +
                "            line-height: 1.2;\n" +
@@ -1004,7 +1001,7 @@ public class HTMLPaystubTemplateService {
                "            background: white;\n" +
                "            min-height: 50px;\n" +
                "            position: relative;\n" +
-               "            z-index: 2;\n" +
+               "            z-index: 10;\n" +
                "        }\n" +
                "        .payee-line,\n" +
                "        .amount-line {\n" +
@@ -1047,7 +1044,7 @@ public class HTMLPaystubTemplateService {
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
                "            position: relative;\n" +
-               "            z-index: 2;\n" +
+               "            z-index: 10;\n" +
                "        }\n" +
                "        .bank-name {\n" +
                "            font-weight: bold;\n" +
@@ -1061,10 +1058,10 @@ public class HTMLPaystubTemplateService {
                "            top: 50%;\n" +
                "            left: 50%;\n" +
                "            transform: translate(-50%, -50%) rotate(-32deg);\n" +
-               "            font-size: 28pt;\n" +
+               "            font-size: 24pt;\n" +
                "            font-weight: bold;\n" +
-               "            color: rgba(0, 0, 0, 0.12);\n" +
-               "            z-index: 1;\n" +
+               "            color: rgba(0, 0, 0, 0.06);\n" +
+               "            z-index: 0;\n" +
                "            white-space: nowrap;\n" +
                "            pointer-events: none;\n" +
                "            font-family: 'Times New Roman', serif;\n" +
@@ -1103,6 +1100,7 @@ public class HTMLPaystubTemplateService {
                "            .section-spacer {\n" +
                "                flex-shrink: 1;\n" +
                "                min-height: 0;\n" +
+               "                height: auto;\n" +
                "            }\n" +
                "            .watermark {\n" +
                "                opacity: 0.08;\n" +
