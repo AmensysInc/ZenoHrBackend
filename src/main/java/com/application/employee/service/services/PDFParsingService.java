@@ -127,25 +127,29 @@ public class PDFParsingService {
             }
             
             // Extract State Tax - must be "state income" (not "state ui", "state di", etc.)
+            // Extract even if current period is 0, as long as we can find the state name (for YTD display)
             if (lowerLine.matches(".*\\bstate\\s+income\\b.*") && 
-                !lowerLine.contains("ui") && !lowerLine.contains("di") && !lowerLine.contains("fli") &&
-                extracted.get("stateTaxWithheld") == null) {
-                // Extract state name
+                !lowerLine.contains("ui") && !lowerLine.contains("di") && !lowerLine.contains("fli")) {
+                // Extract state name first (always extract if found, even if value is 0)
                 Pattern stateNamePattern = Pattern.compile("([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)\\s+State\\s+Income", Pattern.CASE_INSENSITIVE);
                 Matcher stateNameMatcher = stateNamePattern.matcher(line);
                 if (stateNameMatcher.find()) {
                     extracted.put("stateTaxName", stateNameMatcher.group(1) + " State Income");
                 } else {
                     // Try simpler pattern
-                    Pattern simpleStatePattern = Pattern.compile("(California|Illinois|New Jersey|Texas|New York|Florida|Arizona|Georgia|North Carolina|Washington)", Pattern.CASE_INSENSITIVE);
+                    Pattern simpleStatePattern = Pattern.compile("(California|Illinois|New Jersey|Texas|New York|Florida|Arizona|Georgia|North Carolina|Washington|Virginia|Maryland|Pennsylvania|Massachusetts|Connecticut|Ohio|Michigan|Indiana|Wisconsin|Minnesota|Colorado|Oregon|Nevada|Utah|Tennessee|Alabama|Louisiana|Kentucky|Missouri|Iowa|Arkansas|Mississippi|Oklahoma|Kansas|Nebraska|Idaho|West Virginia|Hawaii|New Hampshire|Maine|Rhode Island|Montana|Delaware|South Dakota|North Dakota|Alaska|Wyoming|Vermont)", Pattern.CASE_INSENSITIVE);
                     Matcher simpleMatcher = simpleStatePattern.matcher(line);
                     if (simpleMatcher.find()) {
                         extracted.put("stateTaxName", simpleMatcher.group(1) + " State Income");
                     }
                 }
+                // Extract current period value (even if 0, we still want to capture it)
                 BigDecimal value = extractThisPeriodValue(line, i, lines, thisPeriodColIndex);
                 if (value != null) {
                     extracted.put("stateTaxWithheld", value.abs()); // Take absolute value
+                } else if (extracted.get("stateTaxWithheld") == null) {
+                    // If no value found but we have state name, set to 0
+                    extracted.put("stateTaxWithheld", BigDecimal.ZERO);
                 }
             }
             
@@ -226,12 +230,13 @@ public class PDFParsingService {
                 }
             }
             
-            // Extract YTD State Tax
+            // Extract YTD State Tax - extract even if current period is 0 (for cases like moving from CA to TX)
             if (lowerLine.matches(".*\\bstate\\s+income\\b.*") && 
                 !lowerLine.contains("ui") && !lowerLine.contains("di") && !lowerLine.contains("fli") &&
                 extracted.get("ytdStateTax") == null) {
                 BigDecimal value = extractYtdValue(line, i, lines, ytdColIndex);
-                if (value != null && value.compareTo(BigDecimal.ZERO) > 0) {
+                // Extract YTD even if it's 0, but prioritize non-zero values
+                if (value != null) {
                     extracted.put("ytdStateTax", value.abs());
                 }
             }
@@ -497,7 +502,10 @@ public class PDFParsingService {
         Set<String> standardFields = new HashSet<>(Arrays.asList(
             "federal income", "federal tax", "social security", "medicare",
             "gross pay", "net pay", "state income", "california state income",
-            "illinois state income", "local tax", "additional medicare",
+            "illinois state income", "new jersey state income", "texas state income",
+            "new york state income", "florida state income", "arizona state income",
+            "georgia state income", "north carolina state income", "washington state income",
+            "local tax", "additional medicare",
             "state ui", "state di", "state fli", "state sdi", "state sui"
         ));
 
@@ -665,14 +673,38 @@ public class PDFParsingService {
                             thisPeriodAmount = BigDecimal.ZERO;
                         }
                         
-                        // Only add if not already exists or if this is a better match (non-zero amount)
-                        if (!additionalFields.containsKey(key) || 
-                            (additionalFields.containsKey(key) && thisPeriodAmount.compareTo(BigDecimal.ZERO) > 0)) {
+                        // Always add the field - even if amount is 0, it might have YTD value
+                        // Only replace if this is a better match (non-zero amount) or if current entry has no YTD but this one does
+                        boolean shouldAdd = false;
+                        if (!additionalFields.containsKey(key)) {
+                            shouldAdd = true;
+                        } else {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> existingField = (Map<String, Object>) additionalFields.get(key);
+                            Object existingYtd = existingField.get("ytd");
+                            BigDecimal existingYtdValue = existingYtd instanceof BigDecimal ? (BigDecimal) existingYtd : 
+                                                          existingYtd instanceof Number ? BigDecimal.valueOf(((Number) existingYtd).doubleValue()) : null;
+                            
+                            // Replace if: current has non-zero amount, or current has YTD but existing doesn't, or both have YTD and current is better
+                            if (thisPeriodAmount.compareTo(BigDecimal.ZERO) > 0) {
+                                shouldAdd = true;
+                            } else if (ytdAmount != null && ytdAmount.compareTo(BigDecimal.ZERO) > 0 && 
+                                      (existingYtdValue == null || existingYtdValue.compareTo(BigDecimal.ZERO) == 0)) {
+                                shouldAdd = true;
+                            } else if (ytdAmount != null && existingYtdValue != null && ytdAmount.compareTo(existingYtdValue) > 0) {
+                                shouldAdd = true;
+                            }
+                        }
+                        
+                        if (shouldAdd) {
                             Map<String, Object> fieldData = new HashMap<>();
                             fieldData.put("name", deductionName);
                             fieldData.put("value", thisPeriodAmount);
                             if (ytdAmount != null) {
                                 fieldData.put("ytd", ytdAmount);
+                            } else {
+                                // Set YTD to 0 if not found, so field is still created
+                                fieldData.put("ytd", BigDecimal.ZERO);
                             }
                             additionalFields.put(key, fieldData);
                         }
