@@ -164,11 +164,12 @@ public class PreviousMonthTaxController {
                     // Read the saved PDF file to create a MultipartFile for Paystub service
                     Path savedPdfPath = Paths.get(taxData.getPdfFilePath());
                     if (Files.exists(savedPdfPath)) {
-                        byte[] fileBytes = Files.readAllBytes(savedPdfPath);
-                        String fileName = taxData.getPdfFileName() != null ? taxData.getPdfFileName() : pdfFile.getOriginalFilename();
-                        if (fileName == null || fileName.isEmpty()) {
-                            fileName = "paystub_" + System.currentTimeMillis() + ".pdf";
+                        final byte[] fileBytes = Files.readAllBytes(savedPdfPath);
+                        String tempFileName = taxData.getPdfFileName() != null ? taxData.getPdfFileName() : pdfFile.getOriginalFilename();
+                        if (tempFileName == null || tempFileName.isEmpty()) {
+                            tempFileName = "paystub_" + System.currentTimeMillis() + ".pdf";
                         }
+                        final String fileName = tempFileName;
                         
                         // Create a MultipartFile implementation from the saved file
                         MultipartFile paystubFile = new MultipartFile() {
