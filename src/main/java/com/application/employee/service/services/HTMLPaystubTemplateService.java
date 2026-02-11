@@ -667,6 +667,7 @@ public class HTMLPaystubTemplateService {
                "            margin: 0 auto;\n" +
                "            overflow: hidden;\n" +
                "            box-sizing: border-box;\n" +
+               "            page-break-after: avoid;\n" +
                "        }\n" +
                "        .paystub-header {\n" +
                "            display: flex;\n" +
@@ -746,6 +747,7 @@ public class HTMLPaystubTemplateService {
                "            align-items: flex-start;\n" +
                "            flex-shrink: 0;\n" +
                "            position: relative;\n" +
+               "            min-height: 360px;\n" +
                "        }\n" +
                "        .main-left {\n" +
                "            width: 65%;\n" +
@@ -947,12 +949,10 @@ public class HTMLPaystubTemplateService {
                "            margin-bottom: 1px;\n" +
                "        }\n" +
                "        .section-spacer {\n" +
-               "            height: 200px;\n" +
+               "            height: 220px;\n" +
                "            width: 100%;\n" +
                "            display: block;\n" +
                "            clear: both;\n" +
-               "            flex-grow: 1;\n" +
-               "            min-height: 200px;\n" +
                "        }\n" +
                "        .check-stub-section {\n" +
                "            margin-top: 0;\n" +
@@ -961,6 +961,7 @@ public class HTMLPaystubTemplateService {
                "            position: relative;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
+               "            page-break-inside: avoid;\n" +
                "        }\n" +
                "        .federal-taxable {\n" +
                "            font-size: 9pt;\n" +
@@ -1042,7 +1043,7 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .check-watermark {\n" +
                "            position: absolute;\n" +
-               "            top: 50%;\n" +
+               "            top: 55%;\n" +
                "            left: 50%;\n" +
                "            transform: translate(-50%, -50%) rotate(-32deg);\n" +
                "            font-size: 28pt;\n" +
