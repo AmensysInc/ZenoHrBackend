@@ -50,6 +50,28 @@ public class Paystub {
     @Column(name = "NET_PAY", precision = 10, scale = 2)
     private BigDecimal netPay;
 
+    // YTD (Year-To-Date) values from uploaded paystub
+    @Column(name = "YTD_GROSS_PAY", precision = 10, scale = 2)
+    private BigDecimal ytdGrossPay;
+
+    @Column(name = "YTD_NET_PAY", precision = 10, scale = 2)
+    private BigDecimal ytdNetPay;
+
+    @Column(name = "YTD_FEDERAL_TAX", precision = 10, scale = 2)
+    private BigDecimal ytdFederalTax;
+
+    @Column(name = "YTD_STATE_TAX", precision = 10, scale = 2)
+    private BigDecimal ytdStateTax;
+
+    @Column(name = "YTD_LOCAL_TAX", precision = 10, scale = 2)
+    private BigDecimal ytdLocalTax;
+
+    @Column(name = "YTD_SOCIAL_SECURITY", precision = 10, scale = 2)
+    private BigDecimal ytdSocialSecurity;
+
+    @Column(name = "YTD_MEDICARE", precision = 10, scale = 2)
+    private BigDecimal ytdMedicare;
+
     @Column(name = "UPLOADED_AT", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime uploadedAt;

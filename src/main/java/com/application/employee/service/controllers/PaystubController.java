@@ -42,7 +42,14 @@ public class PaystubController {
             @RequestParam("payPeriodEnd") String payPeriodEnd,
             @RequestParam(value = "checkDate", required = false) String checkDateStr,
             @RequestParam(value = "grossPay", required = false) String grossPayStr,
-            @RequestParam(value = "netPay", required = false) String netPayStr) {
+            @RequestParam(value = "netPay", required = false) String netPayStr,
+            @RequestParam(value = "ytdGrossPay", required = false) String ytdGrossPayStr,
+            @RequestParam(value = "ytdNetPay", required = false) String ytdNetPayStr,
+            @RequestParam(value = "ytdFederalTax", required = false) String ytdFederalTaxStr,
+            @RequestParam(value = "ytdStateTax", required = false) String ytdStateTaxStr,
+            @RequestParam(value = "ytdLocalTax", required = false) String ytdLocalTaxStr,
+            @RequestParam(value = "ytdSocialSecurity", required = false) String ytdSocialSecurityStr,
+            @RequestParam(value = "ytdMedicare", required = false) String ytdMedicareStr) {
         try {
             // Get current user
             String currentUserEmail = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -67,7 +74,40 @@ public class PaystubController {
                 netPay = new BigDecimal(netPayStr);
             }
 
-            paystubService.uploadPaystub(employeeId, file, year, startDate, endDate, checkDate, grossPay, netPay, currentUser.getEmail());
+            // Parse YTD amounts
+            BigDecimal ytdGrossPay = null;
+            BigDecimal ytdNetPay = null;
+            BigDecimal ytdFederalTax = null;
+            BigDecimal ytdStateTax = null;
+            BigDecimal ytdLocalTax = null;
+            BigDecimal ytdSocialSecurity = null;
+            BigDecimal ytdMedicare = null;
+            
+            if (ytdGrossPayStr != null && !ytdGrossPayStr.isEmpty()) {
+                ytdGrossPay = new BigDecimal(ytdGrossPayStr);
+            }
+            if (ytdNetPayStr != null && !ytdNetPayStr.isEmpty()) {
+                ytdNetPay = new BigDecimal(ytdNetPayStr);
+            }
+            if (ytdFederalTaxStr != null && !ytdFederalTaxStr.isEmpty()) {
+                ytdFederalTax = new BigDecimal(ytdFederalTaxStr);
+            }
+            if (ytdStateTaxStr != null && !ytdStateTaxStr.isEmpty()) {
+                ytdStateTax = new BigDecimal(ytdStateTaxStr);
+            }
+            if (ytdLocalTaxStr != null && !ytdLocalTaxStr.isEmpty()) {
+                ytdLocalTax = new BigDecimal(ytdLocalTaxStr);
+            }
+            if (ytdSocialSecurityStr != null && !ytdSocialSecurityStr.isEmpty()) {
+                ytdSocialSecurity = new BigDecimal(ytdSocialSecurityStr);
+            }
+            if (ytdMedicareStr != null && !ytdMedicareStr.isEmpty()) {
+                ytdMedicare = new BigDecimal(ytdMedicareStr);
+            }
+
+            paystubService.uploadPaystub(employeeId, file, year, startDate, endDate, checkDate, 
+                    grossPay, netPay, ytdGrossPay, ytdNetPay, ytdFederalTax, ytdStateTax, 
+                    ytdLocalTax, ytdSocialSecurity, ytdMedicare, currentUser.getEmail());
             return ResponseEntity.ok("Paystub uploaded successfully");
         } catch (FileUploadException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

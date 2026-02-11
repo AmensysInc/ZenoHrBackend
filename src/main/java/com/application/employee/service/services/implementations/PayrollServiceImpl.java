@@ -2,10 +2,12 @@ package com.application.employee.service.services.implementations;
 
 import com.application.employee.service.entities.Employee;
 import com.application.employee.service.entities.PayrollRecord;
+import com.application.employee.service.entities.Paystub;
 import com.application.employee.service.entities.PreviousMonthTax;
 import com.application.employee.service.entities.YTDData;
 import com.application.employee.service.repositories.EmployeeRespository;
 import com.application.employee.service.repositories.PayrollRecordRepository;
+import com.application.employee.service.repositories.PaystubRepository;
 import com.application.employee.service.repositories.PreviousMonthTaxRepository;
 import com.application.employee.service.repositories.YTDDataRepository;
 import com.application.employee.service.services.CheckSettingsService;
@@ -36,6 +38,9 @@ public class PayrollServiceImpl implements PayrollService {
 
     @Autowired
     private PayrollRecordRepository payrollRecordRepository;
+
+    @Autowired
+    private PaystubRepository paystubRepository;
 
     @Autowired
     private PreviousMonthTaxRepository previousMonthTaxRepository;
@@ -118,7 +123,89 @@ public class PayrollServiceImpl implements PayrollService {
             ytdData.setPayPeriodsCount(0);
         }
         
-        // If previous YTD data is provided, use it as the starting point
+        // Automatically aggregate YTD from previous records before current pay period
+        // PRIORITY: Generated payroll records are ALWAYS used over uploaded paystubs
+        // This ensures that when generating March, it uses February's generated payroll (not January's uploaded paystub)
+        BigDecimal aggregatedYtdGrossPay = null;
+        BigDecimal aggregatedYtdNetPay = null;
+        BigDecimal aggregatedYtdFederalTax = null;
+        BigDecimal aggregatedYtdStateTax = null;
+        BigDecimal aggregatedYtdLocalTax = null;
+        BigDecimal aggregatedYtdSocialSecurity = null;
+        BigDecimal aggregatedYtdMedicare = null;
+        
+        // FIRST: Find the latest generated payroll record before current pay period (PRIORITY)
+        // This ensures generated payrolls are always used over uploaded paystubs
+        Optional<PayrollRecord> latestPayrollOpt = payrollRecordRepository.findLatestByEmployeeIdAndPayPeriodEndBefore(employeeId, payPeriodStart);
+        if (latestPayrollOpt.isPresent()) {
+            PayrollRecord payroll = latestPayrollOpt.get();
+            if (payroll.getYtdGrossPay() != null) {
+                aggregatedYtdGrossPay = payroll.getYtdGrossPay();
+                aggregatedYtdNetPay = payroll.getYtdNetPay();
+                // For generated payrolls, get tax YTD from YTDData if available
+                // (PayrollRecord only stores ytdGrossPay and ytdNetPay)
+                Optional<YTDData> latestYtdData = ytdDataRepository.findByEmployeeEmployeeIDAndCurrentYear(employeeId, currentYear);
+                if (latestYtdData.isPresent()) {
+                    YTDData latestYtd = latestYtdData.get();
+                    aggregatedYtdFederalTax = latestYtd.getYtdFederalTax();
+                    aggregatedYtdStateTax = latestYtd.getYtdStateTax();
+                    aggregatedYtdLocalTax = latestYtd.getYtdLocalTax();
+                    aggregatedYtdSocialSecurity = latestYtd.getYtdSocialSecurity();
+                    aggregatedYtdMedicare = latestYtd.getYtdMedicare();
+                }
+                System.out.println("Using YTD from generated PayrollRecord: " + payroll.getId() + " (Pay Period End: " + payroll.getPayPeriodEnd() + ")");
+            }
+        }
+        
+        // SECOND: Only if no generated payroll found, check uploaded paystubs (FALLBACK)
+        // This is used only for the first time when generating payroll from uploaded paystub
+        if (aggregatedYtdGrossPay == null) {
+            Optional<Paystub> latestPaystubOpt = paystubRepository.findLatestByEmployeeIdAndPayPeriodEndBefore(employeeId, payPeriodStart);
+            if (latestPaystubOpt.isPresent()) {
+                Paystub paystub = latestPaystubOpt.get();
+                if (paystub.getYtdGrossPay() != null) {
+                    aggregatedYtdGrossPay = paystub.getYtdGrossPay();
+                    aggregatedYtdNetPay = paystub.getYtdNetPay();
+                    aggregatedYtdFederalTax = paystub.getYtdFederalTax();
+                    aggregatedYtdStateTax = paystub.getYtdStateTax();
+                    aggregatedYtdLocalTax = paystub.getYtdLocalTax();
+                    aggregatedYtdSocialSecurity = paystub.getYtdSocialSecurity();
+                    aggregatedYtdMedicare = paystub.getYtdMedicare();
+                    System.out.println("Using YTD from uploaded Paystub: " + paystub.getId() + " (Pay Period End: " + paystub.getPayPeriodEnd() + ")");
+                }
+            } else {
+                System.out.println("No previous payroll record or paystub found for YTD initialization.");
+            }
+        } else {
+            System.out.println("Generated payroll found, skipping uploaded paystubs check.");
+        }
+        
+        // Use aggregated YTD if available and no explicit previous YTD was provided
+        if (aggregatedYtdGrossPay != null) {
+            if (previousYtdGrossPay == null) {
+                ytdData.setYtdGrossPay(aggregatedYtdGrossPay);
+            }
+            if (previousYtdNetPay == null && aggregatedYtdNetPay != null) {
+                ytdData.setYtdNetPay(aggregatedYtdNetPay);
+            }
+            if (previousYtdFederalTax == null && aggregatedYtdFederalTax != null) {
+                ytdData.setYtdFederalTax(aggregatedYtdFederalTax);
+            }
+            if (previousYtdStateTax == null && aggregatedYtdStateTax != null) {
+                ytdData.setYtdStateTax(aggregatedYtdStateTax);
+            }
+            if (previousYtdLocalTax == null && aggregatedYtdLocalTax != null) {
+                ytdData.setYtdLocalTax(aggregatedYtdLocalTax);
+            }
+            if (previousYtdSocialSecurity == null && aggregatedYtdSocialSecurity != null) {
+                ytdData.setYtdSocialSecurity(aggregatedYtdSocialSecurity);
+            }
+            if (previousYtdMedicare == null && aggregatedYtdMedicare != null) {
+                ytdData.setYtdMedicare(aggregatedYtdMedicare);
+            }
+        }
+        
+        // If previous YTD data is explicitly provided, use it as the starting point (overrides aggregated)
         if (previousYtdGrossPay != null) {
             ytdData.setYtdGrossPay(previousYtdGrossPay);
         }

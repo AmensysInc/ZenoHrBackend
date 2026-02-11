@@ -11,8 +11,10 @@ import java.util.List;
 
 public interface PaystubService {
     Paystub uploadPaystub(String employeeId, MultipartFile file, Integer year, LocalDate payPeriodStart, 
-                         LocalDate payPeriodEnd, LocalDate checkDate, BigDecimal grossPay, BigDecimal netPay, 
-                         String uploadedBy) throws FileUploadException, IOException;
+                         LocalDate payPeriodEnd, LocalDate checkDate, BigDecimal grossPay, BigDecimal netPay,
+                         BigDecimal ytdGrossPay, BigDecimal ytdNetPay, BigDecimal ytdFederalTax, 
+                         BigDecimal ytdStateTax, BigDecimal ytdLocalTax, BigDecimal ytdSocialSecurity, 
+                         BigDecimal ytdMedicare, String uploadedBy) throws FileUploadException, IOException;
     
     List<Paystub> getPaystubsByEmployee(String employeeId);
     

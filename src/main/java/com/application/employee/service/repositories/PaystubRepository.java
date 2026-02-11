@@ -3,8 +3,10 @@ package com.application.employee.service.repositories;
 import com.application.employee.service.entities.Paystub;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,5 +19,11 @@ public interface PaystubRepository extends JpaRepository<Paystub, Long> {
     
     @Query("SELECT DISTINCT p FROM Paystub p LEFT JOIN FETCH p.employee")
     List<Paystub> findAllWithEmployee();
+    
+    @Query("SELECT p FROM Paystub p WHERE p.employee.employeeID = :employeeId AND p.payPeriodEnd < :beforeDate ORDER BY p.payPeriodEnd DESC")
+    List<Paystub> findByEmployeeIdAndPayPeriodEndBefore(@Param("employeeId") String employeeId, @Param("beforeDate") LocalDate beforeDate);
+    
+    @Query("SELECT p FROM Paystub p WHERE p.employee.employeeID = :employeeId AND p.payPeriodEnd < :beforeDate ORDER BY p.payPeriodEnd DESC")
+    Optional<Paystub> findLatestByEmployeeIdAndPayPeriodEndBefore(@Param("employeeId") String employeeId, @Param("beforeDate") LocalDate beforeDate);
 }
 

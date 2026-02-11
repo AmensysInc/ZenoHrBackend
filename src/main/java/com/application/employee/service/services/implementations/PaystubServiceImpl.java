@@ -37,7 +37,9 @@ public class PaystubServiceImpl implements PaystubService {
     @Override
     public Paystub uploadPaystub(String employeeId, MultipartFile file, Integer year, LocalDate payPeriodStart,
                                  LocalDate payPeriodEnd, LocalDate checkDate, BigDecimal grossPay, BigDecimal netPay,
-                                 String uploadedBy) throws FileUploadException, IOException {
+                                 BigDecimal ytdGrossPay, BigDecimal ytdNetPay, BigDecimal ytdFederalTax,
+                                 BigDecimal ytdStateTax, BigDecimal ytdLocalTax, BigDecimal ytdSocialSecurity,
+                                 BigDecimal ytdMedicare, String uploadedBy) throws FileUploadException, IOException {
         
         if (file == null || file.isEmpty()) {
             throw new FileUploadException("File cannot be empty");
@@ -78,6 +80,16 @@ public class PaystubServiceImpl implements PaystubService {
         paystub.setCheckDate(checkDate);
         paystub.setGrossPay(grossPay);
         paystub.setNetPay(netPay);
+        
+        // Set YTD values from uploaded paystub
+        paystub.setYtdGrossPay(ytdGrossPay);
+        paystub.setYtdNetPay(ytdNetPay);
+        paystub.setYtdFederalTax(ytdFederalTax);
+        paystub.setYtdStateTax(ytdStateTax);
+        paystub.setYtdLocalTax(ytdLocalTax);
+        paystub.setYtdSocialSecurity(ytdSocialSecurity);
+        paystub.setYtdMedicare(ytdMedicare);
+        
         paystub.setUploadedAt(LocalDateTime.now());
         paystub.setUploadedBy(uploadedBy);
         paystub.setMonth(payPeriodStart.getMonthValue());

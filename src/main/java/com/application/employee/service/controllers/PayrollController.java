@@ -218,6 +218,18 @@ public class PayrollController {
         }
     }
 
+    @GetMapping("/ytd-data/employee/{employeeId}/year/{year}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER', 'EMPLOYEE')")
+    public ResponseEntity<YTDData> getYtdData(@PathVariable String employeeId, @PathVariable Integer year) {
+        try {
+            YTDData ytdData = ytdDataRepository.findByEmployeeEmployeeIDAndCurrentYear(employeeId, year)
+                    .orElse(null);
+            return ResponseEntity.ok(ytdData);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping("/records/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<Map<String, Object>> deletePayrollRecord(@PathVariable Long id) {
