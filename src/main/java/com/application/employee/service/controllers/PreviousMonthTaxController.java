@@ -19,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -171,13 +170,48 @@ public class PreviousMonthTaxController {
                             fileName = "paystub_" + System.currentTimeMillis() + ".pdf";
                         }
                         
-                        // Create a MockMultipartFile from the saved file
-                        MultipartFile paystubFile = new MockMultipartFile(
-                            "file",
-                            fileName,
-                            "application/pdf",
-                            fileBytes
-                        );
+                        // Create a MultipartFile implementation from the saved file
+                        MultipartFile paystubFile = new MultipartFile() {
+                            @Override
+                            public String getName() {
+                                return "file";
+                            }
+
+                            @Override
+                            public String getOriginalFilename() {
+                                return fileName;
+                            }
+
+                            @Override
+                            public String getContentType() {
+                                return "application/pdf";
+                            }
+
+                            @Override
+                            public boolean isEmpty() {
+                                return fileBytes == null || fileBytes.length == 0;
+                            }
+
+                            @Override
+                            public long getSize() {
+                                return fileBytes != null ? fileBytes.length : 0;
+                            }
+
+                            @Override
+                            public byte[] getBytes() throws IOException {
+                                return fileBytes;
+                            }
+
+                            @Override
+                            public java.io.InputStream getInputStream() throws IOException {
+                                return new java.io.ByteArrayInputStream(fileBytes);
+                            }
+
+                            @Override
+                            public void transferTo(java.io.File dest) throws IOException, IllegalStateException {
+                                java.nio.file.Files.write(dest.toPath(), fileBytes);
+                            }
+                        };
                         
                         // Extract year from period end date
                         Integer year = taxData.getPeriodEndDate() != null ? taxData.getPeriodEndDate().getYear() : java.time.LocalDate.now().getYear();
