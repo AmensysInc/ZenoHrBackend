@@ -41,6 +41,9 @@ public class PDFGenerationService {
                 throw new IOException("Generated HTML is null or empty");
             }
             
+            // Log HTML length for debugging
+            System.out.println("Generated HTML length: " + html.length() + " characters");
+            
             // Convert HTML to PDF using OpenHTMLToPDF
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfRendererBuilder builder = new PdfRendererBuilder();
