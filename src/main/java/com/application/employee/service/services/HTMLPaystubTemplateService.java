@@ -127,6 +127,8 @@ public class HTMLPaystubTemplateService {
         html.append("                    </div>\n");
         html.append("                </div>\n");
         html.append("            </div>\n");
+        html.append("            <!-- Spacer after header -->\n");
+        html.append("            <div class=\"header-spacer\"></div>\n");
         return html.toString();
     }
 
@@ -157,13 +159,6 @@ public class HTMLPaystubTemplateService {
         
         html.append("                </div>\n");
         html.append("                <div class=\"main-right\">\n");
-        html.append("                    <!-- Tax Override - aligned with Taxable Filing Status -->\n");
-        html.append("                    <div class=\"tax-override-section\" style=\"margin-top: 0;\">\n");
-        html.append("                        <div class=\"section-title\">Tax Override:</div>\n");
-        html.append("                        <div>Federal: 0.00 Addnl</div>\n");
-        html.append("                        <div>State:</div>\n");
-        html.append("                        <div>Local:</div>\n");
-        html.append("                    </div>\n");
         html.append("                    <!-- Important Notes -->\n");
         html.append("                    <div class=\"notes-section\">\n");
         html.append("                        <div class=\"section-title\">Important Notes</div>\n");
@@ -672,13 +667,20 @@ public class HTMLPaystubTemplateService {
                "        .paystub-header {\n" +
                "            display: flex;\n" +
                "            justify-content: space-between;\n" +
-               "            border-bottom: 2px solid #000;\n" +
-               "            padding-bottom: 8px;\n" +
-               "            margin-bottom: 12px;\n" +
+               "            border-bottom: none;\n" +
+               "            padding-bottom: 0;\n" +
+               "            margin-bottom: 0;\n" +
                "        }\n" +
                "        .header-left {\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
+               "            margin-left: -5px;\n" +
+               "            margin-top: -3px;\n" +
+               "        }\n" +
+               "        .header-spacer {\n" +
+               "            height: 8px;\n" +
+               "            width: 100%;\n" +
+               "            display: block;\n" +
                "        }\n" +
                "        .company-code {\n" +
                "            font-weight: bold;\n" +
@@ -735,6 +737,7 @@ public class HTMLPaystubTemplateService {
                "        .main-left {\n" +
                "            width: 65%;\n" +
                "            flex-shrink: 0;\n" +
+               "            margin-left: 0;\n" +
                "        }\n" +
                "        .main-right {\n" +
                "            width: 35%;\n" +
@@ -817,19 +820,22 @@ public class HTMLPaystubTemplateService {
                "            border-right: none;\n" +
                "        }\n" +
                "        .paystub-table .total-row td:nth-child(4) {\n" +
-               "            border-top: 1px solid #999;\n" +
-               "            border-bottom: 1px solid #999;\n" +
+               "            border-top: 2px solid #999;\n" +
+               "            border-bottom: 2px solid #999;\n" +
                "            border-left: none;\n" +
                "            border-right: none;\n" +
                "        }\n" +
                "        .paystub-table .total-row td:nth-child(5) {\n" +
-               "            border-top: 1px solid #999;\n" +
-               "            border-bottom: 1px solid #999;\n" +
+               "            border-top: 2px solid #999;\n" +
+               "            border-bottom: 2px solid #999;\n" +
                "            border-left: none;\n" +
                "            border-right: none;\n" +
                "        }\n" +
                "        .deductions-section {\n" +
                "            margin-bottom: 15px;\n" +
+               "        }\n" +
+               "        .deductions-section .paystub-table {\n" +
+               "            border-bottom: 1px solid #ccc;\n" +
                "        }\n" +
                "        .deductions-section .paystub-table thead {\n" +
                "            border-bottom: none;\n" +
@@ -891,7 +897,7 @@ public class HTMLPaystubTemplateService {
                "        }\n" +
                "        .tax-override-section {\n" +
                "            flex: 0 0 30%;\n" +
-               "            padding-left: 25px;\n" +
+               "            padding-left: 20px;\n" +
                "            overflow: hidden;\n" +
                "            word-wrap: break-word;\n" +
                "        }\n" +
