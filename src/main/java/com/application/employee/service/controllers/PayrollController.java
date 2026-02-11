@@ -182,6 +182,18 @@ public class PayrollController {
             PayrollRecord payrollRecord = payrollService.getPayrollRecordById(payrollRecordId);
             Employee employee = employeeService.getEmployee(payrollRecord.getEmployee().getEmployeeID());
             
+            // Ensure company is loaded (lazy loading)
+            if (employee.getCompany() != null) {
+                // Access company to trigger lazy loading
+                employee.getCompany().getCompanyName();
+            }
+            
+            // Ensure employee details is loaded (lazy loading)
+            if (employee.getEmployeeDetails() != null) {
+                // Access employee details to trigger lazy loading
+                employee.getEmployeeDetails().getResidentialAddress();
+            }
+            
             // Get YTD data
             Integer currentYear = java.time.LocalDate.now().getYear();
             YTDData ytdData = ytdDataRepository.findByEmployeeEmployeeIDAndCurrentYear(
