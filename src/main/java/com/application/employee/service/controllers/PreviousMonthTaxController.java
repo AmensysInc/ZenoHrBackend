@@ -3,6 +3,7 @@ package com.application.employee.service.controllers;
 import com.application.employee.service.dto.PreviousMonthTaxRequest;
 import com.application.employee.service.entities.PreviousMonthTax;
 import com.application.employee.service.services.PDFParsingService;
+import com.application.employee.service.services.PaystubService;
 import com.application.employee.service.services.PreviousMonthTaxService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,6 +40,9 @@ public class PreviousMonthTaxController {
 
     @Autowired
     private PDFParsingService pdfParsingService;
+
+    @Autowired
+    private PaystubService paystubService;
 
     @Value("${file.upload.path:D:\\My Drive\\New folder}")
     private String uploadPath;
@@ -153,6 +158,60 @@ public class PreviousMonthTaxController {
             }
 
             PreviousMonthTax saved = previousMonthTaxService.savePreviousMonthTax(request.getEmployeeId(), taxData);
+
+            // Also save the PDF as a Paystub record if PDF was uploaded
+            if (pdfFile != null && !pdfFile.isEmpty() && taxData.getPdfFilePath() != null) {
+                try {
+                    // Read the saved PDF file to create a MultipartFile for Paystub service
+                    Path savedPdfPath = Paths.get(taxData.getPdfFilePath());
+                    if (Files.exists(savedPdfPath)) {
+                        byte[] fileBytes = Files.readAllBytes(savedPdfPath);
+                        String fileName = taxData.getPdfFileName() != null ? taxData.getPdfFileName() : pdfFile.getOriginalFilename();
+                        if (fileName == null || fileName.isEmpty()) {
+                            fileName = "paystub_" + System.currentTimeMillis() + ".pdf";
+                        }
+                        
+                        // Create a MockMultipartFile from the saved file
+                        MultipartFile paystubFile = new MockMultipartFile(
+                            "file",
+                            fileName,
+                            "application/pdf",
+                            fileBytes
+                        );
+                        
+                        // Extract year from period end date
+                        Integer year = taxData.getPeriodEndDate() != null ? taxData.getPeriodEndDate().getYear() : java.time.LocalDate.now().getYear();
+                        
+                        // Use check date as period end date if available, otherwise use period end date
+                        java.time.LocalDate checkDate = taxData.getPeriodEndDate() != null ? taxData.getPeriodEndDate() : java.time.LocalDate.now();
+                        
+                        // Save as Paystub record
+                        paystubService.uploadPaystub(
+                            request.getEmployeeId(),
+                            paystubFile,
+                            year,
+                            taxData.getPeriodStartDate(),
+                            taxData.getPeriodEndDate(),
+                            checkDate,
+                            taxData.getTotalGrossPay(),
+                            taxData.getTotalNetPay(),
+                            taxData.getYtdGrossPay(),
+                            taxData.getYtdNetPay(),
+                            taxData.getYtdFederalTax(),
+                            taxData.getYtdStateTax(),
+                            taxData.getYtdLocalTax(),
+                            taxData.getYtdSocialSecurity(),
+                            taxData.getYtdMedicare(),
+                            "System" // Mark as uploaded by system from previous month tax
+                        );
+                        System.out.println("PDF saved as Paystub record for employee: " + request.getEmployeeId());
+                    }
+                } catch (Exception e) {
+                    // Log error but don't fail the request - PreviousMonthTax is already saved
+                    System.err.println("Warning: Failed to save PDF as Paystub record: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
