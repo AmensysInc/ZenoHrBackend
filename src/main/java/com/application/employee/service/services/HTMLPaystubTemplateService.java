@@ -516,11 +516,15 @@ public class HTMLPaystubTemplateService {
     }
 
     private String getEmployeeAddress(Employee employee) {
-        if (employee.getEmployeeDetails() != null) {
-            EmployeeDetails details = employee.getEmployeeDetails();
-            if (details.getResidentialAddress() != null && !details.getResidentialAddress().trim().isEmpty()) {
-                return details.getResidentialAddress();
+        try {
+            if (employee != null && employee.getEmployeeDetails() != null) {
+                EmployeeDetails details = employee.getEmployeeDetails();
+                if (details.getResidentialAddress() != null && !details.getResidentialAddress().trim().isEmpty()) {
+                    return details.getResidentialAddress();
+                }
             }
+        } catch (Exception e) {
+            // EmployeeDetails might not be loaded (lazy loading) - ignore
         }
         return "Address not available";
     }
