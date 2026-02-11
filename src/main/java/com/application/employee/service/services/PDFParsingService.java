@@ -1,6 +1,5 @@
 package com.application.employee.service.services;
 
-import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
@@ -44,7 +43,7 @@ public class PDFParsingService {
 
         try {
             byte[] pdfBytes = file.getInputStream().readAllBytes();
-            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            try (PDDocument document = PDDocument.load(pdfBytes)) {
                 PDFTextStripper stripper = new PDFTextStripper();
                 String text = stripper.getText(document);
                 
