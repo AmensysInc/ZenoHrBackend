@@ -37,6 +37,10 @@ public class PDFGenerationService {
             // Generate HTML using the template service
             String html = htmlTemplateService.generateHTML(payrollRecord, employee, ytdData);
             
+            if (html == null || html.trim().isEmpty()) {
+                throw new IOException("Generated HTML is null or empty");
+            }
+            
             // Convert HTML to PDF using OpenHTMLToPDF
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfRendererBuilder builder = new PdfRendererBuilder();
@@ -45,8 +49,16 @@ public class PDFGenerationService {
             builder.useFastMode();
             builder.run();
             
-            return baos.toByteArray();
+            byte[] pdfBytes = baos.toByteArray();
+            
+            if (pdfBytes == null || pdfBytes.length == 0) {
+                throw new IOException("PDF conversion resulted in empty byte array");
+            }
+            
+            return pdfBytes;
         } catch (Exception e) {
+            System.err.println("ERROR in generateADPPaystub: " + e.getMessage());
+            e.printStackTrace();
             throw new IOException("Error generating PDF from HTML: " + e.getMessage(), e);
         }
     }

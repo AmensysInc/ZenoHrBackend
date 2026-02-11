@@ -189,6 +189,12 @@ public class PayrollController {
 
             byte[] pdfBytes = pdfGenerationService.generateADPPaystub(payrollRecord, employee, ytdData);
 
+            if (pdfBytes == null || pdfBytes.length == 0) {
+                System.err.println("ERROR: Generated PDF is null or empty for payrollRecordId: " + payrollRecordId);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("PDF generation returned empty result".getBytes());
+            }
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", 
@@ -197,7 +203,10 @@ public class PayrollController {
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            System.err.println("ERROR generating paystub PDF for payrollRecordId: " + payrollRecordId);
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(("Error generating PDF: " + e.getMessage()).getBytes());
         }
     }
 
