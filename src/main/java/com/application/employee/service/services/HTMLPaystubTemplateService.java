@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,8 +17,8 @@ import java.util.Map;
 @Service
 public class HTMLPaystubTemplateService {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public String generateHTML(PayrollRecord payrollRecord, Employee employee, YTDData ytdData) {
         // Get company information
@@ -88,7 +87,7 @@ public class HTMLPaystubTemplateService {
         
         // Check Stub Section
         html.append(generateCheckStub(companyName, companyAddress, employeeName, employeeAddress, 
-            payrollRecord.getGrossPay(), payrollRecord.getNetPay(), checkNumber, payDate));
+            payrollRecord.getGrossPay(), payrollRecord.getNetPay(), checkNumber, payDate, employee));
         
         html.append("        </div>\n");
         html.append("    </div>\n");
@@ -118,6 +117,7 @@ public class HTMLPaystubTemplateService {
         html.append("                        <div>Period Ending: ").append(periodEnd).append("</div>\n");
         html.append("                        <div>Pay Date: ").append(payDate).append("</div>\n");
         html.append("                    </div>\n");
+        html.append("                    <!-- Employee Info moved to right side -->\n");
         html.append("                    <div class=\"employee-info\" style=\"margin-top: 8px; text-align: right;\">\n");
         html.append("                        <div class=\"employee-name\">").append(escapeHtml(employeeName)).append("</div>\n");
         html.append("                        <div class=\"employee-address\">").append(escapeHtml(employeeAddress)).append("</div>\n");
@@ -136,8 +136,8 @@ public class HTMLPaystubTemplateService {
         html.append("            <div class=\"paystub-main\">\n");
         html.append("                <div class=\"main-left\">\n");
         
-        // Tax Information
-        html.append(generateTaxInfo(employee));
+        // Tax Information and Tax Override - Side by Side
+        html.append(generateTaxInfoWithOverride(employee));
         
         // Earnings Table
         html.append(generateEarningsTable(payrollRecord.getGrossPay(), ytdGrossPay));
@@ -154,24 +154,21 @@ public class HTMLPaystubTemplateService {
         
         html.append("                </div>\n");
         html.append("                <div class=\"main-right\">\n");
-        html.append("                    <div class=\"tax-override-section\" style=\"margin-top: 0;\">\n");
-        html.append("                        <div class=\"section-title\">Tax Override:</div>\n");
-        html.append("                        <div>Federal: 0.00 Addnl</div>\n");
-        html.append("                        <div>State:</div>\n");
-        html.append("                        <div>Local:</div>\n");
-        html.append("                    </div>\n");
-        html.append("                    <div class=\"notes-section\">\n");
+        html.append("                    <!-- Important Notes -->\n");
+        html.append("                    <div class=\"notes-section\" style=\"margin-top: 0;\">\n");
         html.append("                        <div class=\"section-title\">Important Notes</div>\n");
         html.append("                        <div>Basis of pay: Salaried</div>\n");
         html.append("                    </div>\n");
         html.append("                </div>\n");
         html.append("            </div>\n");
+        html.append("            <!-- Spacer between Net Pay and Check Stub -->\n");
         html.append("            <div class=\"section-spacer\"></div>\n");
         return html.toString();
     }
 
-    private String generateTaxInfo(Employee employee) {
+    private String generateTaxInfoWithOverride(Employee employee) {
         StringBuilder html = new StringBuilder();
+        html.append("                    <!-- Tax Information and Tax Override - Side by Side -->\n");
         html.append("                    <div class=\"tax-info-wrapper\">\n");
         html.append("                        <div class=\"tax-info-section\">\n");
         html.append("                            <div class=\"tax-info-row\">\n");
@@ -189,12 +186,21 @@ public class HTMLPaystubTemplateService {
         html.append("                                <span>Social Security Number: XXX-XX-XXXX</span>\n");
         html.append("                            </div>\n");
         html.append("                        </div>\n");
+        html.append("                        \n");
+        html.append("                        <!-- Tax Override - beside Taxable Filing Status -->\n");
+        html.append("                        <div class=\"tax-override-section\" style=\"margin-top: 0; margin-left: 20px;\">\n");
+        html.append("                            <div class=\"section-title\">Tax Override:</div>\n");
+        html.append("                            <div>Federal: 0.00 Addnl</div>\n");
+        html.append("                            <div>State:</div>\n");
+        html.append("                            <div>Local:</div>\n");
+        html.append("                        </div>\n");
         html.append("                    </div>\n");
         return html.toString();
     }
 
     private String generateEarningsTable(BigDecimal grossPay, BigDecimal ytdGrossPay) {
         StringBuilder html = new StringBuilder();
+        html.append("                    <!-- Earnings Table -->\n");
         html.append("                    <div class=\"earnings-section\">\n");
         html.append("                        <table class=\"paystub-table\">\n");
         html.append("                            <thead>\n");
@@ -209,10 +215,10 @@ public class HTMLPaystubTemplateService {
         html.append("                            <tbody>\n");
         html.append("                                <tr>\n");
         html.append("                                    <td>Regular</td>\n");
-        html.append("                                    <td></td>\n");
+        html.append("                                    <td>$0.00</td>\n");
         html.append("                                    <td>0.00</td>\n");
-        html.append("                                    <td class=\"text-right\">").append(formatCurrencyNoDollar(grossPay)).append("</td>\n");
-        html.append("                                    <td class=\"text-right\">").append(formatCurrencyNoDollar(ytdGrossPay)).append("</td>\n");
+        html.append("                                    <td class=\"text-right\">").append(formatCurrency(grossPay)).append("</td>\n");
+        html.append("                                    <td class=\"text-right\">").append(formatCurrency(ytdGrossPay)).append("</td>\n");
         html.append("                                </tr>\n");
         html.append("                                <tr class=\"total-row\">\n");
         html.append("                                    <td colspan=\"3\"><strong>Gross Pay</strong></td>\n");
@@ -230,6 +236,7 @@ public class HTMLPaystubTemplateService {
                                                BigDecimal ytdSocialSecurity, BigDecimal ytdMedicare,
                                                Map<String, Object> customDeductions) {
         StringBuilder html = new StringBuilder();
+        html.append("                    <!-- Statutory Deductions -->\n");
         html.append("                    <div class=\"deductions-section\">\n");
         html.append("                        <table class=\"paystub-table deductions-table\">\n");
         html.append("                            <thead>\n");
@@ -289,15 +296,6 @@ public class HTMLPaystubTemplateService {
             html.append("                                </tr>\n");
         }
         
-        // Additional Medicare
-        if (payrollRecord.getAdditionalMedicare() != null && payrollRecord.getAdditionalMedicare().compareTo(BigDecimal.ZERO) > 0) {
-            html.append("                                <tr>\n");
-            html.append("                                    <td>Additional Medicare</td>\n");
-            html.append("                                    <td class=\"text-right\">").append(formatCurrency(payrollRecord.getAdditionalMedicare())).append("</td>\n");
-            html.append("                                    <td class=\"text-right\">$0.00</td>\n");
-            html.append("                                </tr>\n");
-        }
-        
         html.append("                            </tbody>\n");
         html.append("                        </table>\n");
         html.append("                    </div>\n");
@@ -313,6 +311,7 @@ public class HTMLPaystubTemplateService {
         boolean hasCustomDeductions = customDeductions != null && !customDeductions.isEmpty();
         
         if (hasHealthInsurance || hasOtherDeductions || hasCustomDeductions) {
+            html.append("                    <!-- Voluntary Deductions -->\n");
             html.append("                    <div class=\"deductions-section\">\n");
             html.append("                        <table class=\"paystub-table deductions-table\">\n");
             html.append("                            <thead>\n");
@@ -337,16 +336,14 @@ public class HTMLPaystubTemplateService {
             if (hasCustomDeductions) {
                 for (Map.Entry<String, Object> entry : customDeductions.entrySet()) {
                     String deductionName = getDeductionName(entry.getKey(), entry.getValue());
-                    BigDecimal deductionAmount = getDeductionAmount(entry.getValue());
-                    BigDecimal ytdAmount = getDeductionYtd(entry.getValue());
+                    BigDecimal thisPeriodAmount = getDeductionAmount(entry.getValue(), false);
+                    BigDecimal ytdAmount = getDeductionAmount(entry.getValue(), true);
                     
-                    if (deductionAmount != null && deductionAmount.compareTo(BigDecimal.ZERO) >= 0) {
-                        html.append("                                <tr>\n");
-                        html.append("                                    <td>").append(escapeHtml(deductionName)).append("</td>\n");
-                        html.append("                                    <td class=\"text-right\">").append(formatCurrency(deductionAmount)).append("</td>\n");
-                        html.append("                                    <td class=\"text-right\">").append(formatCurrency(ytdAmount)).append("</td>\n");
-                        html.append("                                </tr>\n");
-                    }
+                    html.append("                                <tr>\n");
+                    html.append("                                    <td>").append(escapeHtml(deductionName)).append("</td>\n");
+                    html.append("                                    <td class=\"text-right\">").append(formatCurrency(thisPeriodAmount)).append("</td>\n");
+                    html.append("                                    <td class=\"text-right\">").append(formatCurrency(ytdAmount)).append("</td>\n");
+                    html.append("                                </tr>\n");
                 }
             }
             
@@ -363,12 +360,12 @@ public class HTMLPaystubTemplateService {
             html.append("                        </table>\n");
             html.append("                    </div>\n");
         }
-        
         return html.toString();
     }
 
     private String generateNetPay(BigDecimal netPay) {
         StringBuilder html = new StringBuilder();
+        html.append("                    <!-- Net Pay -->\n");
         html.append("                    <div class=\"net-pay-section\">\n");
         html.append("                        <div class=\"net-pay-row\">\n");
         html.append("                            <span class=\"net-pay-label\">Net Pay</span>\n");
@@ -380,7 +377,7 @@ public class HTMLPaystubTemplateService {
 
     private String generateCheckStub(String companyName, String companyAddress, String employeeName, 
                                      String employeeAddress, BigDecimal grossPay, BigDecimal netPay,
-                                     String checkNumber, String payDate) {
+                                     String checkNumber, String payDate, Employee employee) {
         StringBuilder html = new StringBuilder();
         html.append("            <!-- Check Stub Section -->\n");
         html.append("            <div class=\"check-stub-section\" style=\"position: relative;\">\n");
@@ -388,17 +385,35 @@ public class HTMLPaystubTemplateService {
         html.append("                <div class=\"federal-taxable\">\n");
         html.append("                    Your federal taxable wages this period are ").append(formatCurrency(grossPay)).append("\n");
         html.append("                </div>\n");
+        html.append("                \n");
         html.append("                <div class=\"check-stub-main\">\n");
         html.append("                    <div class=\"check-stub-left\">\n");
         html.append("                        <div class=\"company-name\">").append(escapeHtml(companyName)).append("</div>\n");
         html.append("                        <div class=\"company-address\">").append(escapeHtml(companyAddress)).append("</div>\n");
         html.append("                    </div>\n");
         html.append("                    <div class=\"check-stub-right\">\n");
-        html.append("                        <div>68-426/514</div>\n");
+        
+        // Get routing and account numbers
+        String routingNumber = "68-426";
+        String accountNumber = "514";
+        if (employee.getEmployeeDetails() != null) {
+            if (employee.getEmployeeDetails().getRoutingNumber() != null) {
+                routingNumber = employee.getEmployeeDetails().getRoutingNumber();
+            }
+            if (employee.getEmployeeDetails().getAccNumber() != null) {
+                String accNum = employee.getEmployeeDetails().getAccNumber().replaceAll("[^0-9]", "");
+                if (accNum.length() >= 3) {
+                    accountNumber = accNum.substring(accNum.length() - 3);
+                }
+            }
+        }
+        
+        html.append("                        <div>").append(routingNumber).append("/").append(accountNumber).append("</div>\n");
         html.append("                        <div>Payroll Check Number: ").append(checkNumber).append("</div>\n");
         html.append("                        <div>Pay Date: ").append(payDate).append("</div>\n");
         html.append("                    </div>\n");
         html.append("                </div>\n");
+        html.append("\n");
         html.append("                <div class=\"payee-section\">\n");
         html.append("                    <div class=\"payee-line\">\n");
         html.append("                        <span>Pay to the order of: ").append(escapeHtml(employeeName)).append("</span>\n");
@@ -411,93 +426,21 @@ public class HTMLPaystubTemplateService {
         html.append("                    </div>\n");
         html.append("                    <div class=\"void-text\">VOID - NON NEGOTIABLE</div>\n");
         html.append("                </div>\n");
+        html.append("\n");
         html.append("                <div class=\"bank-section\">\n");
-        html.append("                    <div class=\"bank-name\">Chase</div>\n");
+        
+        // Get bank name
+        String bankName = "Chase";
+        if (employee.getEmployeeDetails() != null && employee.getEmployeeDetails().getBankName() != null) {
+            bankName = employee.getEmployeeDetails().getBankName();
+        }
+        
+        html.append("                    <div class=\"bank-name\">").append(escapeHtml(bankName)).append("</div>\n");
         html.append("                    <div class=\"bank-account\">").append(escapeHtml(employeeName)).append("</div>\n");
         html.append("                    <div class=\"bank-address\">").append(escapeHtml(employeeAddress)).append("</div>\n");
         html.append("                </div>\n");
         html.append("            </div>\n");
         return html.toString();
-    }
-
-    private Map<String, Object> parseCustomDeductions(String customDeductionsJson) {
-        if (customDeductionsJson == null || customDeductionsJson.trim().isEmpty()) {
-            return new HashMap<>();
-        }
-        try {
-            return objectMapper.readValue(customDeductionsJson, new TypeReference<Map<String, Object>>() {});
-        } catch (Exception e) {
-            return new HashMap<>();
-        }
-    }
-
-    private String getDeductionName(String key, Object value) {
-        if (value instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) value;
-            if (map.containsKey("name")) {
-                return String.valueOf(map.get("name"));
-            }
-        }
-        // Convert key to readable format - capitalize first letter of each word
-        String[] words = key.replace("_", " ").split("\\s+");
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < words.length; i++) {
-            if (i > 0) result.append(" ");
-            if (words[i].length() > 0) {
-                result.append(words[i].substring(0, 1).toUpperCase());
-                if (words[i].length() > 1) {
-                    result.append(words[i].substring(1).toLowerCase());
-                }
-            }
-        }
-        return result.toString();
-    }
-
-    private BigDecimal getDeductionAmount(Object value) {
-        if (value instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) value;
-            if (map.containsKey("value")) {
-                Object val = map.get("value");
-                return parseBigDecimal(val);
-            }
-        } else if (value instanceof Number) {
-            return BigDecimal.valueOf(((Number) value).doubleValue());
-        } else if (value instanceof String) {
-            try {
-                return new BigDecimal((String) value);
-            } catch (NumberFormatException e) {
-                return BigDecimal.ZERO;
-            }
-        }
-        return BigDecimal.ZERO;
-    }
-
-    private BigDecimal getDeductionYtd(Object value) {
-        if (value instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) value;
-            if (map.containsKey("ytd")) {
-                Object ytd = map.get("ytd");
-                return parseBigDecimal(ytd);
-            }
-        }
-        return BigDecimal.ZERO;
-    }
-
-    private BigDecimal parseBigDecimal(Object value) {
-        if (value == null) return BigDecimal.ZERO;
-        if (value instanceof BigDecimal) return (BigDecimal) value;
-        if (value instanceof Number) return BigDecimal.valueOf(((Number) value).doubleValue());
-        if (value instanceof String) {
-            try {
-                return new BigDecimal((String) value);
-            } catch (NumberFormatException e) {
-                return BigDecimal.ZERO;
-            }
-        }
-        return BigDecimal.ZERO;
     }
 
     private String getCompanyAddress(Companies company) {
@@ -523,31 +466,107 @@ public class HTMLPaystubTemplateService {
             return address.toString();
         }
 
-        return "21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279";
+        String companyName = company.getCompanyName() != null ? company.getCompanyName().toLowerCase() : "";
+        
+        if (companyName.contains("saibersys")) {
+            return "2840 Keller Springs Rd., Suite 401, Carrollton, TX 75006";
+        } else if (companyName.contains("amensys")) {
+            return "860 Hebron Parkway, #603-604, Lewisville, TX 75057";
+        } else if (companyName.contains("ingenious")) {
+            return "21135 Whitfield Place, Suite 207, Sterling, Virginia 20165";
+        } else if (companyName.contains("itiyam")) {
+            return "44790 Maynard Square, Suite #230, Ashburn, VA 20147";
+        }
+        
+        return "21135 Whitfield Place, Suite 207, Sterling, Virginia 20165";
     }
 
     private String getEmployeeAddress(Employee employee) {
-        try {
-            if (employee != null && employee.getEmployeeDetails() != null) {
-                EmployeeDetails details = employee.getEmployeeDetails();
-                if (details.getResidentialAddress() != null && !details.getResidentialAddress().trim().isEmpty()) {
-                    return details.getResidentialAddress();
-                }
+        if (employee != null && employee.getEmployeeDetails() != null) {
+            EmployeeDetails details = employee.getEmployeeDetails();
+            if (details.getResidentialAddress() != null && !details.getResidentialAddress().trim().isEmpty()) {
+                return details.getResidentialAddress();
             }
-        } catch (Exception e) {
-            // EmployeeDetails might not be loaded (lazy loading) - ignore
         }
         return "Address not available";
     }
 
-    private String formatCurrency(BigDecimal amount) {
-        if (amount == null) return "$0.00";
-        return "$" + amount.setScale(2, RoundingMode.HALF_UP).toString();
+    private Map<String, Object> parseCustomDeductions(String customDeductionsJson) {
+        if (customDeductionsJson == null || customDeductionsJson.trim().isEmpty()) {
+            return new HashMap<>();
+        }
+        
+        try {
+            return objectMapper.readValue(customDeductionsJson, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            System.err.println("Error parsing custom deductions JSON: " + e.getMessage());
+            return new HashMap<>();
+        }
     }
 
-    private String formatCurrencyNoDollar(BigDecimal amount) {
-        if (amount == null) return "0.00";
-        return amount.setScale(2, RoundingMode.HALF_UP).toString();
+    private String getDeductionName(String key, Object value) {
+        if (value instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) value;
+            if (map.containsKey("name")) {
+                return String.valueOf(map.get("name"));
+            }
+        }
+        // Convert key to readable format: replace underscores and capitalize first letter of each word
+        String[] words = key.replace("_", " ").split(" ");
+        StringBuilder formattedName = new StringBuilder();
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                formattedName.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase()).append(" ");
+            }
+        }
+        return formattedName.toString().trim();
+    }
+
+    private BigDecimal getDeductionAmount(Object value, boolean isYtd) {
+        if (value instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) value;
+            if (isYtd) {
+                Object ytdVal = map.containsKey("ytd") ? map.get("ytd") : map.get("yearToDate");
+                if (ytdVal instanceof Number) {
+                    return BigDecimal.valueOf(((Number) ytdVal).doubleValue()).abs();
+                } else if (ytdVal instanceof String) {
+                    try {
+                        return new BigDecimal((String) ytdVal).abs();
+                    } catch (NumberFormatException e) {
+                        return BigDecimal.ZERO;
+                    }
+                }
+                return BigDecimal.ZERO;
+            } else {
+                Object val = map.get("value");
+                if (val instanceof Number) {
+                    return BigDecimal.valueOf(((Number) val).doubleValue()).abs();
+                } else if (val instanceof String) {
+                    try {
+                        return new BigDecimal((String) val).abs();
+                    } catch (NumberFormatException e) {
+                        return BigDecimal.ZERO;
+                    }
+                }
+                return BigDecimal.ZERO;
+            }
+        } else if (value instanceof Number) {
+            return BigDecimal.valueOf(((Number) value).doubleValue()).abs();
+        } else if (value instanceof String) {
+            try {
+                return new BigDecimal((String) value).abs();
+            } catch (NumberFormatException e) {
+                return BigDecimal.ZERO;
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        if (amount == null) return "$0.00";
+        return String.format("$%,.2f", amount);
     }
 
     private String escapeHtml(String text) {
@@ -560,37 +579,41 @@ public class HTMLPaystubTemplateService {
     }
 
     private String numberToWords(BigDecimal amount) {
-        if (amount == null) return "Zero";
+        if (amount == null) return "ZERO AND 00/100";
+        
         long dollars = amount.longValue();
-        int cents = amount.subtract(BigDecimal.valueOf(dollars))
-                         .multiply(BigDecimal.valueOf(100))
-                         .intValue();
+        int cents = amount.subtract(BigDecimal.valueOf(dollars)).multiply(BigDecimal.valueOf(100)).intValue();
         
         String dollarsWords = convertNumberToWords(dollars);
-        return dollarsWords + " and " + cents + "/100 Dollars";
+        return dollarsWords + " AND " + String.format("%02d", cents) + "/100 DOLLARS";
     }
 
     private String convertNumberToWords(long number) {
-        if (number == 0) return "Zero";
+        if (number == 0) return "ZERO";
         
-        String[] ones = {"", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"};
-        String[] teens = {"Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", 
-                         "Seventeen", "Eighteen", "Nineteen"};
-        String[] tens = {"", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"};
+        String[] ones = {"", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE",
+            "TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN",
+            "EIGHTEEN", "NINETEEN"};
+        String[] tens = {"", "", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"};
         
-        if (number < 10) return ones[(int) number];
-        if (number < 20) return teens[(int) (number - 10)];
+        if (number < 20) {
+            return ones[(int) number];
+        }
+        
         if (number < 100) {
             return tens[(int) (number / 10)] + (number % 10 != 0 ? " " + ones[(int) (number % 10)] : "");
         }
+        
         if (number < 1000) {
-            return ones[(int) (number / 100)] + " Hundred" + 
-                   (number % 100 != 0 ? " " + convertNumberToWords(number % 100) : "");
+            return ones[(int) (number / 100)] + " HUNDRED" + 
+                (number % 100 != 0 ? " " + convertNumberToWords(number % 100) : "");
         }
+        
         if (number < 1000000) {
-            return convertNumberToWords(number / 1000) + " Thousand" + 
-                   (number % 1000 != 0 ? " " + convertNumberToWords(number % 1000) : "");
+            return convertNumberToWords(number / 1000) + " THOUSAND" + 
+                (number % 1000 != 0 ? " " + convertNumberToWords(number % 1000) : "");
         }
+        
         return "Amount";
     }
 
@@ -629,46 +652,61 @@ public class HTMLPaystubTemplateService {
                "            margin: 0 auto;\n" +
                "            overflow: hidden;\n" +
                "            box-sizing: border-box;\n" +
-               "            display: flex;\n" +
-               "            flex-direction: column;\n" +
                "        }\n" +
                "        .paystub-header {\n" +
                "            display: flex;\n" +
                "            justify-content: space-between;\n" +
-               "            border-bottom: 2px solid #000;\n" +
-               "            padding-bottom: 8px;\n" +
-               "            margin-bottom: 12px;\n" +
+               "            border-bottom: none;\n" +
+               "            padding-bottom: 6px;\n" +
+               "            margin-bottom: 8px;\n" +
                "        }\n" +
                "        .header-left {\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.2;\n" +
+               "            line-height: 1.05;\n" +
                "        }\n" +
                "        .company-code {\n" +
                "            font-weight: bold;\n" +
+               "            margin-bottom: 0;\n" +
+               "            margin-top: 0;\n" +
                "        }\n" +
-               "        .loc-dept, .page-number {\n" +
-               "            margin-top: 1px;\n" +
+               "        .loc-dept {\n" +
+               "            margin-top: 0;\n" +
+               "            margin-bottom: 0;\n" +
+               "        }\n" +
+               "        .page-number {\n" +
+               "            margin-top: 0;\n" +
+               "            margin-bottom: 0;\n" +
                "        }\n" +
                "        .company-name {\n" +
-               "            font-weight: bold;\n" +
-               "            margin-top: 4px;\n" +
+               "            font-weight: 700;\n" +
+               "            margin-top: 2px;\n" +
+               "            margin-bottom: 0;\n" +
                "            font-size: 10pt;\n" +
                "        }\n" +
                "        .company-address {\n" +
                "            font-size: 9pt;\n" +
-               "            margin-top: 1px;\n" +
+               "            margin-top: 0;\n" +
+               "            margin-bottom: 0;\n" +
                "        }\n" +
                "        .header-right {\n" +
                "            text-align: right;\n" +
                "        }\n" +
                "        .earnings-statement-title {\n" +
-               "            font-size: 12pt;\n" +
+               "            font-size: 11pt;\n" +
                "            font-weight: bold;\n" +
-               "            margin-bottom: 4px;\n" +
+               "            margin-bottom: 2px;\n" +
+               "            margin-top: 0;\n" +
                "        }\n" +
                "        .period-info {\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.3;\n" +
+               "            line-height: 1.2;\n" +
+               "            margin-top: 0;\n" +
+               "        }\n" +
+               "        .period-info div {\n" +
+               "            margin-bottom: 1px;\n" +
+               "        }\n" +
+               "        .period-info div:last-child {\n" +
+               "            margin-bottom: 8px;\n" +
                "        }\n" +
                "        .employee-info {\n" +
                "            margin-bottom: 8px;\n" +
@@ -727,47 +765,83 @@ public class HTMLPaystubTemplateService {
                "        .paystub-table {\n" +
                "            width: 100%;\n" +
                "            border-collapse: collapse;\n" +
-               "            margin-bottom: 12px;\n" +
+               "            margin-bottom: 10px;\n" +
                "            font-size: 9pt;\n" +
-               "            line-height: 1.2;\n" +
+               "            line-height: 1.05;\n" +
+               "            table-layout: fixed;\n" +
+               "        }\n" +
+               "        .paystub-table th:nth-child(1),\n" +
+               "        .paystub-table td:nth-child(1) {\n" +
+               "            width: 25%;\n" +
+               "        }\n" +
+               "        .paystub-table th:nth-child(2),\n" +
+               "        .paystub-table td:nth-child(2) {\n" +
+               "            width: 15%;\n" +
+               "        }\n" +
+               "        .paystub-table th:nth-child(3),\n" +
+               "        .paystub-table td:nth-child(3) {\n" +
+               "            width: 15%;\n" +
+               "        }\n" +
+               "        .paystub-table th:nth-child(4),\n" +
+               "        .paystub-table td:nth-child(4) {\n" +
+               "            width: 22.5%;\n" +
+               "        }\n" +
+               "        .paystub-table th:nth-child(5),\n" +
+               "        .paystub-table td:nth-child(5) {\n" +
+               "            width: 22.5%;\n" +
+               "        }\n" +
+               "        .paystub-table.deductions-table th:nth-child(1),\n" +
+               "        .paystub-table.deductions-table td:nth-child(1) {\n" +
+               "            width: 55%;\n" +
+               "        }\n" +
+               "        .paystub-table.deductions-table th:nth-child(2),\n" +
+               "        .paystub-table.deductions-table td:nth-child(2) {\n" +
+               "            width: 22.5%;\n" +
+               "        }\n" +
+               "        .paystub-table.deductions-table th:nth-child(3),\n" +
+               "        .paystub-table.deductions-table td:nth-child(3) {\n" +
+               "            width: 22.5%;\n" +
                "        }\n" +
                "        .paystub-table thead {\n" +
                "            border-bottom: 1px solid #ccc;\n" +
                "        }\n" +
                "        .paystub-table th {\n" +
                "            text-align: left;\n" +
-               "            padding: 3px 6px;\n" +
+               "            padding: 1px 4px;\n" +
                "            font-weight: bold;\n" +
                "            background: transparent;\n" +
                "            border-bottom: 1px solid #ccc;\n" +
                "            border-top: none;\n" +
+               "            font-size: 9pt;\n" +
                "        }\n" +
                "        .paystub-table th.text-right {\n" +
                "            text-align: right;\n" +
                "        }\n" +
                "        .paystub-table td {\n" +
-               "            padding: 2px 6px;\n" +
+               "            padding: 0px 4px;\n" +
                "            border-bottom: none;\n" +
+               "            font-size: 9pt;\n" +
+               "            height: 16px;\n" +
                "        }\n" +
                "        .paystub-table td.text-right {\n" +
                "            text-align: right;\n" +
                "        }\n" +
                "        .paystub-table .total-row {\n" +
                "            background: transparent;\n" +
-               "            font-weight: bold;\n" +
+               "            font-weight: 700;\n" +
                "        }\n" +
                "        .paystub-table .total-row td {\n" +
-               "            padding-top: 4px;\n" +
-               "            padding-bottom: 4px;\n" +
+               "            padding-top: 1px;\n" +
+               "            padding-bottom: 1px;\n" +
                "            border-top: none;\n" +
                "            border-bottom: none;\n" +
                "        }\n" +
                "        .paystub-table .total-row td:first-child {\n" +
+               "            text-align: left;\n" +
                "            border-top: none;\n" +
                "            border-bottom: none;\n" +
                "            border-left: none;\n" +
                "            border-right: none;\n" +
-               "            text-align: left;\n" +
                "        }\n" +
                "        .paystub-table .total-row td:nth-child(2),\n" +
                "        .paystub-table .total-row td:nth-child(3) {\n" +
@@ -789,7 +863,7 @@ public class HTMLPaystubTemplateService {
                "            border-right: none;\n" +
                "        }\n" +
                "        .deductions-section {\n" +
-               "            margin-bottom: 15px;\n" +
+               "            margin-bottom: 10px;\n" +
                "        }\n" +
                "        .deductions-section .paystub-table thead {\n" +
                "            border-bottom: none;\n" +
@@ -801,6 +875,9 @@ public class HTMLPaystubTemplateService {
                "        .deductions-section .paystub-table th:first-child,\n" +
                "        .deductions-section .paystub-table td:first-child {\n" +
                "            padding-left: var(--deduction-indent);\n" +
+               "        }\n" +
+               "        .deductions-section .paystub-table th:first-child {\n" +
+               "            position: relative;\n" +
                "        }\n" +
                "        .section-label {\n" +
                "            display: block;\n" +
@@ -821,8 +898,8 @@ public class HTMLPaystubTemplateService {
                "            margin-top: 10px;\n" +
                "            margin-bottom: 8px;\n" +
                "            padding: 8px 10px;\n" +
-               "            border-top: 2px solid #777474d0;\n" +
-               "            border-bottom: 2px solid #8a8282a4;\n" +
+               "            border-top: 2px solid #666;\n" +
+               "            border-bottom: 2px solid #666;\n" +
                "            border-left: none;\n" +
                "            border-right: none;\n" +
                "            background: #f8f8f8;\n" +
@@ -865,7 +942,7 @@ public class HTMLPaystubTemplateService {
                "        .check-stub-section {\n" +
                "            margin-top: 0;\n" +
                "            padding-top: 8px;\n" +
-               "            border-top: 1px solid #999;\n" +
+               "            border-top: none;\n" +
                "            position: relative;\n" +
                "            flex-shrink: 0;\n" +
                "            margin-bottom: 0;\n" +
@@ -885,14 +962,14 @@ public class HTMLPaystubTemplateService {
                "            line-height: 1.15;\n" +
                "        }\n" +
                "        .check-stub-left {\n" +
-               "            line-height: 1.6;\n" +
+               "            line-height: 1.2;\n" +
                "        }\n" +
                "        .check-stub-left div {\n" +
                "            margin-bottom: 1px;\n" +
                "        }\n" +
                "        .check-stub-right {\n" +
                "            text-align: right;\n" +
-               "            line-height: 1.6;\n" +
+               "            line-height: 1.2;\n" +
                "        }\n" +
                "        .check-stub-right div {\n" +
                "            margin-bottom: 1px;\n" +
@@ -945,6 +1022,9 @@ public class HTMLPaystubTemplateService {
                "            font-weight: bold;\n" +
                "            margin-bottom: 5px;\n" +
                "        }\n" +
+               "        .watermark {\n" +
+               "            display: none;\n" +
+               "        }\n" +
                "        .check-watermark {\n" +
                "            position: absolute;\n" +
                "            top: 50%;\n" +
@@ -968,7 +1048,6 @@ public class HTMLPaystubTemplateService {
                "            color: #000;\n" +
                "            margin-top: 4px;\n" +
                "            text-align: left;\n" +
-               "            padding-top: 2px;\n" +
                "        }\n" +
                "        @media print {\n" +
                "            body {\n" +
@@ -989,8 +1068,16 @@ public class HTMLPaystubTemplateService {
                "                width: 8.5in;\n" +
                "                height: 11in;\n" +
                "            }\n" +
+               "            .watermark {\n" +
+               "                opacity: 0.08;\n" +
+               "            }\n" +
+               "        }\n" +
+               "        @media screen {\n" +
+               "            .paystub-html-container {\n" +
+               "                width: 8.5in;\n" +
+               "                height: 11in;\n" +
+               "            }\n" +
                "        }\n" +
                "    </style>\n";
     }
 }
-
