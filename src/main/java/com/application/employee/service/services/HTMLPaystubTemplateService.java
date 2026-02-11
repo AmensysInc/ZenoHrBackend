@@ -749,14 +749,19 @@ public class HTMLPaystubTemplateService {
                "        .tax-info-wrapper {\n" +
                "            display: flex;\n" +
                "            align-items: flex-start;\n" +
-               "            margin-bottom: 10px;\n" +
-               "            gap: 0;\n" +
+               "            margin-bottom: 12px;\n" +
+               "            width: 100%;\n" +
                "        }\n" +
                "        .tax-info-section {\n" +
-               "            margin-bottom: 0;\n" +
+               "            flex: 0 0 70%;\n" +
                "            font-size: 9pt;\n" +
                "            line-height: 1.2;\n" +
-               "            flex-shrink: 0;\n" +
+               "        }\n" +
+               "        .tax-override-section {\n" +
+               "            flex: 0 0 30%;\n" +
+               "            font-size: 9pt;\n" +
+               "            line-height: 1.2;\n" +
+               "            padding-left: 25px;\n" +
                "        }\n" +
                "        .tax-info-row {\n" +
                "            margin-bottom: 1px;\n" +
