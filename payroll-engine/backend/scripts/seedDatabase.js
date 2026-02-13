@@ -42,6 +42,9 @@ async function seedDatabase() {
         await importStateWithholdingTables(false); // Don't clear existing - we just imported state data
         console.log('✓ State withholding tables generated\n');
         
+        // Note: Local taxes are optional and can be imported separately if needed
+        // They are not required for basic payroll calculations
+        
         // Step 6: Validate all tables
         console.log('Step 6: Validating database...');
         const validation = await validateTables(2026);
