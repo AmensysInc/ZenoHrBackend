@@ -37,8 +37,8 @@ WORKDIR /app
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose ports (8080 for Spring Boot, 3000 for payroll engine)
-EXPOSE 8080 3000
+# Expose ports (8080 for Spring Boot, 9005 for payroll engine)
+EXPOSE 8080 9005
 
 # Health check (simple TCP check if actuator not available)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \

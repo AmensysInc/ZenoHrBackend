@@ -13,9 +13,10 @@ chown -R spring:spring /app/payroll-engine
 chmod -R 755 /app/files
 chmod -R 755 /app/payroll-engine
 
-# Start payroll engine in background
-echo "Starting payroll engine..."
+# Start payroll engine in background on port 9005
+echo "Starting payroll engine on port 9005..."
 cd /app/payroll-engine
+export PORT=9005
 su-exec spring:spring node server.js &
 PAYROLL_ENGINE_PID=$!
 echo "Payroll engine started with PID: $PAYROLL_ENGINE_PID"
