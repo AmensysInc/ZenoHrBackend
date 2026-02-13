@@ -78,12 +78,11 @@ function seedFederalData2026() {
                     reject(err);
                 } else {
                     console.log('Federal data seeded successfully');
+                    // Don't close the database - it's a shared connection
                     resolve();
                 }
             });
         });
-
-        db.close();
     });
 }
 
