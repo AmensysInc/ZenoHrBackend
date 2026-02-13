@@ -9,6 +9,8 @@
 const { initDatabase } = require('../database/init');
 const { seedFederalData2026 } = require('../database/seedData');
 const { importCompletePub15TTables } = require('./importPub15TComplete');
+const { importStateData } = require('./importStateData');
+const { importStateWithholdingTables } = require('./importStateWithholdingTables');
 const { validateTables } = require('../database/validateTables');
 
 async function seedDatabase() {
@@ -30,8 +32,18 @@ async function seedDatabase() {
         await importCompletePub15TTables();
         console.log('✓ Pub 15-T tables imported\n');
         
-        // Step 4: Validate all tables
-        console.log('Step 4: Validating database...');
+        // Step 4: Import state data (brackets, deductions)
+        console.log('Step 4: Importing state tax data (brackets, deductions)...');
+        await importStateData();
+        console.log('✓ State tax data imported\n');
+        
+        // Step 5: Generate state withholding tables from brackets
+        console.log('Step 5: Generating state withholding tables...');
+        await importStateWithholdingTables(false); // Don't clear existing - we just imported state data
+        console.log('✓ State withholding tables generated\n');
+        
+        // Step 6: Validate all tables
+        console.log('Step 6: Validating database...');
         const validation = await validateTables(2026);
         
         if (!validation.valid) {
