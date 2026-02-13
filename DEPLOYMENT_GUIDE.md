@@ -45,8 +45,8 @@ REACT_APP_API_URL=https://zenopayhr.com/api
 REACT_APP_PDF_SERVICE_URL=https://zenopayhr.com:3002
 REACT_APP_PAYROLL_ENGINE_URL=https://zenopayhr.com:3000
 
-# Payroll Engine
-PAYROLL_ENGINE_PORT=3000
+# Payroll Engine (runs in backend container)
+PAYROLL_ENGINE_PORT=9005
 
 # PDF Service
 PDF_SERVICE_PORT=3002
@@ -107,7 +107,7 @@ After deployment, services will be available at:
 
 - **Frontend**: `https://zenopayhr.com` (port 80)
 - **Backend API**: `https://zenopayhr.com/api` (port 8080)
-- **Payroll Engine**: `https://zenopayhr.com:3000` (port 3000)
+- **Payroll Engine**: `https://zenopayhr.com:9005` (port 9005, runs in backend container)
 - **PDF Service**: `https://zenopayhr.com:3002` (port 3002)
 
 ## Nginx Configuration (if using reverse proxy)
