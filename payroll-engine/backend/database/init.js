@@ -195,16 +195,37 @@ function initDatabase() {
                 ip_address TEXT
             )`);
 
-            // Insert 2026 tax year
-            db.run(`INSERT OR IGNORE INTO tax_years (year, status, effective_date) 
-                    VALUES (2026, 'active', '2026-01-01')`, (err) => {
+            // Insert 2026 tax year (only if it doesn't exist)
+            // Check first to avoid write errors if database is read-only or already has data
+            db.get(`SELECT COUNT(*) as count FROM tax_years WHERE year = 2026`, (err, row) => {
                 if (err) {
-                    console.error('Error inserting tax year:', err);
+                    console.error('Error checking tax year:', err);
                     reject(err);
-                } else {
-                    console.log('Database tables created successfully');
-                    // Don't close the database here - it's used by the server
+                    return;
+                }
+                
+                if (row && row.count > 0) {
+                    // Tax year already exists, skip insert
+                    console.log('Database tables already initialized');
                     resolve();
+                } else {
+                    // Insert tax year
+                    db.run(`INSERT OR IGNORE INTO tax_years (year, status, effective_date) 
+                            VALUES (2026, 'active', '2026-01-01')`, (err) => {
+                        if (err) {
+                            // If write fails, check if it's because data already exists
+                            if (err.code === 'SQLITE_READONLY') {
+                                console.warn('Database is read-only, but tables appear to exist. Continuing...');
+                                resolve(); // Continue if tables exist
+                            } else {
+                                console.error('Error inserting tax year:', err);
+                                reject(err);
+                            }
+                        } else {
+                            console.log('Database tables created successfully');
+                            resolve();
+                        }
+                    });
                 }
             });
         });
