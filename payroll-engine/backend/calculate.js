@@ -30,60 +30,73 @@ async function ensureDatabaseReady() {
         const db = getDatabase();
         
         return new Promise((resolve, reject) => {
-            // Check Pub 15-T tables
-            db.get('SELECT COUNT(*) as count FROM pub15t_percentage_tables', (err, row) => {
+            // First verify FICA rates (critical - must be present before calculations)
+            db.get('SELECT COUNT(*) as count FROM fica_rates WHERE year = 2026', (err, ficaRow) => {
                 if (err) {
-                    console.error('Error checking pub15t_percentage_tables:', err);
-                    // Try to import anyway
-                    importCompletePub15TTables()
-                        .then(() => {
-                            dbInitialized = true;
-                            resolve();
-                        })
-                        .catch(importErr => {
-                            console.error('Warning: Could not import Pub 15-T data:', importErr.message);
-                            dbInitialized = true;
-                            resolve();
+                    console.error('Error checking fica_rates:', err);
+                    // Try to seed anyway
+                    seedFederalData2026()
+                        .then(() => checkPub15T())
+                        .catch(seedErr => {
+                            console.error('Warning: Could not seed FICA rates:', seedErr.message);
+                            checkPub15T();
                         });
-                } else if (row.count === 0) {
-                    // Table exists but empty - import data
-                    console.log('Pub 15-T tables empty, importing data...');
-                    importCompletePub15TTables()
+                } else if (!ficaRow || ficaRow.count === 0) {
+                    console.log('FICA rates missing, seeding...');
+                    seedFederalData2026()
                         .then(() => {
-                            console.log('Pub 15-T data imported successfully');
-                            dbInitialized = true;
-                            resolve();
+                            console.log('FICA rates seeded successfully');
+                            checkPub15T();
                         })
-                        .catch(importErr => {
-                            console.error('Warning: Could not import Pub 15-T data:', importErr.message);
-                            dbInitialized = true;
-                            resolve();
+                        .catch(seedErr => {
+                            console.error('Warning: Could not seed FICA rates:', seedErr.message);
+                            checkPub15T();
                         });
                 } else {
-                    // Data exists - verify FICA rates are present
-                    console.log(`Pub 15-T tables have ${row.count} entries`);
-                    db.get('SELECT COUNT(*) as count FROM fica_rates WHERE year = 2026', (err, ficaRow) => {
-                        if (err || !ficaRow || ficaRow.count === 0) {
-                            console.log('FICA rates missing, seeding...');
-                            seedFederalData2026()
-                                .then(() => {
-                                    console.log('FICA rates seeded successfully');
-                                    dbInitialized = true;
-                                    resolve();
-                                })
-                                .catch(seedErr => {
-                                    console.error('Warning: Could not seed FICA rates:', seedErr.message);
-                                    dbInitialized = true;
-                                    resolve();
-                                });
-                        } else {
-                            console.log('FICA rates present');
-                            dbInitialized = true;
-                            resolve();
-                        }
-                    });
+                    console.log('FICA rates verified');
+                    checkPub15T();
                 }
             });
+            
+            function checkPub15T() {
+                // Check Pub 15-T tables
+                db.get('SELECT COUNT(*) as count FROM pub15t_percentage_tables', (err, row) => {
+                    if (err) {
+                        console.error('Error checking pub15t_percentage_tables:', err);
+                        // Try to import anyway
+                        importCompletePub15TTables()
+                            .then(() => {
+                                console.log('Pub 15-T data imported successfully');
+                                dbInitialized = true;
+                                resolve();
+                            })
+                            .catch(importErr => {
+                                console.error('Warning: Could not import Pub 15-T data:', importErr.message);
+                                dbInitialized = true;
+                                resolve();
+                            });
+                    } else if (row.count === 0) {
+                        // Table exists but empty - import data
+                        console.log('Pub 15-T tables empty, importing data...');
+                        importCompletePub15TTables()
+                            .then(() => {
+                                console.log('Pub 15-T data imported successfully');
+                                dbInitialized = true;
+                                resolve();
+                            })
+                            .catch(importErr => {
+                                console.error('Warning: Could not import Pub 15-T data:', importErr.message);
+                                dbInitialized = true;
+                                resolve();
+                            });
+                    } else {
+                        // Data exists
+                        console.log(`Pub 15-T tables verified (${row.count} entries)`);
+                        dbInitialized = true;
+                        resolve();
+                    }
+                });
+            }
         });
     } catch (error) {
         console.error('Database initialization error:', error);
