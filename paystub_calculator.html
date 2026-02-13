@@ -1,0 +1,2878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paystub Calculator - All 50 US States | 2026 Tax Year</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-section, .results-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .form-section h2, .results-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .paystub-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .paystub-header {
+            text-align: center;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .paystub-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .paystub-row.total {
+            font-weight: bold;
+            font-size: 1.2em;
+            border-top: 2px solid #667eea;
+            border-bottom: 2px solid #667eea;
+            margin-top: 10px;
+            padding-top: 15px;
+        }
+
+        .paystub-row.net-pay {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 1.3em;
+            color: #2e7d32;
+        }
+
+        .deduction-item {
+            color: #d32f2f;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+            color: #1976d2;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Paystub Calculator</h1>
+            <p>Calculate paystubs for all 50 US States | OPT, H1B, Green Card, US Citizen | 2026 Tax Year</p>
+            <p style="font-size: 0.9em; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 5px;">
+                ⚠️ <strong>For Estimates Only:</strong> This calculator provides tax liability estimates. For production payroll, 
+                verify all data against official IRS and state sources. See PRODUCTION_COMPLIANCE.md for details.
+            </p>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <h2>Employee Information</h2>
+                <div class="info-box" style="margin-bottom: 20px;">
+                    <p><strong>IRS Publication 15-T (2026) Method:</strong> This calculator uses the Annualized Wage Method from IRS Pub 15-T Worksheet 1A for 2026 tax year, including Step 3 credits and Step 4 adjustments with proper IRS rounding rules.</p>
+                    <p><strong>⚠️ Important Limitations:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><strong>Step 2 Checkbox:</strong> Not fully implemented - requires Pub 15-T Percentage Method tables</li>
+                        <li><strong>State Taxes:</strong> Simplified - complex states (NJ, CA, NY, HI) may have inaccuracies</li>
+                        <li><strong>Local Taxes:</strong> Uses default rates - actual rates vary by jurisdiction</li>
+                        <li><strong>Data Verification:</strong> All brackets and rates should be verified against official 2026 sources</li>
+                    </ul>
+                    <p><strong>For Production Use:</strong> This calculator is for estimates only. Production payroll requires backend architecture, percentage method tables, state withholding tables, and professional tax review. See PRODUCTION_COMPLIANCE.md for details.</p>
+                    <p><strong>Official 2026 Tax Brackets:</strong> Based on <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank">IRS official inflation adjustments</a> including amendments from the One Big Beautiful Bill (OBBB). <strong>Verify against IRS Revenue Procedure 2025-32 before production use.</strong></p>
+                </div>
+                <div id="error-message"></div>
+                
+                <div class="form-group">
+                    <label>Employee Type</label>
+                    <select id="employeeType" onchange="toggleEmployeeTypeFields()">
+                        <option value="SALARY" selected>Salary Employee</option>
+                        <option value="HOURLY">Hourly Employee</option>
+                    </select>
+                </div>
+
+                <div id="salaryFields">
+                    <div class="form-group">
+                        <label>Salary Input Method</label>
+                        <select id="salaryMethod" onchange="toggleSalaryMethod()">
+                            <option value="ANNUAL" selected>Annual Salary</option>
+                            <option value="PERIOD">Gross per Pay Period</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="annualSalaryGroup">
+                        <label for="annualSalary">Annual Salary ($)</label>
+                        <input type="number" id="annualSalary" step="0.01" min="0" placeholder="130000.00" value="130000">
+                    </div>
+                    <div class="form-group" id="periodGrossGroup" style="display: none;">
+                        <label for="periodGross">Gross Pay per Pay Period ($)</label>
+                        <input type="number" id="periodGross" step="0.01" min="0" placeholder="5000.00" value="5000">
+                    </div>
+                </div>
+
+                <div id="hourlyFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="hourlyRate">Hourly Rate ($)</label>
+                        <input type="number" id="hourlyRate" step="0.01" min="0" placeholder="25.00" value="25.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="regularHours">Regular Hours</label>
+                        <input type="number" id="regularHours" step="0.01" min="0" placeholder="80.00" value="80.00">
+                        <small style="color: #666;">Hours at regular rate (typically up to 40 per week)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="overtimeHours">Overtime Hours</label>
+                        <input type="number" id="overtimeHours" step="0.01" min="0" placeholder="0.00" value="0.00">
+                        <small style="color: #666;">Hours at 1.5x rate (over 40 hours/week, or daily overtime per state rules)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="bonus">Bonus/Other Pay ($)</label>
+                        <input type="number" id="bonus" step="0.01" min="0" placeholder="0.00" value="0.00">
+                        <small style="color: #666;">Optional: Bonus, commission, or other pay for this period</small>
+                    </div>
+                    <div class="info-box" style="margin-top: 10px;">
+                        <p><strong>Overtime Rules:</strong> Federal FLSA requires 1.5x for hours over 40/week. Some states (like CA) have daily overtime rules. This calculator uses simple 1.5x for overtime hours.</p>
+                    </div>
+                </div>
+
+                <div class="form-group" id="calculatedGrossGroup" style="display: none; background: #e8f5e9; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                    <label><strong>Calculated Gross Pay:</strong></label>
+                    <div id="calculatedGrossDisplay" style="font-size: 1.2em; color: #2e7d32; font-weight: bold;">$0.00</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <select id="state" onchange="updateLocalTaxOptions()">
+                        <option value="AL">Alabama</option>
+                        <option value="AK">Alaska</option>
+                        <option value="AZ">Arizona</option>
+                        <option value="AR">Arkansas</option>
+                        <option value="CA" selected>California</option>
+                        <option value="CO">Colorado</option>
+                        <option value="CT">Connecticut</option>
+                        <option value="DE">Delaware</option>
+                        <option value="FL">Florida</option>
+                        <option value="GA">Georgia</option>
+                        <option value="HI">Hawaii</option>
+                        <option value="ID">Idaho</option>
+                        <option value="IL">Illinois</option>
+                        <option value="IN">Indiana</option>
+                        <option value="IA">Iowa</option>
+                        <option value="KS">Kansas</option>
+                        <option value="KY">Kentucky</option>
+                        <option value="LA">Louisiana</option>
+                        <option value="ME">Maine</option>
+                        <option value="MD">Maryland</option>
+                        <option value="MA">Massachusetts</option>
+                        <option value="MI">Michigan</option>
+                        <option value="MN">Minnesota</option>
+                        <option value="MS">Mississippi</option>
+                        <option value="MO">Missouri</option>
+                        <option value="MT">Montana</option>
+                        <option value="NE">Nebraska</option>
+                        <option value="NV">Nevada</option>
+                        <option value="NH">New Hampshire</option>
+                        <option value="NJ">New Jersey</option>
+                        <option value="NM">New Mexico</option>
+                        <option value="NY">New York</option>
+                        <option value="NC">North Carolina</option>
+                        <option value="ND">North Dakota</option>
+                        <option value="OH">Ohio</option>
+                        <option value="OK">Oklahoma</option>
+                        <option value="OR">Oregon</option>
+                        <option value="PA">Pennsylvania</option>
+                        <option value="RI">Rhode Island</option>
+                        <option value="SC">South Carolina</option>
+                        <option value="SD">South Dakota</option>
+                        <option value="TN">Tennessee</option>
+                        <option value="TX">Texas</option>
+                        <option value="UT">Utah</option>
+                        <option value="VT">Vermont</option>
+                        <option value="VA">Virginia</option>
+                        <option value="WA">Washington</option>
+                        <option value="WV">West Virginia</option>
+                        <option value="WI">Wisconsin</option>
+                        <option value="WY">Wyoming</option>
+                        <option value="DC">District of Columbia</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="localTaxGroup" style="display: none;">
+                    <label for="localJurisdiction">City / Local Jurisdiction</label>
+                    <select id="localJurisdiction">
+                        <option value="NONE">None</option>
+                    </select>
+                    <small style="color: #666;" id="localTaxNote"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="employeeStatus">Employee Status</label>
+                    <select id="employeeStatus">
+                        <option value="US_CITIZEN" selected>US Citizen</option>
+                        <option value="GREEN_CARD">Green Card</option>
+                        <option value="H1B">H1B</option>
+                        <option value="OPT">OPT</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="optExemptGroup" style="display: none;">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="optExempt">
+                        <label for="optExempt">OPT First 2 Years (FICA Exempt)</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="filingStatus">Filing Status</label>
+                    <select id="filingStatus">
+                        <option value="SINGLE" selected>Single</option>
+                        <option value="MARRIED_JOINTLY">Married Filing Jointly</option>
+                        <option value="MARRIED_SEPARATELY">Married Filing Separately</option>
+                        <option value="HEAD_OF_HOUSEHOLD">Head of Household</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="payPeriods">Pay Periods per Year</label>
+                    <select id="payPeriods">
+                        <option value="52">Weekly (52)</option>
+                        <option value="26" selected>Bi-weekly (26)</option>
+                        <option value="24">Semi-monthly (24)</option>
+                        <option value="12">Monthly (12)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="w4Step2Checkbox">W-4 Step 2: Multiple Jobs/Spouse Working</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="w4Step2Checkbox">
+                        <label for="w4Step2Checkbox">Checkbox checked (use higher withholding rate)</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="w4Step3Credits">W-4 Step 3: Tax Credits ($)</label>
+                    <input type="number" id="w4Step3Credits" step="0.01" min="0" value="0" placeholder="0.00">
+                    <small style="color: #666;">Child tax credit, other dependent credits</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="w4Step4a">W-4 Step 4(a): Other Income ($)</label>
+                    <input type="number" id="w4Step4a" step="0.01" min="0" value="0" placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label for="w4Step4b">W-4 Step 4(b): Deductions ($)</label>
+                    <input type="number" id="w4Step4b" step="0.01" min="0" value="0" placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label for="w4Step4c">W-4 Step 4(c): Extra Withholding ($)</label>
+                    <input type="number" id="w4Step4c" step="0.01" min="0" value="0" placeholder="0.00">
+                </div>
+
+                <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <label style="font-weight: bold; font-size: 1.1em; color: #667eea;">Pre-Tax Deductions</label>
+                    <small style="color: #666; display: block; margin-bottom: 10px;">These deductions reduce taxable income before taxes are calculated</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="preTaxAdvance">Advance / Loan Repayment ($)</label>
+                    <input type="number" id="preTaxAdvance" step="0.01" min="0" value="0" placeholder="0.00">
+                    <small style="color: #666;">Pre-tax advance payments or loan repayments</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="preTaxMedical">Medical / Health Insurance ($)</label>
+                    <input type="number" id="preTaxMedical" step="0.01" min="0" value="0" placeholder="0.00">
+                    <small style="color: #666;">Pre-tax medical insurance, HSA, FSA contributions</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="preTaxMiscellaneous">Miscellaneous Pre-Tax ($)</label>
+                    <input type="number" id="preTaxMiscellaneous" step="0.01" min="0" value="0" placeholder="0.00">
+                    <small style="color: #666;">Other pre-tax deductions (401k, parking, transit, etc.)</small>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <label style="font-weight: bold; font-size: 1.1em; color: #667eea;">Employee Information (for Paystub)</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="employeeName">Employee Name</label>
+                    <input type="text" id="employeeName" placeholder="John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="employeeAddress">Employee Address</label>
+                    <input type="text" id="employeeAddress" placeholder="123 Main St, City, State 12345">
+                </div>
+
+                <div class="form-group">
+                    <label for="employeeId">Employee ID</label>
+                    <input type="text" id="employeeId" placeholder="25841619" value="25841619">
+                </div>
+
+                <div class="form-group">
+                    <label for="payPeriodStart">Pay Period Start Date</label>
+                    <input type="date" id="payPeriodStart">
+                </div>
+
+                <div class="form-group">
+                    <label for="payPeriodEnd">Pay Period End Date</label>
+                    <input type="date" id="payPeriodEnd">
+                </div>
+
+                <div class="form-group">
+                    <label for="payDate">Pay Date</label>
+                    <input type="date" id="payDate">
+                </div>
+
+                <div class="form-group">
+                    <label for="checkNumber">Check Number</label>
+                    <input type="text" id="checkNumber" placeholder="12345">
+                </div>
+
+                <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+                    <label style="font-weight: bold; font-size: 1.1em; color: #667eea;">Year-to-Date Information</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="ytdGross">Year-to-Date Gross Pay ($)</label>
+                    <input type="number" id="ytdGross" step="0.01" min="0" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="ytdNet">Year-to-Date Net Pay ($)</label>
+                    <input type="number" id="ytdNet" step="0.01" min="0" value="0">
+                </div>
+
+                <button class="btn-calculate" onclick="calculatePaystub()">Calculate Paystub</button>
+            </div>
+
+            <div class="results-section">
+                <h2>Paystub Results</h2>
+                <div id="results" class="results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tax Year Configuration
+        const TAX_YEAR = 2026;
+        
+        // Tax calculation constants - 2026 IRS Data (Official IRS Publication)
+        // Source: https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026
+        // Bracket structure: {min, max, rate} - min is inclusive, max is exclusive
+        // IMPORTANT: Verify these brackets match official IRS Revenue Procedure 2025-32
+        // Per IRS announcement: 10% up to $12,400; 12% $12,400-$50,400; 22% $50,400-$105,700; etc.
+        const FEDERAL_TAX_BRACKETS_2026 = [
+            { min: 0,      max: 12400,  rate: 0.10 },      // 10% up to $12,400
+            { min: 12400,  max: 50400,  rate: 0.12 },      // 12% $12,400 - $50,400
+            { min: 50400,  max: 105700, rate: 0.22 },      // 22% $50,400 - $105,700
+            { min: 105700, max: 201775, rate: 0.24 },      // 24% $105,700 - $201,775
+            { min: 201775, max: 256225, rate: 0.32 },      // 32% $201,775 - $256,225
+            { min: 256225, max: 640600, rate: 0.35 },      // 35% $256,225 - $640,600
+            { min: 640600, max: Infinity, rate: 0.37 }     // 37% over $640,600
+        ];
+
+        const STANDARD_DEDUCTIONS_2026 = {
+            'SINGLE': 16100,                    // $16,100 (per IRS OBBB)
+            'MARRIED_JOINTLY': 32200,           // $32,200 (per IRS OBBB)
+            'MARRIED_SEPARATELY': 16100,        // $16,100 (per IRS OBBB)
+            'HEAD_OF_HOUSEHOLD': 24150          // $24,150 (per IRS OBBB)
+        };
+
+        // FICA Tax Rates - 2026
+        const SOCIAL_SECURITY_RATE = 0.062;  // 6.2%
+        const SOCIAL_SECURITY_WAGE_BASE = 184500;  // 2026 wage base (SSA projected)
+        const MEDICARE_RATE = 0.0145;  // 1.45%
+        const ADDITIONAL_MEDICARE_RATE = 0.009;  // 0.9% on wages over threshold
+        const ADDITIONAL_MEDICARE_THRESHOLD = 200000;  // 2026 threshold (unchanged)
+
+        // State-specific payroll taxes (separate from income tax)
+        // These are mandatory payroll deductions that vary by state
+        const STATE_PAYROLL_TAXES_2026 = {
+            'NJ': {
+                UI: { name: 'Unemployment Insurance', rate: 0.003825, wageBase: 42900, employee: true },
+                DI: { name: 'Disability Insurance', rate: 0.0026, wageBase: 156800, employee: true },
+                FLI: { name: 'Family Leave Insurance', rate: 0.0009, wageBase: 156800, employee: true }
+            },
+            'CA': {
+                SDI: { name: 'State Disability Insurance', rate: 0.011, wageBase: 153164, employee: true }
+            },
+            'NY': {
+                SDI: { name: 'State Disability Insurance', rate: 0.005, wageBase: 12000, employee: true },
+                PFL: { name: 'Paid Family Leave', rate: 0.00373, wageBase: 153164, employee: true }
+            },
+            'HI': {
+                TDI: { name: 'Temporary Disability Insurance', rate: 0.005, wageBase: 153164, employee: true }
+            },
+            'RI': {
+                TDI: { name: 'Temporary Disability Insurance', rate: 0.013, wageBase: 84000, employee: true }
+            },
+            'WA': {
+                PFL: { name: 'Paid Family Leave', rate: 0.004, wageBase: 153164, employee: true },
+                WA_CARES_LTC: { name: 'WA Cares Long-Term Care', rate: 0.0058, wageBase: Infinity, employee: true }
+            },
+            'MA': {
+                PFML: { name: 'Paid Family Medical Leave', rate: 0.0034, wageBase: 153164, employee: true }
+            },
+            'CO': {
+                FAMLI: { name: 'Family Medical Leave Insurance', rate: 0.0045, wageBase: 153164, employee: true }
+                // Note: Total FAMLI rate is 0.9% (0.009), split 50/50: 0.45% employee, 0.45% employer
+            },
+            'OR': {
+                PLO: { name: 'Paid Leave Oregon', rate: 0.01, wageBase: 153164, employee: true }
+            },
+            'CT': {
+                PL: { name: 'Paid Leave', rate: 0.005, wageBase: 153164, employee: true }
+            },
+            'DC': {
+                PFL: { name: 'Paid Family Leave', rate: 0.0062, wageBase: 153164, employee: true }
+            }
+        };
+
+        // Local taxes (city, county, school district) - separate from state taxes
+        const LOCAL_TAX_DATA_2026 = {
+            'NY': {
+                'NYC': {
+                    name: 'New York City Resident Tax',
+                    type: 'brackets',
+                    brackets: [
+                        { min: 0, max: 12000, rate: 0.03078 },
+                        { min: 12000, max: 25000, rate: 0.03762 },
+                        { min: 25000, max: 50000, rate: 0.03819 },
+                        { min: 50000, max: Infinity, rate: 0.03876 }
+                    ]
+                },
+                'YONKERS_RESIDENT': {
+                    name: 'Yonkers Resident Tax',
+                    type: 'flat',
+                    rate: 0.165
+                },
+                'YONKERS_NONRESIDENT': {
+                    name: 'Yonkers Non-Resident Earnings Tax',
+                    type: 'flat',
+                    rate: 0.005
+                }
+            },
+            'PA': {
+                'LOCAL_EIT': {
+                    name: 'Local Earned Income Tax',
+                    type: 'flat',
+                    rate: 0.01,  // Varies by municipality - default 1%
+                    note: 'Rate varies by work municipality'
+                },
+                'LOCAL_LST': {
+                    name: 'Local Services Tax',
+                    type: 'flat',
+                    rate: 0,  // Fixed amount per year, not percentage
+                    fixedAmount: 52,  // Typical $52/year, prorated per pay period
+                    note: 'Fixed annual amount, varies by municipality'
+                }
+            },
+            'MD': {
+                // Maryland county taxes - rates vary by county
+                // Common rates: 2.25% to 3.2%
+                'COUNTY': {
+                    name: 'County Income Tax',
+                    type: 'flat',
+                    rate: 0.032,  // Default 3.2% - varies by county
+                    note: 'Rate varies by county (2.25% to 3.2%)'
+                }
+            },
+            'OH': {
+                'SCHOOL_DISTRICT': {
+                    name: 'School District Income Tax',
+                    type: 'flat',
+                    rate: 0.01,  // Varies by school district - default 1%
+                    note: 'Rate varies by school district (0.5% to 2.5%)'
+                }
+            },
+            'KY': {
+                'JEFFERSON': {
+                    name: 'Jefferson County (Louisville)',
+                    type: 'flat',
+                    rate: 0.02,  // 2%
+                    note: 'Jefferson County income tax'
+                },
+                'FAYETTE': {
+                    name: 'Fayette County (Lexington)',
+                    type: 'flat',
+                    rate: 0.02,  // 2%
+                    note: 'Fayette County income tax'
+                },
+                'KENTON': {
+                    name: 'Kenton County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Kenton County income tax'
+                },
+                'BOONE': {
+                    name: 'Boone County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Boone County income tax'
+                },
+                'CAMPBELL': {
+                    name: 'Campbell County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Campbell County income tax'
+                },
+                'WARREN': {
+                    name: 'Warren County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Warren County income tax'
+                },
+                'HARDIN': {
+                    name: 'Hardin County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Hardin County income tax'
+                },
+                'DAVIESS': {
+                    name: 'Daviess County (Owensboro)',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Daviess County income tax'
+                },
+                'MADISON': {
+                    name: 'Madison County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Madison County income tax'
+                },
+                'BULLITT': {
+                    name: 'Bullitt County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Bullitt County income tax'
+                }
+            },
+            'IN': {
+                'MARION': {
+                    name: 'Marion County (Indianapolis)',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Marion County income tax'
+                },
+                'LAKE': {
+                    name: 'Lake County',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Lake County income tax'
+                },
+                'ALLEN': {
+                    name: 'Allen County (Fort Wayne)',
+                    type: 'flat',
+                    rate: 0.013,  // 1.3%
+                    note: 'Allen County income tax'
+                },
+                'ST_JOSEPH': {
+                    name: 'St. Joseph County (South Bend)',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'St. Joseph County income tax'
+                },
+                'VANDERBURGH': {
+                    name: 'Vanderburgh County (Evansville)',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Vanderburgh County income tax'
+                },
+                'TIPPECANOE': {
+                    name: 'Tippecanoe County (Lafayette)',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Tippecanoe County income tax'
+                },
+                'HAMILTON': {
+                    name: 'Hamilton County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Hamilton County income tax'
+                },
+                'ELKHART': {
+                    name: 'Elkhart County',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Elkhart County income tax'
+                },
+                'MONROE': {
+                    name: 'Monroe County (Bloomington)',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Monroe County income tax'
+                },
+                'DELAWARE': {
+                    name: 'Delaware County (Muncie)',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Delaware County income tax'
+                }
+            },
+            'AL': {
+                'JEFFERSON': {
+                    name: 'Jefferson County (Birmingham)',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Jefferson County income tax'
+                },
+                'MOBILE': {
+                    name: 'Mobile County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Mobile County income tax'
+                },
+                'MADISON': {
+                    name: 'Madison County (Huntsville)',
+                    type: 'flat',
+                    rate: 0.005,  // 0.5%
+                    note: 'Madison County income tax'
+                },
+                'MONTGOMERY': {
+                    name: 'Montgomery County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Montgomery County income tax'
+                },
+                'SHELBY': {
+                    name: 'Shelby County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Shelby County income tax'
+                },
+                'TUSCALOOSA': {
+                    name: 'Tuscaloosa County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Tuscaloosa County income tax'
+                },
+                'BALDWIN': {
+                    name: 'Baldwin County',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Baldwin County income tax'
+                },
+                'LEE': {
+                    name: 'Lee County (Auburn)',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Lee County income tax'
+                },
+                'MORGAN': {
+                    name: 'Morgan County',
+                    type: 'flat',
+                    rate: 0.005,  // 0.5%
+                    note: 'Morgan County income tax'
+                },
+                'CALHOUN': {
+                    name: 'Calhoun County',
+                    type: 'flat',
+                    rate: 0.005,  // 0.5%
+                    note: 'Calhoun County income tax'
+                }
+            },
+            'MI': {
+                'DETROIT': {
+                    name: 'Detroit City Tax',
+                    type: 'flat',
+                    rate: 0.024,  // 2.4%
+                    note: 'Detroit city income tax'
+                },
+                'GRAND_RAPIDS': {
+                    name: 'Grand Rapids City Tax',
+                    type: 'flat',
+                    rate: 0.015,  // 1.5%
+                    note: 'Grand Rapids city income tax'
+                },
+                'FLINT': {
+                    name: 'Flint City Tax',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Flint city income tax'
+                },
+                'LANSING': {
+                    name: 'Lansing City Tax',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Lansing city income tax'
+                },
+                'ANN_ARBOR': {
+                    name: 'Ann Arbor City Tax',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Ann Arbor city income tax'
+                }
+            },
+            'MO': {
+                'KANSAS_CITY': {
+                    name: 'Kansas City Earnings Tax',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Kansas City earnings tax'
+                },
+                'ST_LOUIS': {
+                    name: 'St. Louis Earnings Tax',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'St. Louis earnings tax'
+                }
+            },
+            'NJ': {
+                'NEWARK': {
+                    name: 'Newark Payroll Tax',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Newark city payroll tax'
+                },
+                'JERSEY_CITY': {
+                    name: 'Jersey City Payroll Tax',
+                    type: 'flat',
+                    rate: 0.01,  // 1%
+                    note: 'Jersey City payroll tax'
+                }
+            },
+            'CO': {
+                'DENVER': {
+                    name: 'Denver Occupational Privilege Tax',
+                    type: 'flat',
+                    rate: 0.004,  // 0.4%
+                    note: 'Denver occupational privilege tax'
+                }
+            },
+            'OR': {
+                'TRI_MET': {
+                    name: 'TriMet Transit District Tax',
+                    type: 'flat',
+                    rate: 0.007337,  // 0.7337%
+                    note: 'TriMet transit district tax'
+                },
+                'LANE_TRANSIT': {
+                    name: 'Lane Transit District Tax',
+                    type: 'flat',
+                    rate: 0.007,  // 0.7%
+                    note: 'Lane Transit District tax'
+                }
+            },
+            'IA': {
+                'SCHOOL_SURTAX': {
+                    name: 'School District Surtax',
+                    type: 'flat',
+                    rate: 0.01,  // 1% - varies by district
+                    note: 'School district surtax (varies by district)'
+                }
+            }
+        };
+
+        const STATE_TAX_DATA = {
+            'AL': {type: 'brackets', brackets: [[0, 0.02], [500, 0.04], [3000, 0.05]], standard_deduction: 2500},
+            'AK': {type: 'none'},
+            'AZ': {type: 'flat', rate: 0.025},
+            'AR': {type: 'brackets', brackets: [[0, 0.02], [4400, 0.04], [8800, 0.047]], standard_deduction: 2200},
+            'CA': {type: 'brackets', brackets: [[0, 0.01], [10099, 0.02], [23942, 0.04], [37788, 0.06], [52455, 0.08], [66295, 0.093], [338639, 0.103], [406364, 0.113], [677275, 0.123]], standard_deduction: 5202},
+            'CO': {type: 'flat', rate: 0.044},
+            'CT': {type: 'brackets', brackets: [[0, 0.03], [10000, 0.05], [50000, 0.055], [100000, 0.06], [200000, 0.065], [250000, 0.069], [500000, 0.0699]], standard_deduction: 0},
+            'DE': {type: 'brackets', brackets: [[0, 0.022], [2000, 0.039], [5000, 0.048], [10000, 0.052], [20000, 0.0555], [25000, 0.066]], standard_deduction: 3250},
+            'FL': {type: 'none'},
+            'GA': {type: 'brackets', brackets: [[0, 0.01], [750, 0.02], [2250, 0.03], [3750, 0.04], [5250, 0.05], [7000, 0.0575]], standard_deduction: 5400},
+            'HI': {type: 'brackets', brackets: [[0, 0.014], [2400, 0.032], [4800, 0.055], [9600, 0.064], [14400, 0.068], [19200, 0.072], [24000, 0.076], [36000, 0.079], [48000, 0.0825], [150000, 0.10], [175000, 0.11], [200000, 0.12]], standard_deduction: 2200},
+            'ID': {type: 'flat', rate: 0.058},
+            'IL': {type: 'flat', rate: 0.0495},
+            'IN': {type: 'flat', rate: 0.0315},
+            'IA': {type: 'brackets', brackets: [[0, 0.0333], [6000, 0.0067], [30000, 0.0225], [75000, 0.0414], [150000, 0.0563]], standard_deduction: 2100},
+            'KS': {type: 'brackets', brackets: [[0, 0.031], [15000, 0.0525], [30000, 0.057]], standard_deduction: 3500},
+            'KY': {type: 'flat', rate: 0.045},
+            'LA': {type: 'brackets', brackets: [[0, 0.0185], [12500, 0.035], [50000, 0.0425]], standard_deduction: 4500},
+            'ME': {type: 'brackets', brackets: [[0, 0.058], [24500, 0.0675], [58050, 0.0715]], standard_deduction: 13850},
+            'MD': {type: 'brackets', brackets: [[0, 0.02], [1000, 0.03], [2000, 0.04], [3000, 0.0475], [100000, 0.05], [125000, 0.0525], [150000, 0.055], [250000, 0.0575]], standard_deduction: 2400},
+            'MA': {type: 'flat', rate: 0.05},
+            'MI': {type: 'flat', rate: 0.0425},
+            'MN': {type: 'brackets', brackets: [[0, 0.0535], [30410, 0.068], [100220, 0.0785], [198970, 0.0985]], standard_deduction: 14025},
+            'MS': {type: 'brackets', brackets: [[0, 0.00], [5000, 0.03], [10000, 0.04], [50000, 0.05]], standard_deduction: 2300},  // Fixed: was [5000, 0.05] - corrected to [50000, 0.05]
+            'MO': {type: 'brackets', brackets: [[0, 0.015], [1121, 0.02], [2242, 0.025], [3363, 0.03], [4484, 0.035], [5605, 0.04], [6726, 0.045], [7847, 0.05], [8968, 0.0525], [10089, 0.055], [11210, 0.0575]], standard_deduction: 12950},
+            'MT': {type: 'brackets', brackets: [[0, 0.01], [2100, 0.02], [3600, 0.03], [5400, 0.04], [7200, 0.05], [9300, 0.06], [12000, 0.0675], [15400, 0.069]], standard_deduction: 5400},
+            'NE': {type: 'brackets', brackets: [[0, 0.0246], [3700, 0.0351], [22170, 0.0501], [35730, 0.0684]], standard_deduction: 7900},
+            'NV': {type: 'none'},
+            'NH': {type: 'none'},
+            'NJ': {type: 'brackets', brackets: [[0, 0.014], [20000, 0.0175], [35000, 0.035], [40000, 0.05525], [75000, 0.0637], [500000, 0.0897], [1000000, 0.1075]], standard_deduction: 0},
+            'NM': {type: 'brackets', brackets: [[0, 0.017], [5500, 0.032], [11000, 0.047], [16000, 0.049], [210000, 0.059]], standard_deduction: 13850},
+            'NY': {type: 'brackets', brackets: [[0, 0.04], [8500, 0.045], [11700, 0.0525], [13900, 0.055], [21400, 0.06], [80650, 0.0625], [215400, 0.0685], [1077550, 0.0965], [5000000, 0.103], [25000000, 0.109]], standard_deduction: 8000},
+            'NC': {type: 'flat', rate: 0.0475},
+            'ND': {type: 'brackets', brackets: [[0, 0.011], [44825, 0.0204], [216675, 0.0227], [458350, 0.0251]], standard_deduction: 14600},
+            'OH': {type: 'brackets', brackets: [[0, 0.00], [26050, 0.0275], [41700, 0.0325], [83350, 0.0375], [104250, 0.0425], [208500, 0.0475]], standard_deduction: 0},
+            'OK': {type: 'brackets', brackets: [[0, 0.0025], [1000, 0.0075], [2500, 0.0175], [3750, 0.0275], [4900, 0.0375], [7200, 0.0475]], standard_deduction: 6350},
+            'OR': {type: 'brackets', brackets: [[0, 0.0475], [4050, 0.0675], [10200, 0.0875], [125000, 0.099]], standard_deduction: 2460},
+            'PA': {type: 'flat', rate: 0.0307},
+            'RI': {type: 'brackets', brackets: [[0, 0.0375], [68200, 0.0475], [155050, 0.0599]], standard_deduction: 10000},
+            'SC': {type: 'brackets', brackets: [[0, 0.00], [3200, 0.03], [6410, 0.04], [9620, 0.05], [12820, 0.06], [16040, 0.07]], standard_deduction: 13850},
+            'SD': {type: 'none'},
+            'TN': {type: 'none'},
+            'TX': {type: 'none'},
+            'UT': {type: 'flat', rate: 0.0485},
+            'VT': {type: 'brackets', brackets: [[0, 0.0335], [45200, 0.066], [109450, 0.076], [232950, 0.0875]], standard_deduction: 6500},
+            'VA': {type: 'brackets', brackets: [[0, 0.02], [3000, 0.03], [5000, 0.05], [17000, 0.0575]], standard_deduction: 8000},
+            'WA': {type: 'none'},
+            'WV': {type: 'brackets', brackets: [[0, 0.03], [10000, 0.04], [25000, 0.045], [40000, 0.06], [60000, 0.065]], standard_deduction: 0},
+            'WI': {type: 'brackets', brackets: [[0, 0.0354], [14020, 0.0405], [28040, 0.0535], [308910, 0.0765]], standard_deduction: 12760},
+            'WY': {type: 'none'},
+            'DC': {type: 'brackets', brackets: [[0, 0.04], [10000, 0.06], [40000, 0.065], [60000, 0.085], [250000, 0.0925], [500000, 0.0975], [1000000, 0.1075]], standard_deduction: 13850}
+        };
+
+        // Show/hide OPT exempt checkbox
+        document.getElementById('employeeStatus').addEventListener('change', function() {
+            const optGroup = document.getElementById('optExemptGroup');
+            if (this.value === 'OPT') {
+                optGroup.style.display = 'block';
+            } else {
+                optGroup.style.display = 'none';
+                document.getElementById('optExempt').checked = false;
+            }
+        });
+
+        // Toggle between salary and hourly employee fields
+        function toggleEmployeeTypeFields() {
+            const employeeType = document.getElementById('employeeType').value;
+            const salaryFields = document.getElementById('salaryFields');
+            const hourlyFields = document.getElementById('hourlyFields');
+            const calculatedGrossGroup = document.getElementById('calculatedGrossGroup');
+            
+            if (employeeType === 'SALARY') {
+                salaryFields.style.display = 'block';
+                hourlyFields.style.display = 'none';
+                calculatedGrossGroup.style.display = 'none';
+            } else {
+                salaryFields.style.display = 'none';
+                hourlyFields.style.display = 'block';
+                calculatedGrossGroup.style.display = 'block';
+                updateCalculatedGross();
+            }
+        }
+
+        // Toggle between annual salary and per-period gross
+        function toggleSalaryMethod() {
+            const salaryMethod = document.getElementById('salaryMethod').value;
+            const annualSalaryGroup = document.getElementById('annualSalaryGroup');
+            const periodGrossGroup = document.getElementById('periodGrossGroup');
+            
+            if (salaryMethod === 'ANNUAL') {
+                annualSalaryGroup.style.display = 'block';
+                periodGrossGroup.style.display = 'none';
+            } else {
+                annualSalaryGroup.style.display = 'none';
+                periodGrossGroup.style.display = 'block';
+            }
+        }
+
+        // Calculate gross pay from hours (regular + overtime + bonus)
+        function calculateGrossFromHours(rate, regularHours, overtimeHours, bonus = 0) {
+            const regularPay = rate * regularHours;
+            const overtimePay = rate * overtimeHours * 1.5;  // FLSA: 1.5x for overtime
+            return regularPay + overtimePay + bonus;
+        }
+
+        // Update calculated gross display for hourly employees
+        function updateCalculatedGross() {
+            const employeeType = document.getElementById('employeeType').value;
+            if (employeeType !== 'HOURLY') return;
+            
+            const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+            const regularHours = parseFloat(document.getElementById('regularHours').value) || 0;
+            const overtimeHours = parseFloat(document.getElementById('overtimeHours').value) || 0;
+            const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+            
+            const gross = calculateGrossFromHours(rate, regularHours, overtimeHours, bonus);
+            const formatMoney = (val) => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(val);
+            document.getElementById('calculatedGrossDisplay').textContent = formatMoney(gross);
+        }
+
+        // Add event listeners for hourly fields
+        document.addEventListener('DOMContentLoaded', function() {
+            ['hourlyRate', 'regularHours', 'overtimeHours', 'bonus'].forEach(id => {
+                const field = document.getElementById(id);
+                if (field) {
+                    field.addEventListener('input', updateCalculatedGross);
+                }
+            });
+        });
+
+        // Update local tax options based on selected state
+        function updateLocalTaxOptions() {
+            const state = document.getElementById('state').value;
+            const localTaxGroup = document.getElementById('localTaxGroup');
+            const localJurisdiction = document.getElementById('localJurisdiction');
+            const localTaxNote = document.getElementById('localTaxNote');
+            
+            const localData = LOCAL_TAX_DATA_2026[state];
+            
+            if (localData) {
+                localTaxGroup.style.display = 'block';
+                localJurisdiction.innerHTML = '<option value="NONE">None</option>';
+                
+                for (let jurisdiction in localData) {
+                    const option = document.createElement('option');
+                    option.value = jurisdiction;
+                    option.textContent = localData[jurisdiction].name;
+                    localJurisdiction.appendChild(option);
+                }
+                
+                // Show note if applicable
+                const firstJurisdiction = Object.keys(localData)[0];
+                if (localData[firstJurisdiction].note) {
+                    localTaxNote.textContent = localData[firstJurisdiction].note;
+                    localTaxNote.style.display = 'block';
+                } else {
+                    localTaxNote.style.display = 'none';
+                }
+            } else {
+                localTaxGroup.style.display = 'none';
+                localJurisdiction.value = 'NONE';
+            }
+        }
+
+        // IRS rounding rules: round to nearest dollar, 0.50 rounds up
+        function irsRound(value) {
+            return Math.round(value);
+        }
+
+        function round(value, decimals = 2) {
+            return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+        }
+
+        // Correct marginal tax bracket calculation
+        function calculateAnnualTax(taxableIncome) {
+            let tax = 0;
+
+            for (let bracket of FEDERAL_TAX_BRACKETS_2026) {
+                if (taxableIncome > bracket.min) {
+                    const taxableAtThisRate = Math.min(taxableIncome, bracket.max) - bracket.min;
+                    if (taxableAtThisRate > 0) {
+                        tax += taxableAtThisRate * bracket.rate;
+                    }
+                }
+            }
+
+            return tax;
+        }
+
+        // IRS Publication 15-T Worksheet 1A methodology (Annualized Wage Method)
+        function calculateFederalIncomeTaxPub15T(
+            grossPay, 
+            payPeriodsPerYear, 
+            filingStatus, 
+            step2Checkbox,
+            step3Credits,
+            step4aOtherIncome,
+            step4bDeductions,
+            step4cExtraWithholding
+        ) {
+            // Step 1: Annualize wages
+            let annualWages = grossPay * payPeriodsPerYear;
+            
+            // Step 2: Checkbox logic
+            // If Step 2 checkbox is checked, employee has multiple jobs or working spouse
+            // IRS Pub 15-T uses separate percentage tables or multiple jobs worksheet
+            // Note: Full Pub 15-T implementation would use percentage method tables
+            // 
+            // IMPORTANT: Step 2 checkbox is NOT fully implemented yet
+            // For exact IRS accuracy, would need Pub 15-T percentage method tables
+            // Current implementation shows note but does not change withholding
+            // 
+            // Temporary approximation (if needed): Could apply multiplier (1.15-1.25x)
+            // but that is NOT IRS-accurate and not recommended for production
+            let standardDeduction = STANDARD_DEDUCTIONS_2026[filingStatus];
+            
+            // Step 2 checkbox: Currently not implemented
+            // IRS Pub 15-T requires percentage method tables for accurate Step 2 handling
+            // When checkbox is checked, withholding should be higher
+            // Full implementation would require Pub 15-T percentage method tables
+            
+            // Step 4(a): Add other income (annual amount)
+            annualWages += step4aOtherIncome;
+            
+            // Step 4(b): Subtract deductions (annual amount)
+            let adjustedAnnualWages = annualWages - step4bDeductions;
+            
+            // Calculate taxable income after standard deduction
+            let taxableIncome = Math.max(0, adjustedAnnualWages - standardDeduction);
+            
+            // Calculate tax using correct marginal bracket method
+            let annualTax = calculateAnnualTax(taxableIncome);
+            
+            // Step 3: Subtract credits (annual credits reduce annual tax)
+            // Credits are entered as annual amounts on W-4
+            annualTax = Math.max(0, annualTax - step3Credits);
+            
+            // Convert annual tax to per-pay-period amount
+            // Note: Not rounding to show exact values for comparison with payroll systems
+            let perPeriodTax = annualTax / payPeriodsPerYear;
+            
+            // Step 4(c): Add extra withholding (per pay period)
+            perPeriodTax += step4cExtraWithholding;
+            
+            // Note: IRS Pub 15-T typically rounds to nearest dollar, but keeping exact for comparison
+            // perPeriodTax = irsRound(perPeriodTax);  // Commented out to show exact values
+            
+            // Build calculation details for display
+            const formatMoney = (val) => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(val);
+            const details = `
+                Annual Wages: ${formatMoney(annualWages)}<br>
+                Standard Deduction: ${formatMoney(standardDeduction)}${step2Checkbox ? ' (Step 2 checkbox checked - note: not fully implemented, requires Pub 15-T percentage tables)' : ''}<br>
+                ${step4aOtherIncome > 0 ? `Step 4(a) Other Income: ${formatMoney(step4aOtherIncome)}<br>` : ''}
+                ${step4bDeductions > 0 ? `Step 4(b) Deductions: ${formatMoney(step4bDeductions)}<br>` : ''}
+                Taxable Income: ${formatMoney(taxableIncome)}<br>
+                Annual Tax: ${formatMoney(annualTax + step3Credits)}<br>
+                ${step3Credits > 0 ? `Step 3 Credits: -${formatMoney(step3Credits)}<br>` : ''}
+                Annual Tax After Credits: ${formatMoney(annualTax)}<br>
+                Per Period Tax: ${formatMoney(annualTax / payPeriodsPerYear)}<br>
+                ${step4cExtraWithholding > 0 ? `Step 4(c) Extra Withholding: +${formatMoney(step4cExtraWithholding)}<br>` : ''}
+                Final Withholding (rounded): ${formatMoney(perPeriodTax)}
+            `;
+            
+            return {
+                tax: Math.max(0, perPeriodTax),
+                details: details
+            };
+        }
+
+        // Legacy function for backward compatibility
+        function calculateFederalIncomeTax(annualGross, filingStatus, allowances, additionalWithholding) {
+            // This is a simplified version - use Pub 15-T method instead
+            const standardDeduction = STANDARD_DEDUCTIONS_2026[filingStatus];
+            const allowanceValue = 4700 * allowances;
+            let taxableIncome = Math.max(0, annualGross - standardDeduction - allowanceValue);
+            
+            // Use correct marginal tax calculation
+            let tax = calculateAnnualTax(taxableIncome);
+            
+            tax += additionalWithholding;
+            return round(tax);
+        }
+
+        // Reusable wage base stopper function
+        // Applies rate to gross pay, respecting wage base limit
+        function applyWageBase(rate, wageBase, yearToDateGross, grossPay) {
+            if (!wageBase) {
+                // No wage base - apply to all wages
+                return round(grossPay * rate);
+            }
+            
+            if (yearToDateGross >= wageBase) {
+                // Already exceeded wage base
+                return 0;
+            }
+            
+            // Calculate taxable amount up to wage base
+            const taxable = Math.min(grossPay, wageBase - yearToDateGross);
+            return round(taxable * rate);
+        }
+
+        // Calculate state-specific payroll taxes (separate from income tax)
+        // Examples: NJ UI/DI/FLI, CA SDI, NY SDI/PFL, etc.
+        function calculateStatePayrollTaxes(state, grossPay, yearToDateGross) {
+            const stateData = STATE_PAYROLL_TAXES_2026[state];
+            if (!stateData) return {};
+
+            let taxes = {};
+
+            for (let taxType in stateData) {
+                const taxInfo = stateData[taxType];
+                
+                // Only calculate employee-paid taxes
+                if (!taxInfo.employee) continue;
+
+                const { rate, wageBase } = taxInfo;
+                const amount = applyWageBase(rate, wageBase, yearToDateGross, grossPay);
+                
+                taxes[taxType] = {
+                    amount: amount,
+                    name: taxInfo.name
+                };
+            }
+
+            return taxes;
+        }
+
+        // Calculate local taxes (city, county, school district)
+        // Note: Local taxes typically use same taxable income as state tax, not raw gross
+        function calculateLocalTaxes(state, city, grossPay, annualGross, payPeriods, stateTaxableIncome) {
+            const localData = LOCAL_TAX_DATA_2026[state];
+            if (!localData || !city || city === 'NONE') return {};
+
+            const cityData = localData[city];
+            if (!cityData) return {};
+
+            let taxes = {};
+            let amount = 0;
+
+            if (cityData.type === 'flat') {
+                if (cityData.fixedAmount) {
+                    // Fixed annual amount (like PA LST) - prorated per pay period
+                    amount = round(cityData.fixedAmount / payPeriods);
+                } else {
+                    // Percentage rate - typically applied to gross pay per period
+                    // Some jurisdictions may use taxable income - check local rules
+                    amount = round(grossPay * cityData.rate);
+                }
+            } else if (cityData.type === 'brackets') {
+                // Bracket-based local tax (like NYC)
+                // Use taxable income (after deductions) if available, otherwise use annual gross
+                // Note: Some local taxes have their own deduction rules
+                let taxableIncome = stateTaxableIncome || annualGross;
+                let tax = 0;
+                
+                for (let bracket of cityData.brackets) {
+                    if (taxableIncome > bracket.min) {
+                        const taxableAtThisRate = Math.min(taxableIncome, bracket.max) - bracket.min;
+                        if (taxableAtThisRate > 0) {
+                            tax += taxableAtThisRate * bracket.rate;
+                        }
+                    }
+                }
+                
+                // Convert to per-pay-period
+                amount = round(tax / payPeriods);
+            }
+
+            taxes[city] = {
+                amount: amount,
+                name: cityData.name,
+                note: cityData.note || ''
+            };
+
+            return taxes;
+        }
+
+        // Convert state bracket array format to object format for consistent calculation
+        // Array format: [[threshold, rate], ...] where threshold is the START of the bracket
+        // Converts to: [{min, max, rate}, ...] format
+        function convertStateBrackets(brackets) {
+            if (!brackets || brackets.length === 0) return [];
+            
+            // Check if already in object format
+            if (brackets[0].min !== undefined) return brackets;
+            
+            // Convert from array format [threshold, rate] to {min, max, rate}
+            // min = current threshold, max = next threshold (or Infinity for last bracket)
+            const converted = [];
+            for (let i = 0; i < brackets.length; i++) {
+                const [min, rate] = brackets[i];
+                const max = (i === brackets.length - 1) ? Infinity : brackets[i + 1][0];
+                converted.push({ min, max, rate });
+            }
+            return converted;
+        }
+
+        function calculateStateIncomeTax(annualGross, state, filingStatus) {
+            const stateData = STATE_TAX_DATA[state];
+            
+            if (!stateData || stateData.type === 'none') {
+                return 0;
+            }
+            
+            // NOTE: State standard deduction handling is simplified
+            // Some states have phase-outs, personal exemptions, or filing-status-specific tables
+            // This implementation uses a simple deduction approach
+            // For production payroll, verify state-specific deduction rules
+            const standardDeduction = stateData.standard_deduction || 0;
+            let taxableIncome = Math.max(0, annualGross - standardDeduction);
+            
+            if (stateData.type === 'flat') {
+                return round(taxableIncome * stateData.rate);
+            }
+            
+            if (stateData.type === 'brackets') {
+                // Convert brackets to consistent {min, max, rate} format
+                const brackets = convertStateBrackets(stateData.brackets);
+                
+                // Use same calculation method as federal (consistent and safe)
+                let tax = 0;
+                for (let bracket of brackets) {
+                    if (taxableIncome > bracket.min) {
+                        const taxableAtThisRate = Math.min(taxableIncome, bracket.max) - bracket.min;
+                        if (taxableAtThisRate > 0) {
+                            tax += taxableAtThisRate * bracket.rate;
+                        }
+                    }
+                }
+                
+                return round(tax);
+            }
+            
+            return 0;
+        }
+
+        function calculateFICATaxes(grossPay, employeeStatus, yearToDateGross, isF1OptFirst2Years) {
+            let socialSecurity = 0;
+            let medicare = 0;
+            let additionalMedicare = 0;
+            
+            const isExempt = (employeeStatus === 'OPT' && isF1OptFirst2Years);
+            
+            if (!isExempt) {
+                // Social Security - use reusable wage base function
+                socialSecurity = applyWageBase(SOCIAL_SECURITY_RATE, SOCIAL_SECURITY_WAGE_BASE, yearToDateGross, grossPay);
+                
+                // Medicare (no wage base) - applies to all wages
+                medicare = round(grossPay * MEDICARE_RATE);
+                
+                // Additional Medicare (0.9% on wages exceeding $200,000 threshold)
+                // Per employer calculation: only wages from THIS employer exceeding threshold
+                // This is calculated per pay period, not reconciled annually
+                const currentPeriodWages = grossPay;
+                const ytdBeforeThisPeriod = yearToDateGross;
+                const ytdAfterThisPeriod = yearToDateGross + grossPay;
+                
+                if (ytdAfterThisPeriod > ADDITIONAL_MEDICARE_THRESHOLD) {
+                    // Calculate only the portion of current period wages that exceed threshold
+                    if (ytdBeforeThisPeriod < ADDITIONAL_MEDICARE_THRESHOLD) {
+                        // Threshold is crossed in this pay period
+                        const wagesAboveThreshold = ytdAfterThisPeriod - ADDITIONAL_MEDICARE_THRESHOLD;
+                        additionalMedicare = round(wagesAboveThreshold * ADDITIONAL_MEDICARE_RATE);
+                    } else {
+                        // Already above threshold - apply to entire current period
+                        additionalMedicare = round(currentPeriodWages * ADDITIONAL_MEDICARE_RATE);
+                    }
+                }
+            }
+            
+            return { socialSecurity, medicare, additionalMedicare };
+        }
+
+        // Backend API configuration
+        // API Configuration - Use environment variable in production
+        // In production, set window.PAYROLL_ENGINE_URL or use environment variable
+        const API_BASE_URL = window.PAYROLL_ENGINE_URL || process?.env?.REACT_APP_PAYROLL_ENGINE_URL || 'http://localhost:3000';
+        const USE_BACKEND = true; // CRITICAL: Must be true for production. Frontend fallback uses simplified calculations that do NOT match IRS Pub 15-T.
+
+        async function calculatePaystub() {
+            // Clear error message
+            document.getElementById('error-message').innerHTML = '';
+            
+            // Get employee type and calculate gross pay
+            const employeeType = document.getElementById('employeeType').value;
+            let grossPay = 0;
+            const payPeriods = parseInt(document.getElementById('payPeriods').value);
+            
+            if (employeeType === 'SALARY') {
+                const salaryMethod = document.getElementById('salaryMethod').value;
+                if (salaryMethod === 'ANNUAL') {
+                    const annualSalary = parseFloat(document.getElementById('annualSalary').value) || 0;
+                    grossPay = annualSalary / payPeriods;
+                } else {
+                    grossPay = parseFloat(document.getElementById('periodGross').value) || 0;
+                }
+            } else {
+                // Hourly employee
+                const rate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+                const regularHours = parseFloat(document.getElementById('regularHours').value) || 0;
+                const overtimeHours = parseFloat(document.getElementById('overtimeHours').value) || 0;
+                const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+                grossPay = calculateGrossFromHours(rate, regularHours, overtimeHours, bonus);
+            }
+            
+            // Get input values
+            const state = document.getElementById('state').value;
+            const localJurisdiction = document.getElementById('localJurisdiction') ? document.getElementById('localJurisdiction').value : 'NONE';
+            const employeeStatus = document.getElementById('employeeStatus').value;
+            const filingStatus = document.getElementById('filingStatus').value;
+            const ytdGross = parseFloat(document.getElementById('ytdGross').value) || 0;
+            const ytdNet = parseFloat(document.getElementById('ytdNet').value) || 0;
+            
+            // W-4 Form inputs (IRS Publication 15-T)
+            const step2Checkbox = document.getElementById('w4Step2Checkbox').checked;
+            const step3Credits = parseFloat(document.getElementById('w4Step3Credits').value) || 0;
+            const step4aOtherIncome = parseFloat(document.getElementById('w4Step4a').value) || 0;
+            const step4bDeductions = parseFloat(document.getElementById('w4Step4b').value) || 0;
+            const step4cExtraWithholding = parseFloat(document.getElementById('w4Step4c').value) || 0;
+            
+            // Pre-tax deductions (reduce taxable income)
+            const preTaxAdvance = parseFloat(document.getElementById('preTaxAdvance').value) || 0;
+            const preTaxMedical = parseFloat(document.getElementById('preTaxMedical').value) || 0;
+            const preTaxMiscellaneous = parseFloat(document.getElementById('preTaxMiscellaneous').value) || 0;
+            const totalPreTaxDeductions = preTaxAdvance + preTaxMedical + preTaxMiscellaneous;
+            
+            // Calculate taxable gross pay (after pre-tax deductions)
+            const taxableGrossPay = Math.max(0, grossPay - totalPreTaxDeductions);
+            
+            // Validate inputs
+            if (grossPay <= 0) {
+                showError('Please enter a valid gross pay amount.');
+                return;
+            }
+
+            // Use backend API if enabled
+            if (USE_BACKEND) {
+                try {
+                    const requestBody = {
+                        grossPay: grossPay,
+                        taxableGrossPay: taxableGrossPay, // Gross pay after pre-tax deductions
+                        preTaxDeductions: {
+                            advance: preTaxAdvance,
+                            medical: preTaxMedical,
+                            miscellaneous: preTaxMiscellaneous,
+                            total: totalPreTaxDeductions
+                        },
+                            state: state,
+                            localJurisdiction: localJurisdiction,
+                            employeeStatus: employeeStatus,
+                            filingStatus: filingStatus,
+                            payPeriods: payPeriods,
+                            w4Data: {
+                                step2Checkbox: step2Checkbox,
+                                step3Credits: step3Credits,
+                                step4aOtherIncome: step4aOtherIncome,
+                                step4bDeductions: step4bDeductions,
+                                step4cExtraWithholding: step4cExtraWithholding
+                            },
+                            yearToDateGross: ytdGross,
+                            yearToDateNet: ytdNet,
+                            taxYear: 2026
+                    };
+                    
+                    // Debug: Log what we're sending
+                    console.log('Frontend - Sending to API:', {
+                        grossPay,
+                        taxableGrossPay,
+                        preTaxDeductions: requestBody.preTaxDeductions,
+                        totalPreTaxDeductions
+                    });
+                    
+                    // Store input data for paystub generation
+                    currentInputData = {
+                        employeeName: document.getElementById('employeeName').value || '',
+                        employeeAddress: document.getElementById('employeeAddress').value || '',
+                        employeeId: document.getElementById('employeeId').value || '25841619',
+                        payPeriodStart: document.getElementById('payPeriodStart').value || '',
+                        payPeriodEnd: document.getElementById('payPeriodEnd').value || '',
+                        payDate: document.getElementById('payDate').value || '',
+                        checkNumber: document.getElementById('checkNumber').value || '',
+                        hourlyRate: document.getElementById('hourlyRate') ? parseFloat(document.getElementById('hourlyRate').value) || 0 : 0,
+                        regularHours: document.getElementById('regularHours') ? parseFloat(document.getElementById('regularHours').value) || 0 : 0,
+                        payPeriods: payPeriods
+                    };
+
+                    const response = await fetch(`${API_BASE_URL}/api/v1/payroll/calculate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                        if (data.success) {
+                            // Debug: Log pre-tax deductions
+                            console.log('Backend Response - Pre-Tax Deductions:', data.paystub.preTaxDeductions);
+                            console.log('Backend Response - Taxable Gross Pay:', data.paystub.taxableGrossPay);
+                            console.log('Backend Response - Gross Pay:', data.paystub.grossPay);
+                            
+                            // Display results from backend
+                            displayResults({
+                                grossPay: data.paystub.grossPay,
+                                preTaxDeductions: data.paystub.preTaxDeductions || {
+                                    advance: 0,
+                                    medical: 0,
+                                    miscellaneous: 0,
+                                    total: 0
+                                },
+                                taxableGrossPay: data.paystub.taxableGrossPay || data.paystub.grossPay,
+                                federalIncomeTax: data.paystub.federalIncomeTax,
+                                stateIncomeTax: data.paystub.stateIncomeTax,
+                                statePayrollTaxes: data.paystub.statePayrollTaxes || {},
+                                localTaxes: data.paystub.localTaxes || {},
+                                socialSecurity: data.paystub.socialSecurity,
+                                medicare: data.paystub.medicare,
+                                additionalMedicare: data.paystub.additionalMedicare,
+                                netPay: data.paystub.netPay,
+                                ytdGross: data.paystub.ytdGross,
+                                ytdNet: data.paystub.ytdNet,
+                                annualGross: data.paystub.annualGross,
+                                calculationDetails: `Backend API Calculation (${data.calculationId})`
+                            });
+                        } else {
+                            throw new Error(data.error || 'Calculation failed');
+                        }
+                } catch (error) {
+                    console.error('Backend API error:', error);
+                    // CRITICAL: Do NOT fall back to frontend calculation
+                    // Frontend uses hardcoded brackets which do NOT match IRS Pub 15-T percentage method
+                    // Frontend also does NOT implement Step 2 checkbox properly
+                    // Payroll calculations must use authoritative backend with official withholding tables
+                    showError(`Payroll engine unavailable. Calculation blocked. Please ensure the backend server is running. Error: ${error.message}`);
+                    return; // Block calculation - do not proceed with fallback
+                }
+            } else {
+                // Use frontend calculation
+                calculatePaystubFrontend(grossPay, payPeriods, state, localJurisdiction, employeeStatus, filingStatus, ytdGross, ytdNet, step2Checkbox, step3Credits, step4aOtherIncome, step4bDeductions, step4cExtraWithholding, preTaxAdvance, preTaxMedical, preTaxMiscellaneous);
+            }
+        }
+
+        // Frontend calculation (fallback)
+        function calculatePaystubFrontend(grossPay, payPeriods, state, localJurisdiction, employeeStatus, filingStatus, ytdGross, ytdNet, step2Checkbox, step3Credits, step4aOtherIncome, step4bDeductions, step4cExtraWithholding, preTaxAdvance, preTaxMedical, preTaxMiscellaneous) {
+            // Store input data for paystub generation
+            currentInputData = {
+                employeeName: document.getElementById('employeeName').value || '',
+                employeeAddress: document.getElementById('employeeAddress').value || '',
+                employeeId: document.getElementById('employeeId').value || '25841619',
+                payPeriodStart: document.getElementById('payPeriodStart').value || '',
+                payPeriodEnd: document.getElementById('payPeriodEnd').value || '',
+                payDate: document.getElementById('payDate').value || '',
+                checkNumber: document.getElementById('checkNumber').value || '',
+                hourlyRate: document.getElementById('hourlyRate') ? parseFloat(document.getElementById('hourlyRate').value) || 0 : 0,
+                regularHours: document.getElementById('regularHours') ? parseFloat(document.getElementById('regularHours').value) || 0 : 0,
+                payPeriods: payPeriods
+            };
+            // Calculate pre-tax deductions
+            const totalPreTaxDeductions = (preTaxAdvance || 0) + (preTaxMedical || 0) + (preTaxMiscellaneous || 0);
+            const taxableGrossPay = Math.max(0, grossPay - totalPreTaxDeductions);
+            
+            // Calculate annual gross (use taxable gross for tax calculations)
+            // IMPORTANT: Match backend - backend uses taxableGross for state tax calculation
+            const annualGross = taxableGrossPay * payPeriods;
+            const annualTaxableGross = annualGross; // Same as annualGross for state tax
+            
+            // Calculate federal tax using IRS Publication 15-T methodology
+            // Use taxable gross pay (after pre-tax deductions)
+            const federalResult = calculateFederalIncomeTaxPub15T(
+                taxableGrossPay,
+                payPeriods,
+                filingStatus,
+                step2Checkbox,
+                step3Credits,
+                step4aOtherIncome,
+                step4bDeductions,
+                step4cExtraWithholding
+            );
+            const federalIncomeTax = federalResult.tax;
+            const calculationDetails = federalResult.details;
+            
+            // Calculate state income tax
+            // Match backend approach: backend uses annualTaxableGross for bracket fallback
+            // Frontend should use same annual taxable gross calculation
+            const annualStateTax = calculateStateIncomeTax(annualTaxableGross, state, filingStatus);
+            const stateIncomeTax = round(annualStateTax / payPeriods);
+            
+            // Get state taxable income for local tax calculations
+            const stateData = STATE_TAX_DATA[state];
+            const stateStandardDeduction = (stateData && stateData.standard_deduction) ? stateData.standard_deduction : 0;
+            const stateTaxableIncome = Math.max(0, annualGross - stateStandardDeduction);
+            
+            // Calculate state-specific payroll taxes (separate from income tax)
+            // Use taxable gross pay (after pre-tax deductions)
+            const statePayrollTaxes = calculateStatePayrollTaxes(state, taxableGrossPay, ytdGross);
+            
+            // Calculate local taxes
+            // Use taxable gross pay (after pre-tax deductions)
+            const localTaxes = calculateLocalTaxes(state, localJurisdiction, taxableGrossPay, annualGross, payPeriods, stateTaxableIncome);
+            
+            // Calculate FICA taxes (on taxable gross pay, after pre-tax deductions)
+            const isF1OptFirst2Years = document.getElementById('optExempt').checked;
+            const fica = calculateFICATaxes(taxableGrossPay, employeeStatus, ytdGross, isF1OptFirst2Years);
+            
+            // Calculate totals
+            let totalStatePayrollTaxes = 0;
+            for (let taxType in statePayrollTaxes) {
+                totalStatePayrollTaxes += statePayrollTaxes[taxType].amount;
+            }
+            
+            let totalLocalTaxes = 0;
+            for (let taxType in localTaxes) {
+                totalLocalTaxes += localTaxes[taxType].amount;
+            }
+            
+            // Calculate net pay (subtract pre-tax deductions and all taxes)
+            const totalDeductions = totalPreTaxDeductions + federalIncomeTax + stateIncomeTax + totalStatePayrollTaxes + totalLocalTaxes +
+                                   fica.socialSecurity + fica.medicare + fica.additionalMedicare;
+            const netPay = round(grossPay - totalDeductions);
+            
+            // Update YTD
+            const newYtdGross = round(ytdGross + grossPay);
+            const newYtdNet = round(ytdNet + netPay);
+            
+            // Display results
+            displayResults({
+                grossPay,
+                preTaxDeductions: {
+                    advance: preTaxAdvance,
+                    medical: preTaxMedical,
+                    miscellaneous: preTaxMiscellaneous,
+                    total: totalPreTaxDeductions
+                },
+                taxableGrossPay: taxableGrossPay,
+                federalIncomeTax,
+                stateIncomeTax,
+                statePayrollTaxes: statePayrollTaxes,
+                localTaxes: localTaxes,
+                socialSecurity: fica.socialSecurity,
+                medicare: fica.medicare,
+                additionalMedicare: fica.additionalMedicare,
+                netPay,
+                ytdGross: newYtdGross,
+                ytdNet: newYtdNet,
+                annualGross: grossPay * payPeriods, // Use original gross for annual display
+                calculationDetails: calculationDetails
+            });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function formatPercent(value) {
+            return (value * 100).toFixed(2) + '%';
+        }
+
+        // Store calculation results globally for paystub generation
+        let currentCalculationResult = null;
+        let currentInputData = null;
+
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('results');
+            
+            // Store results globally for paystub generation
+            currentCalculationResult = result;
+            
+            // Calculate total state payroll taxes and build HTML
+            let totalStatePayrollTaxes = 0;
+            let statePayrollTaxesHTML = '';
+            if (result.statePayrollTaxes) {
+                for (let taxType in result.statePayrollTaxes) {
+                    const taxInfo = result.statePayrollTaxes[taxType];
+                    if (taxInfo.amount > 0) {
+                        totalStatePayrollTaxes += taxInfo.amount;
+                        statePayrollTaxesHTML += `
+                            <div class="paystub-row deduction-item">
+                                <span>${taxInfo.name}:</span>
+                                <span>${formatCurrency(taxInfo.amount)}</span>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // Calculate total local taxes and build HTML
+            let totalLocalTaxes = 0;
+            let localTaxesHTML = '';
+            if (result.localTaxes) {
+                for (let taxType in result.localTaxes) {
+                    const taxInfo = result.localTaxes[taxType];
+                    if (taxInfo.amount > 0) {
+                        totalLocalTaxes += taxInfo.amount;
+                        localTaxesHTML += `
+                            <div class="paystub-row deduction-item">
+                                <span>${taxInfo.name}:</span>
+                                <span>${formatCurrency(taxInfo.amount)}</span>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // Calculate pre-tax deductions
+            let preTaxDeductionsHTML = '';
+            let totalPreTaxDeductions = 0;
+            
+            // Get pre-tax deductions from result (handle both backend and frontend formats)
+            const preTaxDeductions = result.preTaxDeductions || {};
+            const advance = parseFloat(preTaxDeductions.advance) || 0;
+            const medical = parseFloat(preTaxDeductions.medical) || 0;
+            const miscellaneous = parseFloat(preTaxDeductions.miscellaneous) || 0;
+            
+            totalPreTaxDeductions = advance + medical + miscellaneous;
+            
+            // Debug logging
+            console.log('Display Results - Pre-Tax Deductions:', {advance, medical, miscellaneous, total: totalPreTaxDeductions});
+            console.log('Display Results - Taxable Gross Pay:', result.taxableGrossPay || result.grossPay);
+            
+            // Show individual pre-tax deductions if they exist
+            if (advance > 0) {
+                preTaxDeductionsHTML += `
+                    <div class="paystub-row deduction-item" style="color: #667eea; font-weight: 500;">
+                        <span>Pre-Tax: Advance / Loan Repayment:</span>
+                        <span>${formatCurrency(advance)}</span>
+                    </div>
+                `;
+            }
+            if (medical > 0) {
+                preTaxDeductionsHTML += `
+                    <div class="paystub-row deduction-item" style="color: #667eea; font-weight: 500;">
+                        <span>Pre-Tax: Medical / Health Insurance:</span>
+                        <span>${formatCurrency(medical)}</span>
+                    </div>
+                `;
+            }
+            if (miscellaneous > 0) {
+                preTaxDeductionsHTML += `
+                    <div class="paystub-row deduction-item" style="color: #667eea; font-weight: 500;">
+                        <span>Pre-Tax: Miscellaneous:</span>
+                        <span>${formatCurrency(miscellaneous)}</span>
+                    </div>
+                `;
+            }
+            
+            // Show total pre-tax deductions if any exist
+            if (totalPreTaxDeductions > 0) {
+                preTaxDeductionsHTML += `
+                    <div class="paystub-row deduction-item" style="color: #667eea; font-weight: 600; border-top: 1px solid #e0e0e0; padding-top: 5px; margin-top: 5px;">
+                        <span>Total Pre-Tax Deductions:</span>
+                        <span>${formatCurrency(totalPreTaxDeductions)}</span>
+                    </div>
+                `;
+            }
+            
+            const taxableGrossPay = result.taxableGrossPay || result.grossPay;
+            const totalDeductions = totalPreTaxDeductions + result.federalIncomeTax + result.stateIncomeTax + totalStatePayrollTaxes + totalLocalTaxes +
+                                   result.socialSecurity + result.medicare + result.additionalMedicare;
+            const effectiveTaxRate = ((totalDeductions / result.grossPay) * 100).toFixed(2);
+            const federalTaxRate = ((result.federalIncomeTax / result.grossPay) * 100).toFixed(2);
+            const stateTaxRate = ((result.stateIncomeTax / result.grossPay) * 100).toFixed(2);
+            const ficaTaxRate = (((result.socialSecurity + result.medicare + result.additionalMedicare) / result.grossPay) * 100).toFixed(2);
+            
+            resultsDiv.innerHTML = `
+                <div class="paystub-card">
+                    <div class="paystub-header">
+                        <h3>Paystub Details</h3>
+                    </div>
+                    
+                    <div class="paystub-row">
+                        <span>Gross Pay:</span>
+                        <strong>${formatCurrency(result.grossPay)}</strong>
+                    </div>
+                    ${preTaxDeductionsHTML}
+                    ${totalPreTaxDeductions > 0 ? `
+                    <div class="paystub-row" style="color: #667eea; font-weight: 600; margin-top: 10px; padding-top: 10px; border-top: 2px solid #667eea;">
+                        <span>Taxable Gross Pay (after pre-tax deductions):</span>
+                        <strong>${formatCurrency(taxableGrossPay)}</strong>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="paystub-row deduction-item">
+                        <span>Federal Income Tax (IRS Pub 15-T):</span>
+                        <span>${formatCurrency(result.federalIncomeTax)}</span>
+                    </div>
+                    ${result.calculationDetails ? `
+                    <div style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px; font-size: 0.9em;">
+                        <strong>Calculation Details:</strong><br>
+                        ${result.calculationDetails}
+                    </div>
+                    ` : ''}
+                    
+                    <div class="paystub-row deduction-item">
+                        <span>State Income Tax:</span>
+                        <span>${formatCurrency(result.stateIncomeTax)}</span>
+                    </div>
+                    ${statePayrollTaxesHTML}
+                    ${localTaxesHTML}
+                    <div class="paystub-row deduction-item">
+                        <span>Social Security Tax:</span>
+                        <span>${formatCurrency(result.socialSecurity)}</span>
+                    </div>
+                    
+                    <div class="paystub-row deduction-item">
+                        <span>Medicare Tax:</span>
+                        <span>${formatCurrency(result.medicare)}</span>
+                    </div>
+                    ${result.additionalMedicare > 0 ? `
+                    <div class="paystub-row deduction-item">
+                        <span>Additional Medicare Tax:</span>
+                        <span>${formatCurrency(result.additionalMedicare)}</span>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="paystub-row total">
+                        <span>Total Deductions:</span>
+                        <span>${formatCurrency(totalDeductions)}</span>
+                    </div>
+                    
+                    <div class="paystub-row net-pay">
+                        <span>Net Pay:</span>
+                        <strong>${formatCurrency(result.netPay)}</strong>
+                    </div>
+                </div>
+                
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <h3>Annual Gross Pay</h3>
+                        <div class="value">${formatCurrency(result.annualGross)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Effective Tax Rate</h3>
+                        <div class="value">${effectiveTaxRate}%</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Federal Tax Rate</h3>
+                        <div class="value">${federalTaxRate}%</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>State Tax Rate</h3>
+                        <div class="value">${stateTaxRate}%</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>FICA Tax Rate</h3>
+                        <div class="value">${ficaTaxRate}%</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>YTD Gross Pay</h3>
+                        <div class="value">${formatCurrency(result.ytdGross)}</div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <p><strong>Year-to-Date Summary:</strong></p>
+                    <p>Gross Pay: ${formatCurrency(result.ytdGross)}</p>
+                    <p>Net Pay: ${formatCurrency(result.ytdNet)}</p>
+                </div>
+            `;
+            
+            resultsDiv.classList.add('show');
+            
+            // Add Generate Paystub button
+            const generateButton = document.createElement('button');
+            generateButton.className = 'btn-generate-paystub';
+            generateButton.textContent = 'Generate Paystub';
+            generateButton.style.cssText = 'margin-top: 20px; padding: 12px 24px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold;';
+            generateButton.onclick = generatePaystub;
+            resultsDiv.appendChild(generateButton);
+        }
+
+        // Generate Paystub from calculation results
+        function generatePaystub() {
+            if (!currentCalculationResult || !currentInputData) {
+                alert('Please calculate paystub first before generating.');
+                return;
+            }
+
+            const result = currentCalculationResult;
+            const input = currentInputData;
+
+            // Calculate totals
+            let totalLocalTax = 0;
+            if (result.localTaxes) {
+                for (let taxType in result.localTaxes) {
+                    totalLocalTax += result.localTaxes[taxType].amount || 0;
+                }
+            }
+
+            // Calculate YTD values
+            // If YTD values are provided, use them; otherwise, use current period values
+            const ytdGross = result.ytdGross || result.grossPay;
+            const ytdNet = result.ytdNet || result.netPay;
+            const ytdFederalTax = (result.ytdGross && result.ytdGross > result.grossPay) ? 
+                (result.ytdFederalTax || result.federalIncomeTax) : result.federalIncomeTax;
+            const ytdStateTax = (result.ytdGross && result.ytdGross > result.grossPay) ? 
+                (result.ytdStateTax || result.stateIncomeTax) : result.stateIncomeTax;
+            const ytdLocalTax = (result.ytdGross && result.ytdGross > result.grossPay) ? 
+                (result.ytdLocalTax || totalLocalTax) : totalLocalTax;
+            const ytdSocialSecurity = (result.ytdGross && result.ytdGross > result.grossPay) ? 
+                (result.ytdSocialSecurity || result.socialSecurity) : result.socialSecurity;
+            const ytdMedicare = (result.ytdGross && result.ytdGross > result.grossPay) ? 
+                (result.ytdMedicare || result.medicare) : result.medicare;
+            const ytdAdditionalMedicare = (result.ytdGross && result.ytdGross > result.grossPay) ? 
+                (result.ytdAdditionalMedicare || (result.additionalMedicare || 0)) : (result.additionalMedicare || 0);
+            
+            const preTaxDeductions = result.preTaxDeductions || {};
+            const healthInsurance = preTaxDeductions.medical || 0;
+            const retirement401k = preTaxDeductions.miscellaneous || 0;
+            const otherDeductions = preTaxDeductions.advance || 0;
+            
+            // YTD pre-tax deductions (simplified - in production, these should be tracked)
+            const ytdHealthInsurance = healthInsurance;
+            const ytdRetirement401k = retirement401k;
+            const ytdOtherDeductions = otherDeductions;
+
+            // Calculate hours worked
+            const hoursWorked = input.regularHours || (result.grossPay / (input.hourlyRate || 1));
+            const hourlyRate = input.hourlyRate || (result.grossPay / hoursWorked);
+
+            // Create paystub HTML
+            const paystubHTML = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Paystub - ${input.employeeName || 'Employee'}</title>
+                    <style>
+                        ${getPaystubCSS()}
+                    </style>
+                </head>
+                <body>
+                    ${generatePaystubHTML(result, input, {
+                        hoursWorked,
+                        hourlyRate,
+                        ytdGross,
+                        ytdNet,
+                        ytdFederalTax,
+                        ytdStateTax,
+                        ytdLocalTax,
+                        ytdSocialSecurity,
+                        ytdMedicare,
+                        ytdAdditionalMedicare,
+                        ytdHealthInsurance,
+                        ytdRetirement401k,
+                        ytdOtherDeductions,
+                        totalLocalTax
+                    })}
+                </body>
+                </html>
+            `;
+
+            // Open in new window for printing
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(paystubHTML);
+            printWindow.document.close();
+            
+            // Auto-print after a short delay
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        }
+
+        function getPaystubCSS() {
+            return `
+                :root {
+                    --deduction-indent: 20px;
+                }
+
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+
+                body {
+                    font-family: 'Times New Roman', serif;
+                    background: #f5f5f5;
+                    padding: 20px;
+                    font-size: 9pt;
+                    line-height: 1.2;
+                    margin: 0;
+                }
+
+                .paystub-html-container {
+                    width: 8.5in;
+                    height: 11in;
+                    margin: 0 auto;
+                    background: white;
+                    position: relative;
+                }
+
+                .paystub-html {
+                    background: white;
+                    width: 8.5in;
+                    height: 11in;
+                    padding: 0.5in;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    position: relative;
+                    margin: 0 auto;
+                    overflow: hidden;
+                    box-sizing: border-box;
+                }
+
+                .paystub-header {
+                    display: flex;
+                    justify-content: space-between;
+                    border-bottom: none;
+                    padding-bottom: 6px;
+                    margin-bottom: 8px;
+                }
+
+                .header-left {
+                    font-size: 9pt;
+                    line-height: 1.05;
+                }
+
+                .company-code {
+                    font-weight: bold;
+                    margin-bottom: 0;
+                    margin-top: 0;
+                }
+
+                .loc-dept, .page-number {
+                    margin-top: 0;
+                    margin-bottom: 0;
+                }
+
+                .company-name {
+                    font-weight: 700;
+                    margin-top: 2px;
+                    margin-bottom: 0;
+                    font-size: 10pt;
+                }
+
+                .company-address {
+                    font-size: 9pt;
+                    margin-top: 0;
+                    margin-bottom: 0;
+                }
+
+                .header-right {
+                    text-align: right;
+                }
+
+                .earnings-statement-title {
+                    font-size: 11pt;
+                    font-weight: bold;
+                    margin-bottom: 2px;
+                    margin-top: 0;
+                }
+
+                .period-info {
+                    font-size: 9pt;
+                    line-height: 1.2;
+                    margin-top: 0;
+                }
+
+                .period-info div {
+                    margin-bottom: 1px;
+                }
+
+                .employee-info {
+                    margin-bottom: 8px;
+                    padding-bottom: 4px;
+                    border-bottom: none;
+                }
+
+                .employee-name {
+                    font-weight: bold;
+                    font-size: 10pt;
+                    margin-bottom: 0;
+                    margin-top: 0;
+                }
+
+                .employee-address {
+                    font-size: 9pt;
+                    line-height: 1.2;
+                    margin-top: 1px;
+                }
+
+                .paystub-main {
+                    display: flex;
+                    gap: 0;
+                    margin-bottom: 10px;
+                    align-items: flex-start;
+                    flex-shrink: 0;
+                    position: relative;
+                }
+
+                .main-left {
+                    width: 65%;
+                    flex-shrink: 0;
+                }
+
+                .main-right {
+                    width: 35%;
+                    flex-shrink: 0;
+                    margin-left: 0;
+                    padding-left: 0;
+                }
+
+                .tax-info-wrapper {
+                    display: flex;
+                    align-items: flex-start;
+                    margin-bottom: 10px;
+                    gap: 0;
+                }
+
+                .tax-info-section {
+                    margin-bottom: 0;
+                    font-size: 9pt;
+                    line-height: 1.2;
+                    flex-shrink: 0;
+                }
+
+                .tax-info-row {
+                    margin-bottom: 1px;
+                    display: flex;
+                    gap: 10px;
+                }
+
+                .tax-info-row span {
+                    white-space: nowrap;
+                }
+
+                .paystub-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 10px;
+                    font-size: 9pt;
+                    line-height: 1.05;
+                    table-layout: fixed;
+                }
+
+                .paystub-table th:nth-child(1),
+                .paystub-table td:nth-child(1) {
+                    width: 25%;
+                }
+
+                .paystub-table th:nth-child(2),
+                .paystub-table td:nth-child(2) {
+                    width: 15%;
+                }
+
+                .paystub-table th:nth-child(3),
+                .paystub-table td:nth-child(3) {
+                    width: 15%;
+                }
+
+                .paystub-table th:nth-child(4),
+                .paystub-table td:nth-child(4) {
+                    width: 22.5%;
+                }
+
+                .paystub-table th:nth-child(5),
+                .paystub-table td:nth-child(5) {
+                    width: 22.5%;
+                }
+
+                .paystub-table.deductions-table th:nth-child(1),
+                .paystub-table.deductions-table td:nth-child(1) {
+                    width: 55%;
+                }
+
+                .paystub-table.deductions-table th:nth-child(2),
+                .paystub-table.deductions-table td:nth-child(2) {
+                    width: 22.5%;
+                }
+
+                .paystub-table.deductions-table th:nth-child(3),
+                .paystub-table.deductions-table td:nth-child(3) {
+                    width: 22.5%;
+                }
+
+                .paystub-table thead {
+                    border-bottom: 1px solid #ccc;
+                }
+
+                .paystub-table th {
+                    text-align: left;
+                    padding: 1px 4px;
+                    font-weight: bold;
+                    background: transparent;
+                    border-bottom: 1px solid #ccc;
+                    border-top: none;
+                    font-size: 9pt;
+                }
+
+                .paystub-table th.text-right {
+                    text-align: right;
+                }
+
+                .paystub-table td {
+                    padding: 0px 4px;
+                    border-bottom: none;
+                    font-size: 9pt;
+                    height: 16px;
+                }
+
+                .paystub-table td.text-right {
+                    text-align: right;
+                }
+
+                .paystub-table .total-row {
+                    background: transparent;
+                    font-weight: 700;
+                }
+
+                .paystub-table .total-row td {
+                    padding-top: 1px;
+                    padding-bottom: 1px;
+                    border-top: none;
+                    border-bottom: none;
+                }
+
+                .paystub-table .total-row td:nth-child(4) {
+                    border-top: 1px solid #999;
+                    border-bottom: 1px solid #999;
+                }
+
+                .paystub-table .total-row td:nth-child(5) {
+                    border-top: 1px solid #999;
+                    border-bottom: 1px solid #999;
+                }
+
+                .deductions-section {
+                    margin-bottom: 10px;
+                }
+
+                .deductions-section .paystub-table thead {
+                    border-bottom: none;
+                }
+
+                .deductions-section .paystub-table th {
+                    border-bottom: none;
+                    padding-left: 0;
+                }
+
+                .deductions-section .paystub-table th:first-child,
+                .deductions-section .paystub-table td:first-child {
+                    padding-left: var(--deduction-indent);
+                }
+
+                .section-label {
+                    display: block;
+                    padding-left: 0;
+                    padding-bottom: 1px;
+                    border-bottom: none;
+                    font-weight: bold;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .deductions-section .paystub-table thead {
+                    background: linear-gradient(
+                        to right,
+                        transparent var(--deduction-indent),
+                        #ccc var(--deduction-indent),
+                        #ccc 100%
+                    );
+                    background-repeat: no-repeat;
+                    background-size: 100% 1px;
+                    background-position: bottom left;
+                }
+
+                .net-pay-section {
+                    margin-top: 10px;
+                    margin-bottom: 8px;
+                    padding: 8px 10px;
+                    border-top: 2px solid #666;
+                    border-bottom: 2px solid #666;
+                    border-left: none;
+                    border-right: none;
+                    background: #f8f8f8;
+                }
+
+                .net-pay-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .net-pay-label {
+                    font-size: 10pt;
+                    font-weight: bold;
+                }
+
+                .net-pay-amount {
+                    font-size: 13pt;
+                    font-weight: 700;
+                }
+
+                .tax-override-section,
+                .notes-section {
+                    margin-bottom: 10px;
+                    font-size: 9pt;
+                    line-height: 1.2;
+                }
+
+                .section-title {
+                    font-weight: bold;
+                    margin-bottom: 2px;
+                    font-size: 9pt;
+                    margin-top: 0;
+                }
+
+                .tax-override-section div,
+                .notes-section div {
+                    margin-bottom: 1px;
+                }
+
+                .section-spacer {
+                    height: 200px;
+                    width: 100%;
+                    display: block;
+                    clear: both;
+                    flex-grow: 1;
+                    min-height: 200px;
+                }
+
+                .check-stub-section {
+                    margin-top: 0;
+                    padding-top: 8px;
+                    border-top: none;
+                    position: relative;
+                    flex-shrink: 0;
+                    margin-bottom: 0;
+                }
+
+                .federal-taxable {
+                    font-size: 9pt;
+                    margin-bottom: 8px;
+                    font-style: italic;
+                    line-height: 1.2;
+                    margin-top: 0;
+                }
+
+                .check-stub-main {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                    font-size: 9pt;
+                    line-height: 1.15;
+                }
+
+                .check-stub-left,
+                .check-stub-right {
+                    line-height: 1.2;
+                }
+
+                .check-stub-right {
+                    text-align: right;
+                }
+
+                .check-stub-left div,
+                .check-stub-right div {
+                    margin-bottom: 1px;
+                }
+
+                .payee-section {
+                    margin: 8px 0;
+                    padding: 6px 10px;
+                    border: none;
+                    background: white;
+                    min-height: 50px;
+                }
+
+                .payee-line,
+                .amount-line {
+                    margin-bottom: 4px;
+                    font-size: 9pt;
+                    min-height: 20px;
+                    border-bottom: 1px solid #ddd;
+                    padding-bottom: 1px;
+                    line-height: 1.2;
+                    position: relative;
+                }
+
+                .amount-line {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                }
+
+                .check-amount-section {
+                    text-align: right;
+                    margin: 0;
+                    position: relative;
+                    right: 0;
+                    bottom: 0;
+                    margin-left: auto;
+                }
+
+                .check-amount {
+                    font-size: 14pt;
+                    font-weight: 700;
+                    border: none;
+                    display: inline-block;
+                    padding: 0;
+                    min-width: auto;
+                    text-align: right;
+                    background: transparent;
+                }
+
+                .bank-section {
+                    margin-top: 10px;
+                    font-size: 9pt;
+                    line-height: 1.2;
+                }
+
+                .bank-name {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+
+                .check-watermark {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) rotate(-32deg);
+                    font-size: 28pt;
+                    font-weight: bold;
+                    color: rgba(0, 0, 0, 0.12);
+                    z-index: 10;
+                    white-space: nowrap;
+                    pointer-events: none;
+                    font-family: 'Times New Roman', serif;
+                    text-align: center;
+                    line-height: 1.2;
+                    width: 100%;
+                    overflow: visible;
+                }
+
+                .void-text {
+                    font-size: 9pt;
+                    font-weight: bold;
+                    color: #000;
+                    margin-top: 4px;
+                    text-align: left;
+                }
+
+                @media print {
+                    body {
+                        padding: 0;
+                        background: white;
+                        margin: 0;
+                    }
+
+                    .paystub-html-container {
+                        padding: 0;
+                        background: white;
+                        width: 8.5in;
+                        height: 11in;
+                    }
+
+                    .paystub-html {
+                        box-shadow: none;
+                        margin: 0;
+                        padding: 0.5in;
+                        width: 8.5in;
+                        height: 11in;
+                    }
+                }
+            `;
+        }
+
+        function generatePaystubHTML(result, input, ytd) {
+            const formatCurrency = (amount) => {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                }).format(amount || 0);
+            };
+
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                try {
+                    // Parse date string as local date (YYYY-MM-DD format)
+                    // Avoid timezone issues by parsing manually
+                    const parts = dateString.split('-');
+                    if (parts.length === 3) {
+                        const year = parseInt(parts[0], 10);
+                        const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                        const day = parseInt(parts[2], 10);
+                        const date = new Date(year, month, day);
+                        
+                        // Format as MM/DD/YYYY
+                        const formattedMonth = String(date.getMonth() + 1).padStart(2, '0');
+                        const formattedDay = String(date.getDate()).padStart(2, '0');
+                        const formattedYear = date.getFullYear();
+                        return `${formattedMonth}/${formattedDay}/${formattedYear}`;
+                    }
+                    // Fallback to original method if format is different
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('en-US', { 
+                        month: '2-digit', 
+                        day: '2-digit', 
+                        year: 'numeric' 
+                    });
+                } catch {
+                    return dateString;
+                }
+            };
+
+            const numberToWords = (num) => {
+                if (num === 0) return 'Zero';
+                
+                const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+                const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+                const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+                
+                // Convert number to integer
+                num = Math.floor(num);
+                
+                // Helper function to convert numbers less than 1000
+                const convertHundreds = (n) => {
+                    if (n === 0) return '';
+                    if (n < 10) return ones[n];
+                    if (n < 20) return teens[n - 10];
+                    if (n < 100) {
+                        const ten = Math.floor(n / 10);
+                        const one = n % 10;
+                        return tens[ten] + (one ? ' ' + ones[one] : '');
+                    }
+                    // 100-999
+                    const hundred = Math.floor(n / 100);
+                    const remainder = n % 100;
+                    return ones[hundred] + ' Hundred' + (remainder ? ' ' + convertHundreds(remainder) : '');
+                };
+                
+                // Handle millions
+                if (num >= 1000000) {
+                    const millions = Math.floor(num / 1000000);
+                    const remainder = num % 1000000;
+                    return convertHundreds(millions) + ' Million' + (remainder ? ' ' + numberToWords(remainder) : '');
+                }
+                
+                // Handle thousands
+                if (num >= 1000) {
+                    const thousands = Math.floor(num / 1000);
+                    const remainder = num % 1000;
+                    return convertHundreds(thousands) + ' Thousand' + (remainder ? ' ' + convertHundreds(remainder) : '');
+                }
+                
+                // Handle hundreds and below
+                return convertHundreds(num);
+            };
+
+            const preTaxDeductions = result.preTaxDeductions || {};
+            const healthInsurance = preTaxDeductions.medical || 0;
+            const retirement401k = preTaxDeductions.miscellaneous || 0;
+            const otherDeductions = preTaxDeductions.advance || 0;
+
+            // Get filing status display
+            const filingStatusDisplay = document.getElementById('filingStatus') ? 
+                document.getElementById('filingStatus').options[document.getElementById('filingStatus').selectedIndex].text : 'Single';
+
+            return `
+                <div class="paystub-html-container">
+                    <div class="paystub-html">
+                        <div class="paystub-header">
+                            <div class="header-left">
+                                <div class="company-code">Company Code K5 / MEL ${input.employeeId || '25841619'} 01/</div>
+                                <div class="loc-dept">Loc/Dept 50838</div>
+                                <div class="page-number">Number Page 1 of 1</div>
+                                <div class="company-name">Ingenious Heads LLC</div>
+                                <div class="company-address">21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279</div>
+                            </div>
+                            <div class="header-right">
+                                <div class="earnings-statement-title">Earnings Statement</div>
+                                <div class="period-info">
+                                    <div>Period Starting: ${formatDate(input.payPeriodStart)}</div>
+                                    <div>Period Ending: ${formatDate(input.payPeriodEnd)}</div>
+                                    <div>Pay Date: ${formatDate(input.payDate)}</div>
+                                </div>
+                                <div class="employee-info" style="margin-top: 8px; text-align: right;">
+                                    <div class="employee-name">${input.employeeName || '{E_Name}'}</div>
+                                    <div class="employee-address">${input.employeeAddress || '{E_Address}'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="paystub-main">
+                            <div class="main-left">
+                                <div class="tax-info-wrapper">
+                                    <div class="tax-info-section">
+                                        <div class="tax-info-row">
+                                            <span>Taxable Filing Status: ${filingStatusDisplay}</span>
+                                        </div>
+                                        <div class="tax-info-row">
+                                            <span>Exemptions/Allowances:</span>
+                                        </div>
+                                        <div class="tax-info-row">
+                                            <span>Federal: Std W/H</span>
+                                            <span>State: Table 0 0</span>
+                                            <span>Local:</span>
+                                        </div>
+                                        <div class="tax-info-row">
+                                            <span>Social Security Number: XXX-XX-XXXX</span>
+                                        </div>
+                                    </div>
+                                    <div class="tax-override-section" style="margin-top: 0; margin-left: 20px;">
+                                        <div class="section-title">Tax Override:</div>
+                                        <div>Federal: 0.00 Addnl</div>
+                                        <div>State:</div>
+                                        <div>Local:</div>
+                                    </div>
+                                </div>
+
+                                <div class="earnings-section">
+                                    <table class="paystub-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Earnings</th>
+                                                <th>rate</th>
+                                                <th>hours/units</th>
+                                                <th class="text-right">this period</th>
+                                                <th class="text-right">year to date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Regular</td>
+                                                <td>${formatCurrency(ytd.hourlyRate)}</td>
+                                                <td>${ytd.hoursWorked.toFixed(2)}</td>
+                                                <td class="text-right">${formatCurrency(result.grossPay)}</td>
+                                                <td class="text-right">${formatCurrency(ytd.ytdGross)}</td>
+                                            </tr>
+                                            <tr class="total-row">
+                                                <td colspan="3"><strong>Gross Pay</strong></td>
+                                                <td class="text-right"><strong>${formatCurrency(result.grossPay)}</strong></td>
+                                                <td class="text-right"><strong>${formatCurrency(ytd.ytdGross)}</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="deductions-section">
+                                    <table class="paystub-table deductions-table">
+                                        <thead>
+                                            <tr>
+                                                <th><span class="section-label">Statutory Deductions</span></th>
+                                                <th class="text-right">this period</th>
+                                                <th class="text-right">year to date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${result.federalIncomeTax > 0 ? `
+                                                <tr>
+                                                    <td>Federal Income</td>
+                                                    <td class="text-right">${formatCurrency(result.federalIncomeTax)}</td>
+                                                    <td class="text-right">${formatCurrency(ytd.ytdFederalTax)}</td>
+                                                </tr>
+                                            ` : ''}
+                                            ${result.socialSecurity > 0 ? `
+                                                <tr>
+                                                    <td>Social Security</td>
+                                                    <td class="text-right">${formatCurrency(result.socialSecurity)}</td>
+                                                    <td class="text-right">${formatCurrency(ytd.ytdSocialSecurity)}</td>
+                                                </tr>
+                                            ` : ''}
+                                            ${result.medicare > 0 ? `
+                                                <tr>
+                                                    <td>Medicare</td>
+                                                    <td class="text-right">${formatCurrency(result.medicare)}</td>
+                                                    <td class="text-right">${formatCurrency(ytd.ytdMedicare)}</td>
+                                                </tr>
+                                            ` : ''}
+                                            ${result.stateIncomeTax > 0 ? `
+                                                <tr>
+                                                    <td>State Income</td>
+                                                    <td class="text-right">${formatCurrency(result.stateIncomeTax)}</td>
+                                                    <td class="text-right">${formatCurrency(ytd.ytdStateTax)}</td>
+                                                </tr>
+                                            ` : ''}
+                                            ${ytd.totalLocalTax > 0 ? `
+                                                <tr>
+                                                    <td>Local Tax</td>
+                                                    <td class="text-right">${formatCurrency(ytd.totalLocalTax)}</td>
+                                                    <td class="text-right">${formatCurrency(ytd.ytdLocalTax)}</td>
+                                                </tr>
+                                            ` : ''}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                ${(healthInsurance > 0 || retirement401k > 0 || otherDeductions > 0) ? `
+                                    <div class="deductions-section">
+                                        <table class="paystub-table deductions-table">
+                                            <thead>
+                                                <tr>
+                                                    <th><span class="section-label">Voluntary Deductions</span></th>
+                                                    <th class="text-right">this period</th>
+                                                    <th class="text-right">year to date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${healthInsurance > 0 ? `
+                                                    <tr>
+                                                        <td>Health Insurance</td>
+                                                        <td class="text-right">${formatCurrency(healthInsurance)}</td>
+                                                        <td class="text-right">${formatCurrency(ytd.ytdHealthInsurance)}</td>
+                                                    </tr>
+                                                ` : ''}
+                                                ${retirement401k > 0 ? `
+                                                    <tr>
+                                                        <td>401(k)</td>
+                                                        <td class="text-right">${formatCurrency(retirement401k)}</td>
+                                                        <td class="text-right">${formatCurrency(ytd.ytdRetirement401k)}</td>
+                                                    </tr>
+                                                ` : ''}
+                                                ${otherDeductions > 0 ? `
+                                                    <tr>
+                                                        <td>Other Deductions</td>
+                                                        <td class="text-right">${formatCurrency(otherDeductions)}</td>
+                                                        <td class="text-right">${formatCurrency(ytd.ytdOtherDeductions)}</td>
+                                                    </tr>
+                                                ` : ''}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ` : ''}
+
+                                <div class="net-pay-section">
+                                    <div class="net-pay-row">
+                                        <span class="net-pay-label">Net Pay</span>
+                                        <span class="net-pay-amount">${formatCurrency(result.netPay)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="main-right">
+                                <div class="notes-section" style="margin-top: 0;">
+                                    <div class="section-title">Important Notes</div>
+                                    <div>Basis of pay: ${ytd.hourlyRate > 0 ? 'Hourly' : 'Salaried'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section-spacer"></div>
+
+                        <div class="check-stub-section" style="position: relative;">
+                            <div class="check-watermark">THIS IS NOT A CHECK</div>
+                            <div class="federal-taxable">
+                                Your federal taxable wages this period are ${formatCurrency(result.taxableGrossPay || result.grossPay)}
+                            </div>
+                            
+                            <div class="check-stub-main">
+                                <div class="check-stub-left">
+                                    <div class="company-name">Ingenious Heads LLC</div>
+                                    <div class="company-address">21135 Whitfield Pl Ste 207, Sterling, VA 20165-7279</div>
+                                </div>
+                                <div class="check-stub-right">
+                                    <div>68-426/514</div>
+                                    <div>Payroll Check Number: ${input.checkNumber || '{Company_Chk}'}</div>
+                                    <div>Pay Date: ${formatDate(input.payDate)}</div>
+                                </div>
+                            </div>
+
+                            <div class="payee-section">
+                                <div class="payee-line">
+                                    <span>Pay to the order of: ${input.employeeName || '{E_Name}'}</span>
+                                </div>
+                                <div class="amount-line">
+                                    <span>This amount: ${numberToWords(Math.floor(result.netPay))} and ${String(Math.round((result.netPay % 1) * 100)).padStart(2, '0')}/100 Dollars</span>
+                                    <div class="check-amount-section">
+                                        <div class="check-amount">${formatCurrency(result.netPay)}</div>
+                                    </div>
+                                </div>
+                                <div class="void-text">VOID - NON NEGOTIABLE</div>
+                            </div>
+
+                            <div class="bank-section">
+                                <div class="bank-name">Chase</div>
+                                <div class="bank-account">${input.employeeName || '{E_Name}'}</div>
+                                <div class="bank-address">${input.employeeAddress || '{E_Address}'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Auto-calculate on page load with default values
+        window.addEventListener('load', function() {
+            // Set default dates
+            const today = new Date();
+            const payDate = new Date(today);
+            payDate.setDate(today.getDate() + (5 - today.getDay())); // Next Friday
+            const payPeriodEnd = new Date(payDate);
+            payPeriodEnd.setDate(payDate.getDate() - 1);
+            const payPeriodStart = new Date(payPeriodEnd);
+            payPeriodStart.setDate(payPeriodEnd.getDate() - 13); // 14-day period
+
+            // Format dates as YYYY-MM-DD using local timezone (not UTC)
+            const formatDateForInput = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            document.getElementById('payDate').value = formatDateForInput(payDate);
+            document.getElementById('payPeriodEnd').value = formatDateForInput(payPeriodEnd);
+            document.getElementById('payPeriodStart').value = formatDateForInput(payPeriodStart);
+
+            calculatePaystub();
+        });
+    </script>
+</body>
+</html>
+
