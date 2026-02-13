@@ -66,13 +66,17 @@ public class PayrollCalculationService {
             
             // Check for error in result
             if (result.containsKey("error")) {
-                throw new RuntimeException("Payroll calculation error: " + result.get("error"));
+                String errorMsg = result.get("error").toString();
+                String errorCode = result.containsKey("code") ? result.get("code").toString() : "CALCULATION_ERROR";
+                throw new RuntimeException("Payroll calculation failed: " + errorMsg);
             }
             
             return result;
             
         } catch (Exception e) {
-            throw new RuntimeException("Error calculating payroll: " + e.getMessage(), e);
+            // Don't expose internal stack traces - log but return user-friendly message
+            String userMessage = e.getMessage() != null ? e.getMessage() : "Payroll calculation service unavailable";
+            throw new RuntimeException(userMessage);
         }
     }
 }

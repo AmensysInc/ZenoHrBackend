@@ -2,14 +2,18 @@
 /**
  * Standalone payroll calculation script
  * Called from Java backend to calculate payroll
+ * 
+ * PRODUCTION MODE:
+ * - No auto-import of data (tables must be pre-seeded)
+ * - Strict table validation (fails if critical tables missing)
+ * - No stack trace exposure (security)
  */
 
 const { calculatePaystub } = require('./services/payrollService');
 const { initDatabase } = require('./database/init');
-const { importCompletePub15TTables } = require('./scripts/importPub15TComplete');
-const { seedFederalData2026 } = require('./database/seedData');
+const { validateTables } = require('./database/validateTables');
 
-// Initialize database and import tax data
+// Initialize database and validate tables (NO auto-import in production)
 let dbInitialized = false;
 
 async function ensureDatabaseReady() {
@@ -18,89 +22,27 @@ async function ensureDatabaseReady() {
     }
     
     try {
-        // Initialize database (create tables)
+        // Initialize database (create tables only - no data import)
         await initDatabase();
         
-        // Seed FICA rates and federal data (required for calculations)
-        await seedFederalData2026();
+        // Strict validation - fail if critical tables are missing
+        const validation = await validateTables(2026);
         
-        // Import Pub 15-T data if tables are empty
-        // Check if pub15t_percentage_tables has data
-        const { getDatabase } = require('./database/init');
-        const db = getDatabase();
+        if (!validation.valid) {
+            const errorMsg = `Database validation failed. Critical tables missing:\n${validation.errors.join('\n')}`;
+            throw new Error(errorMsg);
+        }
         
-        return new Promise((resolve, reject) => {
-            // First verify FICA rates (critical - must be present before calculations)
-            db.get('SELECT COUNT(*) as count FROM fica_rates WHERE year = 2026', (err, ficaRow) => {
-                if (err) {
-                    console.error('Error checking fica_rates:', err);
-                    // Try to seed anyway
-                    seedFederalData2026()
-                        .then(() => checkPub15T())
-                        .catch(seedErr => {
-                            console.error('Warning: Could not seed FICA rates:', seedErr.message);
-                            checkPub15T();
-                        });
-                } else if (!ficaRow || ficaRow.count === 0) {
-                    console.log('FICA rates missing, seeding...');
-                    seedFederalData2026()
-                        .then(() => {
-                            console.log('FICA rates seeded successfully');
-                            checkPub15T();
-                        })
-                        .catch(seedErr => {
-                            console.error('Warning: Could not seed FICA rates:', seedErr.message);
-                            checkPub15T();
-                        });
-                } else {
-                    console.log('FICA rates verified');
-                    checkPub15T();
-                }
-            });
-            
-            function checkPub15T() {
-                // Check Pub 15-T tables
-                db.get('SELECT COUNT(*) as count FROM pub15t_percentage_tables', (err, row) => {
-                    if (err) {
-                        console.error('Error checking pub15t_percentage_tables:', err);
-                        // Try to import anyway
-                        importCompletePub15TTables()
-                            .then(() => {
-                                console.log('Pub 15-T data imported successfully');
-                                dbInitialized = true;
-                                resolve();
-                            })
-                            .catch(importErr => {
-                                console.error('Warning: Could not import Pub 15-T data:', importErr.message);
-                                dbInitialized = true;
-                                resolve();
-                            });
-                    } else if (row.count === 0) {
-                        // Table exists but empty - import data
-                        console.log('Pub 15-T tables empty, importing data...');
-                        importCompletePub15TTables()
-                            .then(() => {
-                                console.log('Pub 15-T data imported successfully');
-                                dbInitialized = true;
-                                resolve();
-                            })
-                            .catch(importErr => {
-                                console.error('Warning: Could not import Pub 15-T data:', importErr.message);
-                                dbInitialized = true;
-                                resolve();
-                            });
-                    } else {
-                        // Data exists
-                        console.log(`Pub 15-T tables verified (${row.count} entries)`);
-                        dbInitialized = true;
-                        resolve();
-                    }
-                });
-            }
-        });
+        if (validation.warnings.length > 0) {
+            // Log warnings but don't fail
+            console.warn('Database validation warnings:', validation.warnings.join('; '));
+        }
+        
+        dbInitialized = true;
     } catch (error) {
-        console.error('Database initialization error:', error);
-        throw error;
+        // Don't expose stack traces in production
+        const errorMsg = error.message || 'Database initialization failed';
+        throw new Error(errorMsg);
     }
 }
 
@@ -125,11 +67,21 @@ process.stdin.on('end', async () => {
                 process.exit(0);
             })
             .catch(error => {
-                console.error(JSON.stringify({ error: error.message, stack: error.stack }));
+                // Don't expose stack traces - security best practice
+                const errorResponse = {
+                    error: error.message || 'Payroll calculation failed',
+                    code: 'CALCULATION_ERROR'
+                };
+                console.error(JSON.stringify(errorResponse));
                 process.exit(1);
             });
     } catch (error) {
-        console.error(JSON.stringify({ error: error.message, stack: error.stack }));
+        // Don't expose stack traces - security best practice
+        const errorResponse = {
+            error: error.message || 'Invalid request or database error',
+            code: 'REQUEST_ERROR'
+        };
+        console.error(JSON.stringify(errorResponse));
         process.exit(1);
     }
 });
