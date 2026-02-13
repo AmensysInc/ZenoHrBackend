@@ -26,6 +26,9 @@ public class Companies {
     @Column(name = "COMPANY_NAME")
     private String companyName;
 
+    @Column(name = "COMPANY_CODE")
+    private String companyCode;
+
     @Column(name = "EMAIL")
     private String email;
 
