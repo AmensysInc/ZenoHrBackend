@@ -4,7 +4,7 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Copy pom.xml and download dependencies (cached layer)
-# Build context is root (.), so backend files are in backend/ subdirectory
+# Build context is root (.), backend files are in backend/ subdirectory
 COPY backend/pom.xml .
 RUN mvn dependency:go-offline -B
 
@@ -27,6 +27,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 COPY --from=build /app/target/*.jar app.jar
 
 # Copy payroll engine into the container (for calculation logic, not as separate service)
+# Build context is root (.), payroll-engine is in payroll-engine/ subdirectory
 COPY payroll-engine/backend /app/payroll-engine
 
 # Install payroll engine dependencies (needed for calculation)
