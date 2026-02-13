@@ -26,6 +26,20 @@ function getDatabase() {
 
 function initDatabase() {
     return new Promise((resolve, reject) => {
+        // Ensure database directory exists and is writable
+        const dbDir = path.dirname(DB_PATH);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true, mode: 0o775 });
+        }
+        // Ensure database file is writable if it exists
+        if (fs.existsSync(DB_PATH)) {
+            try {
+                fs.chmodSync(DB_PATH, 0o664);
+            } catch (err) {
+                console.warn('Could not set database file permissions:', err.message);
+            }
+        }
+        
         const db = getDatabase();
 
         db.serialize(() => {
