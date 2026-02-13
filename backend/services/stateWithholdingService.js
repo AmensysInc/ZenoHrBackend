@@ -58,13 +58,14 @@ async function calculateStateWithholding(grossPay, payFrequency, state, filingSt
                     console.log(`[StateWithholding] Final withholding for ${state}: $${finalWithholding}`);
                     resolve(finalWithholding);
                 } else {
-                    // No table found - this should not happen for 2026 as all states have official tables
-                    console.error(`❌ ERROR: State withholding table not found for ${state} (${payFrequency}, ${filingStatus})`);
+                    // CRITICAL: No table found - calculation cannot proceed
+                    // All calculations MUST use official withholding tables
+                    // Bracket methods are NOT allowed as they do not match official withholding tables
+                    console.error(`❌ CRITICAL ERROR: State withholding table not found for ${state} (${payFrequency}, ${filingStatus})`);
                     console.error(`   This indicates missing official withholding tables.`);
-                    console.error(`   All 42 states should have official tables imported for 2026.`);
-                    console.error(`   Falling back to bracket method (may not match Paycom).`);
-                    const bracketMethod = await calculateStateBracketMethod(annualGross, state, filingStatus, taxYear, payFrequency);
-                    resolve(bracketMethod);
+                    console.error(`   All 42 states MUST have official tables imported for 2026.`);
+                    console.error(`   Calculation blocked - cannot use bracket method fallback.`);
+                    reject(new Error(`State withholding table not found for ${state} (${payFrequency}, ${filingStatus}). Official withholding tables required.`));
                 }
             }
         );
@@ -72,80 +73,12 @@ async function calculateStateWithholding(grossPay, payFrequency, state, filingSt
 }
 
 /**
- * Fallback: Calculate state tax using brackets (annualized method)
+ * REMOVED: calculateStateBracketMethod
+ * 
+ * All calculations MUST use official state withholding tables.
+ * Bracket methods are NOT allowed as they do not match official withholding tables.
+ * If tables are missing, calculation will fail with an error.
  */
-async function calculateStateBracketMethod(annualGross, state, filingStatus, taxYear, payFrequency) {
-    const db = getDatabase();
-    
-    return new Promise((resolve, reject) => {
-        // Get state standard deduction
-        db.get(`SELECT standard_deduction FROM state_deductions 
-                WHERE year = ? AND state_code = ? AND filing_status = ?`,
-            [taxYear, state, filingStatus],
-            (err, dedRow) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                
-                const standardDeduction = dedRow ? dedRow.standard_deduction : 0;
-                const taxableIncome = Math.max(0, annualGross - standardDeduction);
-                
-                // Check if flat rate state
-                db.get(`SELECT rate FROM state_brackets 
-                        WHERE year = ? AND state_code = ? AND filing_status = ?
-                        AND bracket_min = 0
-                        LIMIT 1`,
-                    [taxYear, state, filingStatus],
-                    (err2, flatRow) => {
-                        if (err2) {
-                            reject(err2);
-                            return;
-                        }
-                        
-                        if (flatRow && flatRow.rate) {
-                            // Flat rate state
-                            const annualTax = taxableIncome * flatRow.rate;
-                            const payPeriodsPerYear = getPayPeriodsPerYear(payFrequency);
-                            resolve(annualTax / payPeriodsPerYear);
-                        } else {
-                            // Bracket-based state
-                            db.all(`SELECT bracket_min, bracket_max, rate FROM state_brackets 
-                                    WHERE year = ? AND state_code = ? AND filing_status = ?
-                                    ORDER BY bracket_min`,
-                                [taxYear, state, filingStatus],
-                                (err3, brackets) => {
-                                    if (err3) {
-                                        reject(err3);
-                                        return;
-                                    }
-                                    
-                                    if (!brackets || brackets.length === 0) {
-                                        resolve(0); // No state tax
-                                        return;
-                                    }
-                                    
-                                    let tax = 0;
-                                    for (const bracket of brackets) {
-                                        if (taxableIncome > bracket.bracket_min) {
-                                            const taxableAtThisRate = Math.min(taxableIncome, bracket.bracket_max) - bracket.bracket_min;
-                                            if (taxableAtThisRate > 0) {
-                                                tax += taxableAtThisRate * bracket.rate;
-                                            }
-                                        }
-                                    }
-                                    
-                                    const payPeriodsPerYear = getPayPeriodsPerYear(payFrequency);
-                                    resolve(tax / payPeriodsPerYear);
-                                }
-                            );
-                        }
-                    }
-                );
-            }
-        );
-    });
-}
 
 function getPayPeriodsPerYear(payFrequency) {
     const periods = {

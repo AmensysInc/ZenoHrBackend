@@ -67,10 +67,11 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
                         withholding = row.base_amount + ((taxableWages - row.wage_min) * row.percentage);
                         console.log(`[Pub15T] Using old schema: ${row.base_amount} + (${row.percentage} × (${taxableWages} - ${row.wage_min})) = ${withholding}`);
                     } else {
-                        // No valid data
-                        console.log('[Pub15T] Row missing required columns:', row);
-                        const annualized = await calculateAnnualizedMethod(grossPay, payFrequency, filingStatus, step2Checkbox, w4Data, taxYear);
-                        resolve(annualized);
+                        // CRITICAL: No valid data in table
+                        // All calculations MUST use Pub 15-T percentage tables
+                        // Bracket methods are NOT allowed
+                        console.error('[Pub15T] CRITICAL: Row missing required columns:', row);
+                        reject(new Error(`Pub 15-T table entry missing required data. Official Pub 15-T percentage tables required.`));
                         return;
                     }
                     
@@ -91,10 +92,13 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
                     console.log(`[Pub15T] Final withholding: ${withholding}`);
                     resolve(withholding);
                 } else {
-                    // Fallback to annualized wage method if table not found
-                    console.log(`[Pub15T] Table not found for: year=${taxYear}, freq=${payFrequency}, status=${filingStatus}, step2=${step2}, wages=${taxableWages}`);
-                    const annualized = await calculateAnnualizedMethod(grossPay, payFrequency, filingStatus, step2Checkbox, w4Data, taxYear);
-                    resolve(annualized);
+                    // CRITICAL: Table not found - calculation cannot proceed
+                    // All calculations MUST use Pub 15-T percentage tables
+                    // Bracket methods are NOT allowed as they do not match IRS Pub 15-T
+                    console.error(`[Pub15T] CRITICAL ERROR: Table not found for: year=${taxYear}, freq=${payFrequency}, status=${filingStatus}, step2=${step2}, wages=${taxableWages}`);
+                    console.error(`   Pub 15-T percentage tables are required for all calculations.`);
+                    console.error(`   Calculation blocked - cannot use bracket method fallback.`);
+                    reject(new Error(`Pub 15-T percentage table not found for year=${taxYear}, freq=${payFrequency}, status=${filingStatus}, step2=${step2}, wages=${taxableWages}. Official Pub 15-T tables required.`));
                 }
             }
         );
@@ -102,96 +106,12 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
 }
 
 /**
- * Fallback: Annualized Wage Method (current frontend method)
+ * REMOVED: calculateAnnualizedMethod and calculateTaxFromBrackets
+ * 
+ * All calculations MUST use IRS Pub 15-T percentage method tables.
+ * Bracket methods are NOT allowed as they do not match IRS Pub 15-T.
+ * If tables are missing, calculation will fail with an error.
  */
-async function calculateAnnualizedMethod(grossPay, payFrequency, filingStatus, step2Checkbox, w4Data, taxYear) {
-    const db = getDatabase();
-    
-    return new Promise((resolve, reject) => {
-        const payPeriodsPerYear = getPayPeriodsPerYear(payFrequency);
-        const annualWages = grossPay * payPeriodsPerYear;
-        
-        // Get standard deduction
-        db.get(`SELECT standard_deduction FROM federal_deductions 
-                WHERE year = ? AND filing_status = ?`,
-            [taxYear, filingStatus],
-            (err, dedRow) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                
-                const standardDeduction = dedRow ? dedRow.standard_deduction : 16100;
-                
-                // Calculate taxable income
-                let taxableIncome = annualWages - standardDeduction;
-                
-                // Step 4(a): Add other income
-                if (w4Data.step4aOtherIncome) {
-                    taxableIncome += w4Data.step4aOtherIncome;
-                }
-                
-                // Step 4(b): Subtract deductions
-                if (w4Data.step4bDeductions) {
-                    taxableIncome -= w4Data.step4bDeductions;
-                }
-                
-                taxableIncome = Math.max(0, taxableIncome);
-                
-                // Calculate tax using brackets
-                calculateTaxFromBrackets(taxableIncome, filingStatus, taxYear, db)
-                    .then(annualTax => {
-                        // Step 3: Subtract credits
-                        if (w4Data.step3Credits) {
-                            annualTax = Math.max(0, annualTax - w4Data.step3Credits);
-                        }
-                        
-                        // Convert to per-period
-                        let perPeriodTax = annualTax / payPeriodsPerYear;
-                        
-                        // Step 4(c): Add extra withholding
-                        if (w4Data.step4cExtraWithholding) {
-                            perPeriodTax += w4Data.step4cExtraWithholding;
-                        }
-                        
-                        resolve(Math.max(0, perPeriodTax));
-                    })
-                    .catch(reject);
-            }
-        );
-    });
-}
-
-/**
- * Calculate tax from brackets
- */
-function calculateTaxFromBrackets(taxableIncome, filingStatus, taxYear, db) {
-    return new Promise((resolve, reject) => {
-        db.all(`SELECT bracket_min, bracket_max, rate FROM federal_brackets 
-                WHERE year = ? AND filing_status = ?
-                ORDER BY bracket_min`,
-            [taxYear, filingStatus],
-            (err, brackets) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                
-                let tax = 0;
-                for (const bracket of brackets) {
-                    if (taxableIncome > bracket.bracket_min) {
-                        const taxableAtThisRate = Math.min(taxableIncome, bracket.bracket_max) - bracket.bracket_min;
-                        if (taxableAtThisRate > 0) {
-                            tax += taxableAtThisRate * bracket.rate;
-                        }
-                    }
-                }
-                
-                resolve(tax);
-            }
-        );
-    });
-}
 
 function getPayPeriodsPerYear(payFrequency) {
     const periods = {
@@ -206,7 +126,6 @@ function getPayPeriodsPerYear(payFrequency) {
 }
 
 module.exports = {
-    calculateFederalWithholdingPub15T,
-    calculateAnnualizedMethod
+    calculateFederalWithholdingPub15T
 };
 

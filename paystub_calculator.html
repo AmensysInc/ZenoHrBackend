@@ -1421,8 +1421,10 @@
         }
 
         // Backend API configuration
-        const API_BASE_URL = 'http://localhost:3000';
-        const USE_BACKEND = true; // Set to false to use frontend calculation
+        // API Configuration - Use environment variable in production
+        // In production, set window.PAYROLL_ENGINE_URL or use environment variable
+        const API_BASE_URL = window.PAYROLL_ENGINE_URL || process?.env?.REACT_APP_PAYROLL_ENGINE_URL || 'http://localhost:3000';
+        const USE_BACKEND = true; // CRITICAL: Must be true for production. Frontend fallback uses simplified calculations that do NOT match IRS Pub 15-T.
 
         async function calculatePaystub() {
             // Clear error message
@@ -1579,9 +1581,12 @@
                         }
                 } catch (error) {
                     console.error('Backend API error:', error);
-                    showError(`Backend API error: ${error.message}. Falling back to frontend calculation.`);
-                    // Fall through to frontend calculation
-                    calculatePaystubFrontend(grossPay, payPeriods, state, localJurisdiction, employeeStatus, filingStatus, ytdGross, ytdNet, step2Checkbox, step3Credits, step4aOtherIncome, step4bDeductions, step4cExtraWithholding, preTaxAdvance, preTaxMedical, preTaxMiscellaneous);
+                    // CRITICAL: Do NOT fall back to frontend calculation
+                    // Frontend uses hardcoded brackets which do NOT match IRS Pub 15-T percentage method
+                    // Frontend also does NOT implement Step 2 checkbox properly
+                    // Payroll calculations must use authoritative backend with official withholding tables
+                    showError(`Payroll engine unavailable. Calculation blocked. Please ensure the backend server is running. Error: ${error.message}`);
+                    return; // Block calculation - do not proceed with fallback
                 }
             } else {
                 // Use frontend calculation
@@ -1609,7 +1614,9 @@
             const taxableGrossPay = Math.max(0, grossPay - totalPreTaxDeductions);
             
             // Calculate annual gross (use taxable gross for tax calculations)
+            // IMPORTANT: Match backend - backend uses taxableGross for state tax calculation
             const annualGross = taxableGrossPay * payPeriods;
+            const annualTaxableGross = annualGross; // Same as annualGross for state tax
             
             // Calculate federal tax using IRS Publication 15-T methodology
             // Use taxable gross pay (after pre-tax deductions)
@@ -1627,7 +1634,9 @@
             const calculationDetails = federalResult.details;
             
             // Calculate state income tax
-            const annualStateTax = calculateStateIncomeTax(annualGross, state, filingStatus);
+            // Match backend approach: backend uses annualTaxableGross for bracket fallback
+            // Frontend should use same annual taxable gross calculation
+            const annualStateTax = calculateStateIncomeTax(annualTaxableGross, state, filingStatus);
             const stateIncomeTax = round(annualStateTax / payPeriods);
             
             // Get state taxable income for local tax calculations
