@@ -43,7 +43,7 @@ FILE_STORAGE_LOCATION=/app/files
 FRONTEND_PORT=80
 REACT_APP_API_URL=https://zenopayhr.com/api
 REACT_APP_PDF_SERVICE_URL=https://zenopayhr.com:3002
-REACT_APP_PAYROLL_ENGINE_URL=https://zenopayhr.com:3000
+REACT_APP_PAYROLL_ENGINE_URL=https://zenopayhr.com:9005
 
 # Payroll Engine (runs in backend container)
 PAYROLL_ENGINE_PORT=9005
@@ -74,8 +74,11 @@ docker-compose -f docker-compose.prod.yml logs -f
 The payroll engine database will be automatically initialized on first container start. If you need to manually initialize:
 
 ```bash
-# Enter the payroll engine container
-docker exec -it zenohr-payroll-engine sh
+# Enter the backend container (payroll engine runs inside it)
+docker exec -it zenohr-backend sh
+
+# Navigate to payroll engine directory
+cd /app/payroll-engine
 
 # Initialize database
 npm run init-db
@@ -97,7 +100,7 @@ docker ps
 
 # Test endpoints
 curl http://localhost:8080/api/health  # Backend
-curl http://localhost:3000/api/v1/payroll/health  # Payroll Engine (if health endpoint exists)
+curl http://localhost:9005/health  # Payroll Engine health check
 curl http://localhost:3002/health  # PDF Service (if health endpoint exists)
 ```
 
@@ -126,7 +129,7 @@ location /api/ {
 
 # Payroll Engine
 location /payroll-engine/ {
-    proxy_pass http://localhost:3000/;
+    proxy_pass http://localhost:9005/;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -152,14 +155,14 @@ Then update environment variables:
 ### Payroll Engine Not Starting
 
 ```bash
-# Check logs
-docker logs zenohr-payroll-engine
+# Check backend logs (payroll engine runs inside backend container)
+docker logs zenohr-backend | grep -i payroll
 
 # Check if database exists
-docker exec zenohr-payroll-engine ls -la /app/database/
+docker exec zenohr-backend ls -la /app/payroll-engine/database/
 
 # Manually initialize database
-docker exec zenohr-payroll-engine npm run init-db
+docker exec zenohr-backend sh -c "cd /app/payroll-engine && npm run init-db"
 ```
 
 ### Frontend Not Building
@@ -189,7 +192,7 @@ If ports are already in use, update `.env` file:
 ```bash
 BACKEND_PORT=8081
 FRONTEND_PORT=8080
-PAYROLL_ENGINE_PORT=3001
+PAYROLL_ENGINE_PORT=9006
 PDF_SERVICE_PORT=3003
 ```
 
@@ -226,7 +229,7 @@ docker-compose -f docker-compose.prod.yml logs -f
 
 # View specific service logs
 docker-compose -f docker-compose.prod.yml logs -f backend
-docker-compose -f docker-compose.prod.yml logs -f payroll-engine
+docker-compose -f docker-compose.prod.yml logs -f backend | grep -i payroll
 
 # Check resource usage
 docker stats
