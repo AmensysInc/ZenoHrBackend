@@ -4,12 +4,12 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Copy pom.xml and download dependencies (cached layer)
-# Build context is root (.), backend files are in backend/ subdirectory
-COPY backend/pom.xml .
+# Build context is now ./backend, so files are in current directory
+COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Copy source code and build
-COPY backend/src ./src
+COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime stage
@@ -27,8 +27,8 @@ RUN addgroup -S spring && adduser -S spring -G spring
 COPY --from=build /app/target/*.jar app.jar
 
 # Copy payroll engine into the container (for calculation logic, not as separate service)
-# Build context is root (.), payroll-engine should be in backend repo at backend/payroll-engine/backend
-COPY backend/payroll-engine/backend /app/payroll-engine
+# Build context is ./backend, so payroll-engine is in payroll-engine/backend
+COPY payroll-engine/backend /app/payroll-engine
 
 # Install payroll engine dependencies (needed for calculation)
 WORKDIR /app/payroll-engine
@@ -37,8 +37,8 @@ RUN npm ci --production
 RUN chmod +x calculate.js
 WORKDIR /app
 
-# Copy entrypoint script from backend directory
-COPY backend/entrypoint.sh /entrypoint.sh
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Expose port (only Spring Boot, payroll calculation is integrated)
