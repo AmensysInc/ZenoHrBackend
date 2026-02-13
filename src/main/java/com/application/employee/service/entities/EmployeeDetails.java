@@ -28,6 +28,10 @@ public class EmployeeDetails  {
     private String ssn;
     @Column(name = "CURRENT_WORK_LOCATION")
     private String currentWorkLocation;
+    @Column(name = "WORKING_LOCATION")
+    private String workingLocation;
+    @Column(name = "HOME_LOCATION")
+    private String homeLocation;
     @Column(name = "RESIDENTIALADDRESS")
     private String residentialAddress;
     @Column(name = "HOMECOUNTRYADDRESS")
@@ -67,6 +71,8 @@ public class EmployeeDetails  {
         this.fatherName = employeeDTO.getFatherName();
         this.ssn = employeeDTO.getSsn();
         this.currentWorkLocation = employeeDTO.getCurrentWorkLocation();
+        this.workingLocation = employeeDTO.getWorkingLocation();
+        this.homeLocation = employeeDTO.getHomeLocation();
         this.residentialAddress = employeeDTO.getResidentialAddress();
         this.homeCountryAddress = employeeDTO.getHomeCountryAddress();
         this.emergencyContactDetails = employeeDTO.getEmergencyContactDetails();

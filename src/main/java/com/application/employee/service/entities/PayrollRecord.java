@@ -99,6 +99,10 @@ public class PayrollRecord {
     @Column(name = "CHECK_NUMBER")
     private Long checkNumber;
 
+    // Store the generated paystub HTML template
+    @Column(name = "PAYSTUB_HTML", columnDefinition = "LONGTEXT")
+    private String paystubHtml;
+
     @Column(name = "CREATED_AT", nullable = false)
     private LocalDateTime createdAt;
 

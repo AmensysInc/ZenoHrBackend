@@ -41,6 +41,8 @@ services:
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       FILE_STORAGE_LOCATION: /app/files
+      PDF_SERVICE_URL: ${PDF_SERVICE_URL:-http://pdf-service:3002}
+      PRODUCTION: "true"
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     volumes:
@@ -57,13 +59,42 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL}
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-https://zenopayhr.com/api}
+        REACT_APP_PDF_SERVICE_URL: ${REACT_APP_PDF_SERVICE_URL:-https://zenopayhr.com:3002}
+        REACT_APP_PAYROLL_ENGINE_URL: ${REACT_APP_PAYROLL_ENGINE_URL:-https://zenopayhr.com:3000}
     container_name: zenohr-frontend
     restart: always
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
+    networks:
+      - zenohr-network
+
+  # Payroll Engine Backend Service
+  payroll-engine:
+    build:
+      context: ./payroll-engine/backend
+      dockerfile: Dockerfile
+    container_name: zenohr-payroll-engine
+    restart: always
+    ports:
+      - "${PAYROLL_ENGINE_PORT:-3000}:3000"
+    networks:
+      - zenohr-network
+    # Add volumes if database needs persistence
+    # volumes:
+    #   - payroll_db:/app/database
+
+  # PDF Service
+  pdf-service:
+    build:
+      context: ./pdf-service
+      dockerfile: Dockerfile
+    container_name: zenohr-pdf-service
+    restart: always
+    ports:
+      - "${PDF_SERVICE_PORT:-3002}:3002"
     networks:
       - zenohr-network
 

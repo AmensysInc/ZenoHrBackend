@@ -26,7 +26,8 @@ public interface PayrollService {
                                   java.math.BigDecimal previousYtdStateTax,
                                   java.math.BigDecimal previousYtdLocalTax,
                                   java.math.BigDecimal previousYtdSocialSecurity,
-                                  java.math.BigDecimal previousYtdMedicare);
+                                  java.math.BigDecimal previousYtdMedicare,
+                                  String paystubHtml);
     
     List<PayrollRecord> getAllPayrollRecords();
     

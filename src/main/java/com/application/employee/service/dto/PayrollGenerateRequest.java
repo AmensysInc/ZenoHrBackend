@@ -31,5 +31,8 @@ public class PayrollGenerateRequest {
     private BigDecimal previousYtdLocalTax;
     private BigDecimal previousYtdSocialSecurity;
     private BigDecimal previousYtdMedicare;
+    
+    // HTML template from payroll engine
+    private String paystubHTML;
 }
 

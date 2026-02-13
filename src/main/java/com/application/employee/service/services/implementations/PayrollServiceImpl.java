@@ -98,7 +98,8 @@ public class PayrollServiceImpl implements PayrollService {
                                         BigDecimal previousYtdStateTax,
                                         BigDecimal previousYtdLocalTax,
                                         BigDecimal previousYtdSocialSecurity,
-                                        BigDecimal previousYtdMedicare) {
+                                        BigDecimal previousYtdMedicare,
+                                        String paystubHtml) {
         Employee employee = employeeService.getEmployee(employeeId);
         if (employee == null) {
             throw new RuntimeException("Employee not found: " + employeeId);
@@ -318,6 +319,12 @@ public class PayrollServiceImpl implements PayrollService {
         if (employee.getCompany() != null && employee.getCompany().getCompanyId() != null) {
             Long checkNumber = checkSettingsService.getNextCheckNumber(employee.getCompany().getCompanyId());
             payrollRecord.setCheckNumber(checkNumber);
+        }
+
+        // Store paystub HTML template if provided
+        if (paystubHtml != null && !paystubHtml.isEmpty()) {
+            payrollRecord.setPaystubHtml(paystubHtml);
+            payrollRecord.setPaystubGenerated(true);
         }
 
         // Save payroll record

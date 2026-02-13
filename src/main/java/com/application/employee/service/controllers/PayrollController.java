@@ -19,9 +19,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/payroll")
@@ -114,7 +119,8 @@ public class PayrollController {
                     request.getPreviousYtdStateTax(),
                     request.getPreviousYtdLocalTax(),
                     request.getPreviousYtdSocialSecurity(),
-                    request.getPreviousYtdMedicare()
+                    request.getPreviousYtdMedicare(),
+                    request.getPaystubHTML() // Pass HTML template
             );
 
             Map<String, Object> response = new HashMap<>();
@@ -180,36 +186,83 @@ public class PayrollController {
     }
 
     @GetMapping("/generate-paystub-pdf/{payrollRecordId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER', 'EMPLOYEE')")
     public ResponseEntity<byte[]> generatePaystubPDF(@PathVariable Long payrollRecordId) {
         try {
             PayrollRecord payrollRecord = payrollService.getPayrollRecordById(payrollRecordId);
             String employeeId = payrollRecord.getEmployee().getEmployeeID();
             
-            // Load employee with company and details eagerly to avoid LazyInitializationException
-            Employee employee = employeeRespository.findByIdWithCompanyAndDetails(employeeId)
-                .orElseThrow(() -> new RuntimeException("Employee not found: " + employeeId));
-            
-            // Get YTD data
-            Integer currentYear = java.time.LocalDate.now().getYear();
-            YTDData ytdData = ytdDataRepository.findByEmployeeEmployeeIDAndCurrentYear(
-                employee.getEmployeeID(), currentYear).orElse(null);
+            // Check if HTML template is stored
+            if (payrollRecord.getPaystubHtml() != null && !payrollRecord.getPaystubHtml().isEmpty()) {
+                // Use stored HTML template and convert to PDF via PDF service
+                String pdfServiceUrl = System.getenv("PDF_SERVICE_URL");
+                if (pdfServiceUrl == null || pdfServiceUrl.isEmpty()) {
+                    // Auto-detect production environment
+                    // In Docker, use service name; in production, use full URL
+                    if (System.getenv("PRODUCTION") != null || 
+                        (System.getenv("SPRING_PROFILES_ACTIVE") != null && 
+                         System.getenv("SPRING_PROFILES_ACTIVE").contains("prod"))) {
+                        // Production: use service name in Docker or full URL
+                        pdfServiceUrl = "http://pdf-service:3002"; // Docker service name
+                        // If running outside Docker, this will be overridden by PDF_SERVICE_URL env var
+                    } else {
+                        pdfServiceUrl = "http://localhost:3002"; // Development
+                    }
+                }
+                
+                // Call PDF service to generate PDF from HTML
+                HttpClient client = HttpClient.newHttpClient();
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, String> requestBody = new HashMap<>();
+                requestBody.put("html", payrollRecord.getPaystubHtml());
+                String jsonPayload = objectMapper.writeValueAsString(requestBody);
+                
+                HttpRequest pdfRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(pdfServiceUrl + "/generate-pdf"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                        .build();
+                
+                HttpResponse<byte[]> pdfResponse = client.send(pdfRequest, 
+                    HttpResponse.BodyHandlers.ofByteArray());
+                
+                if (pdfResponse.statusCode() == 200) {
+                    byte[] pdfBytes = pdfResponse.body();
+                    
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_PDF);
+                    headers.setContentDispositionFormData("attachment", 
+                        "paystub_" + employeeId + "_" + payrollRecord.getPayDate() + ".pdf");
+                    headers.setContentLength(pdfBytes.length);
+                    
+                    return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+                } else {
+                    throw new RuntimeException("PDF service returned error: " + pdfResponse.statusCode());
+                }
+            } else {
+                // Fallback to old method if HTML not available
+                Employee employee = employeeRespository.findByIdWithCompanyAndDetails(employeeId)
+                    .orElseThrow(() -> new RuntimeException("Employee not found: " + employeeId));
+                
+                Integer currentYear = java.time.LocalDate.now().getYear();
+                YTDData ytdData = ytdDataRepository.findByEmployeeEmployeeIDAndCurrentYear(
+                    employee.getEmployeeID(), currentYear).orElse(null);
 
-            byte[] pdfBytes = pdfGenerationService.generateADPPaystub(payrollRecord, employee, ytdData);
+                byte[] pdfBytes = pdfGenerationService.generateADPPaystub(payrollRecord, employee, ytdData);
 
-            if (pdfBytes == null || pdfBytes.length == 0) {
-                System.err.println("ERROR: Generated PDF is null or empty for payrollRecordId: " + payrollRecordId);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("PDF generation returned empty result".getBytes());
+                if (pdfBytes == null || pdfBytes.length == 0) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("PDF generation returned empty result".getBytes());
+                }
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_PDF);
+                headers.setContentDispositionFormData("attachment", 
+                    "paystub_" + employeeId + "_" + payrollRecord.getPayDate() + ".pdf");
+                headers.setContentLength(pdfBytes.length);
+
+                return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
             }
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", 
-                "paystub_" + employee.getEmployeeID() + "_" + payrollRecord.getPayDate() + ".pdf");
-            headers.setContentLength(pdfBytes.length);
-
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
             System.err.println("ERROR generating paystub PDF for payrollRecordId: " + payrollRecordId);
             e.printStackTrace();

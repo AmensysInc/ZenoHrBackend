@@ -30,6 +30,8 @@ public class EmployeeDTO {
     private String fatherName;
     private String ssn;
     private String currentWorkLocation;
+    private String workingLocation;
+    private String homeLocation;
     private String residentialAddress;
     private String homeCountryAddress;
     private String emergencyContactDetails;

@@ -209,6 +209,12 @@ public class EmployeeServiceImplementation implements EmployeeService {
         if (employeeDTO.getCurrentWorkLocation() != null) {
             employeeDetails.setCurrentWorkLocation(employeeDTO.getCurrentWorkLocation());
         }
+        if (employeeDTO.getWorkingLocation() != null) {
+            employeeDetails.setWorkingLocation(employeeDTO.getWorkingLocation());
+        }
+        if (employeeDTO.getHomeLocation() != null) {
+            employeeDetails.setHomeLocation(employeeDTO.getHomeLocation());
+        }
         if (employeeDTO.getResidentialAddress() != null) {
             employeeDetails.setResidentialAddress(employeeDTO.getResidentialAddress());
         }
