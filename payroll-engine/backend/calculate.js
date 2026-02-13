@@ -7,6 +7,7 @@
 const { calculatePaystub } = require('./services/payrollService');
 const { initDatabase } = require('./database/init');
 const { importCompletePub15TTables } = require('./scripts/importPub15TComplete');
+const { seedFederalData2026 } = require('./database/seedData');
 
 // Initialize database and import tax data
 let dbInitialized = false;
@@ -19,6 +20,9 @@ async function ensureDatabaseReady() {
     try {
         // Initialize database (create tables)
         await initDatabase();
+        
+        // Seed FICA rates and federal data (required for calculations)
+        await seedFederalData2026();
         
         // Import Pub 15-T data if tables are empty
         // Check if pub15t_percentage_tables has data
