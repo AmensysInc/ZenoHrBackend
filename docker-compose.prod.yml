@@ -24,7 +24,7 @@ services:
     networks:
       - zenohr-network
 
-  # Spring Boot Backend
+  # Spring Boot Backend (includes payroll engine)
   backend:
     build:
       context: .
@@ -43,10 +43,14 @@ services:
       FILE_STORAGE_LOCATION: /app/files
       PDF_SERVICE_URL: ${PDF_SERVICE_URL:-http://pdf-service:3002}
       PRODUCTION: "true"
+      # Payroll engine runs on port 3000 inside the container
+      PAYROLL_ENGINE_PORT: 3000
     ports:
       - "${BACKEND_PORT:-8080}:8080"
+      - "${PAYROLL_ENGINE_PORT:-3000}:3000"  # Expose payroll engine port
     volumes:
       - file_storage:/app/files
+      - payroll_db:/app/payroll-engine/database  # Persist payroll engine database
     depends_on:
       mysql:
         condition: service_healthy
@@ -71,21 +75,6 @@ services:
     networks:
       - zenohr-network
 
-  # Payroll Engine Backend Service
-  payroll-engine:
-    build:
-      context: ./payroll-engine/backend
-      dockerfile: Dockerfile
-    container_name: zenohr-payroll-engine
-    restart: always
-    ports:
-      - "${PAYROLL_ENGINE_PORT:-3000}:3000"
-    networks:
-      - zenohr-network
-    # Add volumes if database needs persistence
-    # volumes:
-    #   - payroll_db:/app/database
-
   # PDF Service
   pdf-service:
     build:
@@ -102,6 +91,8 @@ volumes:
   mysql_data:
     driver: local
   file_storage:
+    driver: local
+  payroll_db:
     driver: local
 
 networks:

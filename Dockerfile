@@ -16,8 +16,8 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Install su-exec for switching users
-RUN apk add --no-cache su-exec
+# Install Node.js, npm, and su-exec for switching users
+RUN apk add --no-cache su-exec nodejs npm
 
 # Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
@@ -25,25 +25,20 @@ RUN addgroup -S spring && adduser -S spring -G spring
 # Copy jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Create entrypoint script inline
-RUN echo '#!/bin/sh' > /entrypoint.sh && \
-    echo 'set -e' >> /entrypoint.sh && \
-    echo '' >> /entrypoint.sh && \
-    echo '# Fix permissions for /app/files directory' >> /entrypoint.sh && \
-    echo '# This runs as root before switching to spring user' >> /entrypoint.sh && \
-    echo '# Create directory if it does not exist (volume mount might be empty)' >> /entrypoint.sh && \
-    echo 'mkdir -p /app/files' >> /entrypoint.sh && \
-    echo '' >> /entrypoint.sh && \
-    echo '# Set ownership and permissions' >> /entrypoint.sh && \
-    echo 'chown -R spring:spring /app/files' >> /entrypoint.sh && \
-    echo 'chmod -R 755 /app/files' >> /entrypoint.sh && \
-    echo '' >> /entrypoint.sh && \
-    echo '# Switch to spring user and run the application' >> /entrypoint.sh && \
-    echo 'exec su-exec spring:spring java -jar app.jar' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+# Copy payroll engine into the container
+COPY payroll-engine/backend /app/payroll-engine
 
-# Expose port
-EXPOSE 8080
+# Install payroll engine dependencies
+WORKDIR /app/payroll-engine
+RUN npm ci --production
+WORKDIR /app
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose ports (8080 for Spring Boot, 3000 for payroll engine)
+EXPOSE 8080 3000
 
 # Health check (simple TCP check if actuator not available)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
