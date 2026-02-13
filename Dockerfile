@@ -35,18 +35,9 @@ RUN npm ci --production
 RUN chmod +x calculate.js
 WORKDIR /app
 
-# Copy entrypoint script (from backend directory if not in root)
-COPY entrypoint.sh backend/entrypoint.sh* /tmp/
-RUN if [ -f /tmp/entrypoint.sh ]; then \
-        cp /tmp/entrypoint.sh /entrypoint.sh; \
-    elif [ -f /tmp/backend/entrypoint.sh ]; then \
-        cp /tmp/backend/entrypoint.sh /entrypoint.sh; \
-    else \
-        echo "Error: entrypoint.sh not found"; \
-        exit 1; \
-    fi && \
-    chmod +x /entrypoint.sh && \
-    rm -rf /tmp/entrypoint.sh* /tmp/backend 2>/dev/null || true
+# Copy entrypoint script from backend directory
+COPY backend/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose port (only Spring Boot, payroll calculation is integrated)
 EXPOSE 8080
