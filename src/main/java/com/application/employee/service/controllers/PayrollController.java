@@ -48,6 +48,30 @@ public class PayrollController {
     @Autowired
     private YTDDataRepository ytdDataRepository;
 
+    @Autowired
+    private com.application.employee.service.services.PayrollCalculationService payrollCalculationService;
+
+    /**
+     * Advanced payroll calculation using payroll engine (Node.js) - called by frontend
+     */
+    @PostMapping("/calculate-advanced")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
+    public ResponseEntity<Map<String, Object>> calculatePayrollAdvanced(@RequestBody Map<String, Object> request) {
+        try {
+            Map<String, Object> result = payrollCalculationService.calculatePayroll(request);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("paystub", result);
+            response.put("calculationId", "CALC-" + System.currentTimeMillis());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
     @PostMapping("/calculate")
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<Map<String, Object>> calculatePayroll(@RequestBody PayrollCalculationRequest request) {

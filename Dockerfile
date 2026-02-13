@@ -16,7 +16,7 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Install Node.js, npm, and su-exec for switching users
+# Install Node.js, npm, and su-exec for switching users (Node.js needed for payroll calculation)
 RUN apk add --no-cache su-exec nodejs npm
 
 # Create non-root user
@@ -25,20 +25,22 @@ RUN addgroup -S spring && adduser -S spring -G spring
 # Copy jar from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Copy payroll engine into the container
+# Copy payroll engine into the container (for calculation logic, not as separate service)
 COPY payroll-engine/backend /app/payroll-engine
 
-# Install payroll engine dependencies
+# Install payroll engine dependencies (needed for calculation)
 WORKDIR /app/payroll-engine
 RUN npm ci --production
+# Make calculate.js executable
+RUN chmod +x calculate.js
 WORKDIR /app
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose ports (8080 for Spring Boot, 9005 for payroll engine)
-EXPOSE 8080 9005
+# Expose port (only Spring Boot, payroll calculation is integrated)
+EXPOSE 8080
 
 # Health check (simple TCP check if actuator not available)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \

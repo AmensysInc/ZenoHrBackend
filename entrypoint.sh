@@ -13,30 +13,10 @@ chown -R spring:spring /app/payroll-engine
 chmod -R 755 /app/files
 chmod -R 755 /app/payroll-engine
 
-# Start payroll engine in background on port 9005
-echo "Starting payroll engine on port 9005..."
-cd /app/payroll-engine
-export PORT=9005
-su-exec spring:spring node server.js &
-PAYROLL_ENGINE_PID=$!
-echo "Payroll engine started with PID: $PAYROLL_ENGINE_PID"
-
-# Wait a bit for payroll engine to start
-sleep 3
-
-# Function to handle shutdown
-cleanup() {
-    echo "Shutting down..."
-    if [ ! -z "$PAYROLL_ENGINE_PID" ]; then
-        kill $PAYROLL_ENGINE_PID 2>/dev/null || true
-    fi
-    exit 0
-}
-
-# Trap SIGTERM and SIGINT
-trap cleanup SIGTERM SIGINT
+# Payroll engine is now integrated into Spring Boot backend
+# No need to start it as a separate service - it's called directly from Java
 
 # Start Spring Boot application (foreground)
-echo "Starting Spring Boot application..."
+echo "Starting Spring Boot application (with integrated payroll calculation)..."
 cd /app
 exec su-exec spring:spring java -jar app.jar

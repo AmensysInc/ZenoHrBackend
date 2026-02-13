@@ -43,12 +43,9 @@ services:
       FILE_STORAGE_LOCATION: /app/files
       PDF_SERVICE_URL: ${PDF_SERVICE_URL:-http://pdf-service:3002}
       PRODUCTION: "true"
-      # Payroll engine runs on port 9005 inside the container
-      PAYROLL_ENGINE_PORT: 9005
-      PORT: 9005  # Set port for payroll engine Node.js service
+      # Payroll calculation is integrated into Spring Boot backend
     ports:
       - "${BACKEND_PORT:-8080}:8080"
-      - "${PAYROLL_ENGINE_PORT:-9005}:9005"  # Expose payroll engine port
     volumes:
       - file_storage:/app/files
       - payroll_db:/app/payroll-engine/database  # Persist payroll engine database
