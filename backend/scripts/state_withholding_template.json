@@ -1,0 +1,89 @@
+{
+  "state": "CA",
+  "year": 2026,
+  "source": "California Franchise Tax Board - Official 2026 Withholding Tables",
+  "lastUpdated": "2026-01-01",
+  "notes": "Official California state withholding tables for 2026",
+  "tables": [
+    {
+      "payFrequency": "MONTHLY",
+      "filingStatus": "SINGLE",
+      "entries": [
+        {
+          "wageMin": 0,
+          "wageMax": 1000,
+          "withholdingAmount": null,
+          "percentage": 0.01,
+          "baseAmount": null
+        },
+        {
+          "wageMin": 1000,
+          "wageMax": 2000,
+          "withholdingAmount": null,
+          "percentage": 0.02,
+          "baseAmount": 10.00
+        },
+        {
+          "wageMin": 2000,
+          "wageMax": null,
+          "withholdingAmount": null,
+          "percentage": 0.04,
+          "baseAmount": 30.00
+        }
+      ]
+    },
+    {
+      "payFrequency": "MONTHLY",
+      "filingStatus": "MARRIED",
+      "entries": [
+        {
+          "wageMin": 0,
+          "wageMax": 2000,
+          "withholdingAmount": null,
+          "percentage": 0.01,
+          "baseAmount": null
+        }
+      ]
+    },
+    {
+      "payFrequency": "WEEKLY",
+      "filingStatus": "SINGLE",
+      "entries": [
+        {
+          "wageMin": 0,
+          "wageMax": 250,
+          "withholdingAmount": null,
+          "percentage": 0.01,
+          "baseAmount": null
+        }
+      ]
+    },
+    {
+      "payFrequency": "BIWEEKLY",
+      "filingStatus": "SINGLE",
+      "entries": [
+        {
+          "wageMin": 0,
+          "wageMax": 500,
+          "withholdingAmount": null,
+          "percentage": 0.01,
+          "baseAmount": null
+        }
+      ]
+    },
+    {
+      "payFrequency": "SEMIMONTHLY",
+      "filingStatus": "SINGLE",
+      "entries": [
+        {
+          "wageMin": 0,
+          "wageMax": 500,
+          "withholdingAmount": null,
+          "percentage": 0.01,
+          "baseAmount": null
+        }
+      ]
+    }
+  ]
+}
+
