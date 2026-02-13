@@ -15,9 +15,31 @@ let sharedDb = null;
 
 function getDatabase() {
     if (!sharedDb) {
-        sharedDb = new sqlite3.Database(DB_PATH, (err) => {
+        // Ensure database directory exists and is writable
+        const dbDir = path.dirname(DB_PATH);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true, mode: 0o775 });
+        }
+        // Ensure database file is writable if it exists
+        if (fs.existsSync(DB_PATH)) {
+            try {
+                fs.chmodSync(DB_PATH, 0o664);
+            } catch (err) {
+                console.warn('Could not set database file permissions:', err.message);
+            }
+        }
+        
+        // Open database with read-write mode (default, but explicit for clarity)
+        sharedDb = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
             if (err) {
                 console.error('Error opening database:', err);
+            } else {
+                // Set database to use WAL mode for better concurrency
+                sharedDb.run('PRAGMA journal_mode = WAL;', (err) => {
+                    if (err) {
+                        console.warn('Could not set WAL mode:', err.message);
+                    }
+                });
             }
         });
     }
