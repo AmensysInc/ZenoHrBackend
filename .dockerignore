@@ -8,6 +8,7 @@ mvnw.cmd
 *.sql
 *.ps1
 *.sh
+!entrypoint.sh
 frontend/
 node_modules/
 .idea/
