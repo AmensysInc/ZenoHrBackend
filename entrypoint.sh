@@ -33,6 +33,14 @@ if [ ! -f /app/payroll-engine/database/tax_data.db ] || [ ! -s /app/payroll-engi
     }
 fi
 
+# Fix database permissions after seeding (in case it was created)
+if [ -f /app/payroll-engine/database/tax_data.db ]; then
+    chown spring:spring /app/payroll-engine/database/tax_data.db
+    chmod 664 /app/payroll-engine/database/tax_data.db
+    chown spring:spring /app/payroll-engine/database
+    chmod 775 /app/payroll-engine/database
+fi
+
 # Start Spring Boot application (foreground)
 echo "Starting Spring Boot application (with integrated payroll calculation)..."
 cd /app
