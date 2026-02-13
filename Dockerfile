@@ -27,8 +27,17 @@ RUN addgroup -S spring && adduser -S spring -G spring
 COPY --from=build /app/target/*.jar app.jar
 
 # Copy payroll engine into the container (for calculation logic, not as separate service)
-# Build context is root (.), payroll-engine is in backend/payroll-engine/backend
-COPY backend/payroll-engine/backend /app/payroll-engine
+# Build context is root (.), try both locations
+COPY payroll-engine/backend backend/payroll-engine/backend* /tmp/
+RUN if [ -d /tmp/payroll-engine/backend ]; then \
+        cp -r /tmp/payroll-engine/backend /app/payroll-engine; \
+    elif [ -d /tmp/backend/payroll-engine/backend ]; then \
+        cp -r /tmp/backend/payroll-engine/backend /app/payroll-engine; \
+    else \
+        echo "Error: payroll-engine/backend not found"; \
+        exit 1; \
+    fi && \
+    rm -rf /tmp/payroll-engine /tmp/backend 2>/dev/null || true
 
 # Install payroll engine dependencies (needed for calculation)
 WORKDIR /app/payroll-engine
