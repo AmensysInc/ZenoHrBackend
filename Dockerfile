@@ -33,7 +33,7 @@ COPY payroll-engine/backend /app/payroll-engine
 # Install payroll engine dependencies (needed for calculation)
 WORKDIR /app/payroll-engine
 RUN npm install --production --legacy-peer-deps
-# Make calculate.js executable
+# Make  ncalculate.js executable
 RUN chmod +x calculate.js
 WORKDIR /app
 

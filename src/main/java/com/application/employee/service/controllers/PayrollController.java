@@ -58,6 +58,9 @@ public class PayrollController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SADMIN', 'GROUP_ADMIN', 'HR_MANAGER')")
     public ResponseEntity<Map<String, Object>> calculatePayrollAdvanced(@RequestBody Map<String, Object> request) {
         try {
+            // Log the request for debugging
+            System.out.println("Payroll calculation request received: " + request);
+            
             Map<String, Object> result = payrollCalculationService.calculatePayroll(request);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -65,9 +68,14 @@ public class PayrollController {
             response.put("calculationId", "CALC-" + System.currentTimeMillis());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            // Log the full error for debugging
+            System.err.println("Payroll calculation error: " + e.getMessage());
+            e.printStackTrace();
+            
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("error", e.getMessage());
+            errorResponse.put("errorDetails", e.getClass().getSimpleName());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
