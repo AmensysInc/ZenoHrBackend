@@ -1,10 +1,22 @@
 const { getDatabase } = require('../database/init');
 
 /**
+ * States with no state income tax
+ * These states should return $0 withholding without table lookup
+ */
+const NO_INCOME_TAX_STATES = ['TX', 'FL', 'NV', 'NH', 'TN', 'WA', 'WY', 'SD', 'AK'];
+
+/**
  * Calculate state withholding using official state withholding tables
- * Falls back to bracket calculation if tables not available
+ * Returns $0 for states with no income tax (TX, FL, NV, etc.)
  */
 async function calculateStateWithholding(grossPay, payFrequency, state, filingStatus, annualGross, taxYear = 2026) {
+    // Check if state has no income tax - return $0 immediately
+    if (NO_INCOME_TAX_STATES.includes(state.toUpperCase())) {
+        console.log(`[StateWithholding] ${state} has no state income tax. Returning $0.`);
+        return Promise.resolve(0);
+    }
+    
     const db = getDatabase();
     
     return new Promise((resolve, reject) => {
@@ -59,9 +71,10 @@ async function calculateStateWithholding(grossPay, payFrequency, state, filingSt
                     resolve(finalWithholding);
                 } else {
                     // No table found - CRITICAL: Enforce table-only calculations (no bracket fallback)
-                    // For states with no income tax (TX, FL, NV, etc.), tables should exist with $0 withholding
+                    // Note: States with no income tax are handled above and return $0
                     const errorMsg = `CRITICAL: State withholding table not found for ${state} (${payFrequency}, ${filingStatus}). ` +
-                                   `Official withholding tables are required. Bracket fallback is disabled for production accuracy.`;
+                                   `Official withholding tables are required. Bracket fallback is disabled for production accuracy. ` +
+                                   `If ${state} has no state income tax, this should have been handled earlier.`;
                     console.error(`❌ ${errorMsg}`);
                     reject(new Error(errorMsg));
                     return;
