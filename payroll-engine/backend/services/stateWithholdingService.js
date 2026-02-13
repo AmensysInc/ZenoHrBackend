@@ -58,13 +58,13 @@ async function calculateStateWithholding(grossPay, payFrequency, state, filingSt
                     console.log(`[StateWithholding] Final withholding for ${state}: $${finalWithholding}`);
                     resolve(finalWithholding);
                 } else {
-                    // No table found - this should not happen for 2026 as all states have official tables
-                    console.error(`❌ ERROR: State withholding table not found for ${state} (${payFrequency}, ${filingStatus})`);
-                    console.error(`   This indicates missing official withholding tables.`);
-                    console.error(`   All 42 states should have official tables imported for 2026.`);
-                    console.error(`   Falling back to bracket method (may not match Paycom).`);
-                    const bracketMethod = await calculateStateBracketMethod(annualGross, state, filingStatus, taxYear, payFrequency);
-                    resolve(bracketMethod);
+                    // No table found - CRITICAL: Enforce table-only calculations (no bracket fallback)
+                    // For states with no income tax (TX, FL, NV, etc.), tables should exist with $0 withholding
+                    const errorMsg = `CRITICAL: State withholding table not found for ${state} (${payFrequency}, ${filingStatus}). ` +
+                                   `Official withholding tables are required. Bracket fallback is disabled for production accuracy.`;
+                    console.error(`❌ ${errorMsg}`);
+                    reject(new Error(errorMsg));
+                    return;
                 }
             }
         );
@@ -72,7 +72,9 @@ async function calculateStateWithholding(grossPay, payFrequency, state, filingSt
 }
 
 /**
- * Fallback: Calculate state tax using brackets (annualized method)
+ * DEPRECATED: Bracket fallback removed for production accuracy
+ * All states must have official withholding tables imported
+ * This function is kept for reference only and should not be called
  */
 async function calculateStateBracketMethod(annualGross, state, filingStatus, taxYear, payFrequency) {
     const db = getDatabase();

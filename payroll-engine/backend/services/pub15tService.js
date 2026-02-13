@@ -91,10 +91,12 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
                     console.log(`[Pub15T] Final withholding: ${withholding}`);
                     resolve(withholding);
                 } else {
-                    // Fallback to annualized wage method if table not found
-                    console.log(`[Pub15T] Table not found for: year=${taxYear}, freq=${payFrequency}, status=${filingStatus}, step2=${step2}, wages=${taxableWages}`);
-                    const annualized = await calculateAnnualizedMethod(grossPay, payFrequency, filingStatus, step2Checkbox, w4Data, taxYear);
-                    resolve(annualized);
+                    // CRITICAL: Pub 15-T table not found - enforce table-only calculations
+                    const errorMsg = `CRITICAL: Pub 15-T percentage table not found for year=${taxYear}, freq=${payFrequency}, status=${filingStatus}, step2=${step2}, wages=${taxableWages}. ` +
+                                   `Official Pub 15-T tables are required. Annualized method fallback is disabled for production accuracy.`;
+                    console.error(`❌ ${errorMsg}`);
+                    reject(new Error(errorMsg));
+                    return;
                 }
             }
         );
@@ -102,7 +104,9 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
 }
 
 /**
- * Fallback: Annualized Wage Method (current frontend method)
+ * DEPRECATED: Annualized method fallback removed for production accuracy
+ * Pub 15-T percentage tables are required
+ * This function is kept for reference only and should not be called
  */
 async function calculateAnnualizedMethod(grossPay, payFrequency, filingStatus, step2Checkbox, w4Data, taxYear) {
     const db = getDatabase();
