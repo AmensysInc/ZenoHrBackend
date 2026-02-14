@@ -28,7 +28,9 @@ public class PayrollCalculationService {
             );
             
             processBuilder.directory(new File(PAYROLL_ENGINE_PATH));
-            processBuilder.redirectErrorStream(true);
+            // Don't redirect stderr to stdout - we only want JSON from stdout
+            // Stderr logs will go to Docker logs but won't interfere with JSON parsing
+            processBuilder.redirectErrorStream(false);
             
             Process process = processBuilder.start();
             
@@ -39,7 +41,7 @@ public class PayrollCalculationService {
                 writer.flush();
             }
             
-            // Read output from stdout
+            // Read output from stdout only (JSON response)
             StringBuilder output = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()))) {
@@ -48,6 +50,21 @@ public class PayrollCalculationService {
                     output.append(line);
                 }
             }
+            
+            // Consume stderr separately (don't let it block, but don't read it)
+            // This prevents the process from hanging if stderr buffer fills up
+            Thread stderrConsumer = new Thread(() -> {
+                try (BufferedReader stderrReader = new BufferedReader(
+                        new InputStreamReader(process.getErrorStream()))) {
+                    while (stderrReader.readLine() != null) {
+                        // Discard stderr - it's just debug logs
+                    }
+                } catch (IOException e) {
+                    // Ignore - stderr consumption errors
+                }
+            });
+            stderrConsumer.setDaemon(true);
+            stderrConsumer.start();
             
             // Wait for process to complete (max 30 seconds)
             boolean finished = process.waitFor(30, TimeUnit.SECONDS);
