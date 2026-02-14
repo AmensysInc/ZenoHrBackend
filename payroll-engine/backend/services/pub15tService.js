@@ -61,14 +61,14 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
                     if (row.base_tax !== null && row.rate !== null && row.excess_over !== null) {
                         // Proper IRS Pub 15-T formula
                         withholding = row.base_tax + (row.rate * (taxableWages - row.excess_over));
-                        console.log(`[Pub15T] Calculated: ${row.base_tax} + (${row.rate} × (${taxableWages} - ${row.excess_over})) = ${withholding}`);
+                        console.error(`[Pub15T] Calculated: ${row.base_tax} + (${row.rate} × (${taxableWages} - ${row.excess_over})) = ${withholding}`);
                     } else if (row.base_amount !== null && row.percentage !== null) {
                         // Fallback for old schema (backward compatibility)
                         withholding = row.base_amount + ((taxableWages - row.wage_min) * row.percentage);
-                        console.log(`[Pub15T] Using old schema: ${row.base_amount} + (${row.percentage} × (${taxableWages} - ${row.wage_min})) = ${withholding}`);
+                        console.error(`[Pub15T] Using old schema: ${row.base_amount} + (${row.percentage} × (${taxableWages} - ${row.wage_min})) = ${withholding}`);
                     } else {
                         // No valid data
-                        console.log('[Pub15T] Row missing required columns:', row);
+                        console.error('[Pub15T] Row missing required columns:', row);
                         const annualized = await calculateAnnualizedMethod(grossPay, payFrequency, filingStatus, step2Checkbox, w4Data, taxYear);
                         resolve(annualized);
                         return;
