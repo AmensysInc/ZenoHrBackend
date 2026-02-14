@@ -13,7 +13,7 @@ const NO_INCOME_TAX_STATES = ['TX', 'FL', 'NV', 'NH', 'TN', 'WA', 'WY', 'SD', 'A
 async function calculateStateWithholding(grossPay, payFrequency, state, filingStatus, annualGross, taxYear = 2026) {
     // Check if state has no income tax - return $0 immediately
     if (NO_INCOME_TAX_STATES.includes(state.toUpperCase())) {
-        console.log(`[StateWithholding] ${state} has no state income tax. Returning $0.`);
+        console.error(`[StateWithholding] ${state} has no state income tax. Returning $0.`);
         return Promise.resolve(0);
     }
     
@@ -34,7 +34,7 @@ async function calculateStateWithholding(grossPay, payFrequency, state, filingSt
 
                 if (row) {
                     // Use withholding table
-                    console.log(`[StateWithholding] Found table entry for ${state}:`, {
+                    console.error(`[StateWithholding] Found table entry for ${state}:`, {
                         wageRange: `$${row.wage_min}-$${row.wage_max}`,
                         baseAmount: row.base_amount,
                         percentage: row.percentage,
@@ -47,27 +47,27 @@ async function calculateStateWithholding(grossPay, payFrequency, state, filingSt
                     if (row.withholding_amount !== null && row.withholding_amount !== undefined) {
                         // Fixed withholding amount
                         withholding = row.withholding_amount;
-                        console.log(`[StateWithholding] Using fixed withholding amount: $${withholding}`);
+                        console.error(`[StateWithholding] Using fixed withholding amount: $${withholding}`);
                     } else if (row.percentage !== null && row.percentage !== undefined) {
                         // Percentage-based withholding
                         // The percentage is an effective rate (tax/wage), so apply to full gross pay
                         if (row.base_amount !== null && row.base_amount !== undefined) {
                             // Base amount + percentage of full gross
                             withholding = row.base_amount + (grossPay * row.percentage);
-                            console.log(`[StateWithholding] Base + percentage: ${row.base_amount} + (${grossPay} * ${row.percentage}) = $${withholding}`);
+                            console.error(`[StateWithholding] Base + percentage: ${row.base_amount} + (${grossPay} * ${row.percentage}) = $${withholding}`);
                         } else {
                             // Just percentage of full gross
                             withholding = grossPay * row.percentage;
-                            console.log(`[StateWithholding] Percentage only: ${grossPay} * ${row.percentage} = $${withholding}`);
+                            console.error(`[StateWithholding] Percentage only: ${grossPay} * ${row.percentage} = $${withholding}`);
                         }
                     } else if (row.base_amount !== null && row.base_amount !== undefined) {
                         // Only base amount
                         withholding = row.base_amount;
-                        console.log(`[StateWithholding] Using base amount only: $${withholding}`);
+                        console.error(`[StateWithholding] Using base amount only: $${withholding}`);
                     }
                     
                     const finalWithholding = Math.max(0, withholding);
-                    console.log(`[StateWithholding] Final withholding for ${state}: $${finalWithholding}`);
+                    console.error(`[StateWithholding] Final withholding for ${state}: $${finalWithholding}`);
                     resolve(finalWithholding);
                 } else {
                     // No table found - CRITICAL: Enforce table-only calculations (no bracket fallback)

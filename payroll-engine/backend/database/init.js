@@ -206,7 +206,8 @@ function initDatabase() {
                 
                 if (row && row.count > 0) {
                     // Tax year already exists, skip insert
-                    console.log('Database tables already initialized');
+                    // Don't log to stdout - this goes to stderr to avoid JSON parsing issues
+                    console.error('Database tables already initialized');
                     resolve();
                 } else {
                     // Insert tax year
@@ -222,7 +223,8 @@ function initDatabase() {
                                 reject(err);
                             }
                         } else {
-                            console.log('Database tables created successfully');
+                            // Don't log to stdout - this goes to stderr to avoid JSON parsing issues
+                            console.error('Database tables created successfully');
                             resolve();
                         }
                     });

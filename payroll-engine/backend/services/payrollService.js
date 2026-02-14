@@ -25,16 +25,16 @@ async function calculatePaystub(input) {
     // Calculate taxable gross pay (after pre-tax deductions)
     let totalPreTaxDeductions = 0;
     if (preTaxDeductions) {
-        console.log('[PayrollService] Pre-tax deductions received:', JSON.stringify(preTaxDeductions));
+        console.error('[PayrollService] Pre-tax deductions received:', JSON.stringify(preTaxDeductions));
         totalPreTaxDeductions = (preTaxDeductions.advance || 0) + 
                                (preTaxDeductions.medical || 0) + 
                                (preTaxDeductions.miscellaneous || 0);
-        console.log('[PayrollService] Total pre-tax deductions:', totalPreTaxDeductions);
+        console.error('[PayrollService] Total pre-tax deductions:', totalPreTaxDeductions);
     } else {
-        console.log('[PayrollService] No pre-tax deductions provided');
+        console.error('[PayrollService] No pre-tax deductions provided');
     }
     const taxableGross = taxableGrossPay || Math.max(0, grossPay - totalPreTaxDeductions);
-    console.log('[PayrollService] Gross Pay:', grossPay, 'Taxable Gross:', taxableGross, 'Taxable Gross Pay param:', taxableGrossPay);
+    console.error('[PayrollService] Gross Pay:', grossPay, 'Taxable Gross:', taxableGross, 'Taxable Gross Pay param:', taxableGrossPay);
 
     // Convert pay periods to frequency string
     const payFrequency = getPayFrequencyFromPeriods(payPeriods);
@@ -113,7 +113,7 @@ async function calculatePaystub(input) {
         total: 0
     };
     
-    console.log('[PayrollService] Returning pre-tax deductions:', JSON.stringify(resultPreTaxDeductions));
+    console.error('[PayrollService] Returning pre-tax deductions:', JSON.stringify(resultPreTaxDeductions));
     
     return {
         grossPay,

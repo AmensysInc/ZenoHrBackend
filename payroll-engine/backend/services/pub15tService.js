@@ -39,7 +39,7 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
         const step2 = step2Checkbox ? 1 : 0;
         
         // Debug logging
-        console.log(`[Pub15T] Lookup: year=${taxYear}, freq=${payFrequency}, status=${filingStatus}, step2=${step2}, wages=${taxableWages}`);
+        console.error(`[Pub15T] Lookup: year=${taxYear}, freq=${payFrequency}, status=${filingStatus}, step2=${step2}, wages=${taxableWages}`);
         
         db.get(`SELECT * FROM pub15t_percentage_tables 
                 WHERE year = ? AND pay_frequency = ? AND filing_status = ? AND step2_checkbox = ?
@@ -88,7 +88,7 @@ async function calculateFederalWithholdingPub15T(grossPay, payFrequency, filingS
                     withholding = Math.round(withholding);
                     withholding = Math.max(0, withholding);
                     
-                    console.log(`[Pub15T] Final withholding: ${withholding}`);
+                    console.error(`[Pub15T] Final withholding: ${withholding}`);
                     resolve(withholding);
                 } else {
                     // CRITICAL: Pub 15-T table not found - enforce table-only calculations
