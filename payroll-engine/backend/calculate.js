@@ -63,25 +63,27 @@ process.stdin.on('end', async () => {
         
         calculatePaystub(request)
             .then(result => {
+                // Success: Output JSON to stdout (Java reads this)
                 console.log(JSON.stringify(result));
                 process.exit(0);
             })
             .catch(error => {
-                // Don't expose stack traces - security best practice
+                // Error: Output JSON to stdout so Java can parse it
+                // All debug logs already go to stderr, so stdout is clean
                 const errorResponse = {
                     error: error.message || 'Payroll calculation failed',
                     code: 'CALCULATION_ERROR'
                 };
-                console.error(JSON.stringify(errorResponse));
+                console.log(JSON.stringify(errorResponse));
                 process.exit(1);
             });
     } catch (error) {
-        // Don't expose stack traces - security best practice
+        // Error: Output JSON to stdout so Java can parse it
         const errorResponse = {
             error: error.message || 'Invalid request or database error',
             code: 'REQUEST_ERROR'
         };
-        console.error(JSON.stringify(errorResponse));
+        console.log(JSON.stringify(errorResponse));
         process.exit(1);
     }
 });
