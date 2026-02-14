@@ -23,20 +23,21 @@ async function ensureDatabaseReady() {
     
     try {
         // Initialize database (create tables only - no data import)
+        // Suppress all output from initDatabase - it logs to stderr which Java reads
         await initDatabase();
         
         // Strict validation - fail if critical tables are missing
         const validation = await validateTables(2026);
         
         if (!validation.valid) {
-            const errorMsg = `Database validation failed. Critical tables missing:\n${validation.errors.join('\n')}`;
+            const errorMsg = `Database validation failed. Critical tables missing: ${validation.errors.join('; ')}`;
             throw new Error(errorMsg);
         }
         
-        if (validation.warnings.length > 0) {
-            // Log warnings but don't fail
-            console.warn('Database validation warnings:', validation.warnings.join('; '));
-        }
+        // Don't log warnings - they pollute stdout/stderr
+        // if (validation.warnings.length > 0) {
+        //     console.warn('Database validation warnings:', validation.warnings.join('; '));
+        // }
         
         dbInitialized = true;
     } catch (error) {

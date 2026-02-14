@@ -206,8 +206,7 @@ function initDatabase() {
                 
                 if (row && row.count > 0) {
                     // Tax year already exists, skip insert
-                    // Don't log to stdout - this goes to stderr to avoid JSON parsing issues
-                    console.error('Database tables already initialized');
+                    // Don't log - Java reads stderr via redirectErrorStream(true)
                     resolve();
                 } else {
                     // Insert tax year
@@ -216,15 +215,14 @@ function initDatabase() {
                         if (err) {
                             // If write fails, check if it's because data already exists
                             if (err.code === 'SQLITE_READONLY') {
-                                console.warn('Database is read-only, but tables appear to exist. Continuing...');
+                                // Don't log - Java reads stderr
                                 resolve(); // Continue if tables exist
                             } else {
-                                console.error('Error inserting tax year:', err);
+                                // Don't log - just reject
                                 reject(err);
                             }
                         } else {
-                            // Don't log to stdout - this goes to stderr to avoid JSON parsing issues
-                            console.error('Database tables created successfully');
+                            // Don't log - Java reads stderr via redirectErrorStream(true)
                             resolve();
                         }
                     });
